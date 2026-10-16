@@ -480,6 +480,10 @@
             }
 
             function normalizeStation(station) {
+                let favicon = station.favicon || '';
+                if (favicon.startsWith('http://')) {
+                    favicon = favicon.replace('http://', 'https://');
+                }
                 return {
                     id: makeId(station),
                     name: station.name || 'Emisora sin nombre',
@@ -488,7 +492,7 @@
                     countrycode: station.countrycode || '',
                     language: station.language || '',
                     tags: station.tags || '',
-                    favicon: station.favicon || '',
+                    favicon: favicon,
                     codec: station.codec || '',
                     bitrate: station.bitrate || 0,
                     homepage: station.homepage || ''
@@ -640,12 +644,14 @@
 
                 const card = document.createElement('div');
                 card.className = 'rmw-station' + (active ? ' rmw-playing' : '');
+                
+                let logoHtml = `<div class="rmw-logo rmw-logo-placeholder">📻</div>`;
+                if (station.favicon) {
+                    logoHtml = `<img class="rmw-logo" loading="lazy" alt="" src="${esc(station.favicon)}">`;
+                }
+
                 card.innerHTML = `
-                  ${
-                    station.favicon
-                      ? `<img class="rmw-logo" loading="lazy" alt="" src="\${esc(station.favicon)}">`
-                      : `<div class="rmw-logo rmw-logo-placeholder">📻</div>`
-                  }
+                  ${logoHtml}
                   <div class="rmw-stationinfo">
                     <div class="rmw-stationname">${esc(station.name)}</div>
                     <div class="rmw-meta">
@@ -661,8 +667,15 @@
                   <button class="rmw-play" data-play="${id}" title="Reproducir">${active && !audio.paused ? 'Ⅱ' : '▶'}</button>
                 `;
 
-                const logo = card.querySelector('img.rmw-logo');
-                if (logo) logo.addEventListener('error', () => { logo.style.display = 'none'; });
+                const logoImg = card.querySelector('img.rmw-logo');
+                if (logoImg) {
+                    logoImg.addEventListener('error', () => {
+                        const placeholder = document.createElement('div');
+                        placeholder.className = 'rmw-logo rmw-logo-placeholder';
+                        placeholder.textContent = '📻';
+                        logoImg.replaceWith(placeholder);
+                    });
+                }
 
                 card.querySelector('[data-play]').addEventListener('click', () => {
                     const isActive = playingStation && playingStation.id === stationId;
