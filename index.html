@@ -1,0 +1,794 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Radio Mundial - Directorio Global de Emisoras</title>
+    <style>
+      :root {
+        --bg-main: #0c1220;
+        --bg-card: #141f32;
+        --bg-tools: #0f1727;
+        --border-color: #273650;
+        --accent: #3478df;
+        --accent-hover: #438cff;
+        --text-main: #edf2ff;
+        --text-sub: #9baac4;
+      }
+
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+
+      body {
+        font-family: system-ui, -apple-system, sans-serif;
+        background-color: var(--bg-main);
+        color: var(--text-main);
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+        padding-bottom: 90px; /* Espacio para el reproductor fijo */
+      }
+
+      header.rmw-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 16px 20px;
+        background: #131d30;
+        border-bottom: 1px solid #293650;
+      }
+
+      .rmw-brand .rmw-title {
+        font-size: 22px;
+        font-weight: 800;
+        letter-spacing: .3px;
+      }
+
+      .rmw-brand .rmw-subtitle {
+        margin-top: 3px;
+        color: #8e9db8;
+        font-size: 13px;
+      }
+
+      .rmw-tools {
+        padding: 14px 20px;
+        display: grid;
+        gap: 10px;
+        background: var(--bg-tools);
+        border-bottom: 1px solid #293650;
+        max-width: 900px;
+        width: 100%;
+        margin: 0 auto;
+      }
+
+      .rmw-searchrow {
+        display: flex;
+        gap: 8px;
+      }
+
+      input, select {
+        font: inherit;
+        min-width: 0;
+        width: 100%;
+        padding: 11px;
+        color: var(--text-main);
+        background: #19253a;
+        border: 1px solid #33425e;
+        border-radius: 10px;
+        outline: none;
+      }
+
+      input:focus, select:focus {
+        border-color: #63a4ff;
+      }
+
+      .rmw-filterrow {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 8px;
+      }
+
+      .rmw-actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 7px;
+      }
+
+      button {
+        font: inherit;
+        cursor: pointer;
+      }
+
+      .rmw-btn {
+        border: 1px solid #344562;
+        background: #1a2941;
+        color: #dce8ff;
+        border-radius: 9px;
+        padding: 9px 13px;
+        font-size: 13px;
+      }
+
+      .rmw-btn.active {
+        color: white;
+        background: #2759a5;
+        border-color: #4688ee;
+      }
+
+      .rmw-container {
+        flex: 1;
+        max-width: 900px;
+        width: 100%;
+        margin: 0 auto;
+        padding: 15px 20px;
+        display: flex;
+        flex-direction: column;
+      }
+
+      #rmw-fav-manager {
+        background: #141f33;
+        border: 1px solid #283a5a;
+        border-radius: 12px;
+        padding: 12px;
+        margin-bottom: 12px;
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+      }
+
+      .rmw-fav-info {
+        font-weight: 600;
+        color: #b0c4de;
+      }
+
+      .rmw-fav-btns {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+      }
+
+      .rmw-mgr-btn {
+        border: 1px solid #3b4e70;
+        background: #1d2d47;
+        color: #e1ecff;
+        padding: 7px 12px;
+        border-radius: 8px;
+        font-size: 13px;
+      }
+      .rmw-mgr-btn:hover { background: #283d5e; border-color: #5272a3; }
+      .rmw-mgr-btn.danger { border-color: #7a2f37; background: #3d1b20; color: #ffb3b8; }
+      .rmw-mgr-btn.danger:hover { background: #59222a; }
+
+      .rmw-results {
+        flex: 1;
+        overflow-y: auto;
+      }
+
+      .rmw-status {
+        color: var(--text-sub);
+        padding: 15px 5px;
+        line-height: 1.5;
+      }
+
+      .rmw-station {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 12px;
+        margin-bottom: 9px;
+        background: var(--bg-card);
+        border: 1px solid var(--border-color);
+        border-radius: 13px;
+      }
+
+      .rmw-station.rmw-playing {
+        border-color: #438cff;
+        background: #172944;
+      }
+
+      .rmw-logo {
+        flex: none;
+        width: 44px;
+        height: 44px;
+        border-radius: 9px;
+        background: #25334c;
+        object-fit: contain;
+      }
+
+      .rmw-logo-placeholder {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 21px;
+      }
+
+      .rmw-stationinfo {
+        flex: 1;
+        min-width: 0;
+      }
+
+      .rmw-stationname {
+        font-weight: 700;
+        color: #f1f5ff;
+        line-height: 1.35;
+        overflow-wrap: anywhere;
+      }
+
+      .rmw-meta {
+        margin-top: 4px;
+        color: #91a1bd;
+        font-size: 11px;
+        line-height: 1.5;
+        overflow-wrap: anywhere;
+      }
+
+      .rmw-play {
+        flex: none;
+        border: 0;
+        border-radius: 10px;
+        background: var(--accent);
+        color: white;
+        width: 41px;
+        height: 41px;
+        font-size: 18px;
+      }
+
+      .rmw-star {
+        flex: none;
+        border: 0;
+        background: transparent;
+        color: #a5b2c9;
+        font-size: 23px;
+        padding: 5px;
+      }
+      .rmw-star.is-fav { color: #ffd166; }
+
+      .rmw-more {
+        width: 100%;
+        padding: 13px;
+        margin: 10px 0 20px;
+        border: 1px solid #334562;
+        border-radius: 10px;
+        color: #eaf1ff;
+        background: #19263c;
+      }
+
+      /* Reproductor Fijo Inferior */
+      #rmw-mini {
+        position: fixed;
+        left: 0; right: 0; bottom: 0;
+        z-index: 1000;
+        display: none;
+        align-items: center;
+        gap: 12px;
+        padding: 12px 20px;
+        background: #111b2c;
+        border-top: 1px solid #344563;
+        box-shadow: 0 -4px 20px #0008;
+      }
+      #rmw-mini.rmw-visible { display: flex; }
+      .rmw-miniinfo { flex: 1; min-width: 0; }
+      .rmw-mininame { font-weight: 700; font-size: 13px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+      .rmw-ministatus { margin-top: 3px; font-size: 11px; color: #9eafca; }
+      .rmw-minibtn {
+        flex: none; width: 38px; height: 38px; border: 0; border-radius: 9px;
+        background: #263956; color: white; font-size: 17px;
+      }
+      .rmw-volume { width: 90px; flex: none; accent-color: #5a9bff; }
+
+      @media (min-width: 700px) {
+        .rmw-container { padding: 20px; }
+        #rmw-mini { max-width: 900px; left: 50%; transform: translateX(-50%); border-radius: 14px 14px 0 0; }
+      }
+    </style>
+</head>
+<body>
+
+    <header class="rmw-header">
+        <div class="rmw-brand rmw-container" style="padding:0;">
+            <div class="rmw-title">🌍 Radio Mundial</div>
+            <div class="rmw-subtitle">Directorio global de emisoras</div>
+        </div>
+    </header>
+
+    <div class="rmw-tools">
+        <div class="rmw-searchrow">
+            <input id="rmw-search" type="search" placeholder="Buscar emisora, ciudad o estilo…" autocomplete="off">
+        </div>
+        <div class="rmw-filterrow">
+            <select id="rmw-country" aria-label="Filtrar por país">
+                <option value="">🌐 Todos los países</option>
+            </select>
+            <select id="rmw-genre" aria-label="Filtrar por género">
+                <option value="Todos los géneros">Todos los géneros</option>
+                <option value="Rock">Rock</option><option value="Classic Rock">Classic Rock</option><option value="Metal">Metal</option>
+                <option value="Pop">Pop</option><option value="Dance">Dance</option><option value="Electronic">Electronic</option>
+                <option value="Techno">Techno</option><option value="House">House</option><option value="Trance">Trance</option>
+                <option value="80s">80s</option><option value="90s">90s</option><option value="Oldies">Oldies</option>
+                <option value="Alternative">Alternative</option><option value="Indie">Indie</option><option value="Jazz">Jazz</option>
+                <option value="Blues">Blues</option><option value="Reggae">Reggae</option><option value="Hip Hop">Hip Hop</option>
+                <option value="Latin">Latin</option><option value="Salsa">Salsa</option><option value="Classical">Classical</option>
+                <option value="Ambient">Ambient</option><option value="Chillout">Chillout</option><option value="Country">Country</option>
+                <option value="News">News</option><option value="Talk">Talk</option><option value="Sports">Sports</option>
+            </select>
+        </div>
+        <div class="rmw-actions">
+            <button class="rmw-btn active" id="rmw-all">🌐 Catálogo</button>
+            <button class="rmw-btn" id="rmw-favs">⭐ Mis Favoritos</button>
+            <button class="rmw-btn" id="rmw-refresh">↻ Actualizar</button>
+        </div>
+    </div>
+
+    <div class="rmw-container">
+        <div class="rmw-results" id="rmw-results" aria-live="polite">
+            <div class="rmw-status">Conectando con el directorio mundial de emisoras…</div>
+        </div>
+    </div>
+
+    <!-- Reproductor Mini Fijo -->
+    <div id="rmw-mini">
+        <div class="rmw-miniinfo">
+            <div class="rmw-mininame" id="rmw-mininame">Radio Mundial</div>
+            <div class="rmw-ministatus" id="rmw-ministatus">Selecciona una emisora</div>
+        </div>
+        <button class="rmw-minibtn" id="rmw-playpause" title="Reproducir o pausar">▶</button>
+        <input class="rmw-volume" id="rmw-volume" type="range" min="0" max="1" step="0.05" aria-label="Volumen">
+    </div>
+
+    <audio id="rmw-audio" preload="none" playsinline></audio>
+    <input type="file" id="rmw-file-input" accept=".json,application/json" style="display:none">
+
+    <script>
+        (() => {
+            'use strict';
+
+            const API_SERVERS = [
+                'https://de1.api.radio-browser.info/json',
+                'https://fr1.api.radio-browser.info/json',
+                'https://at1.api.radio-browser.info/json'
+            ];
+
+            const STORAGE = {
+                favorites: 'rmw_favorites_v1',
+                volume: 'rmw_volume_v1'
+            };
+
+            let apiIndex = 0;
+            let currentStations = [];
+            let favorites = loadGlobalFavorites();
+            let playingStation = null;
+            let showingFavorites = false;
+            let searchTimer = null;
+            let requestNumber = 0;
+            let offset = 0;
+            let loading = false;
+            let currentQuery = {};
+            let userPaused = false;
+            let retryTimer = null;
+
+            function loadGlobalFavorites() {
+                try {
+                    const localData = localStorage.getItem(STORAGE.favorites);
+                    if (localData) {
+                        const parsed = JSON.parse(localData);
+                        if (Array.isArray(parsed)) return parsed;
+                    }
+                    return [];
+                } catch (_) {
+                    return [];
+                }
+            }
+
+            function saveFavorites() {
+                try {
+                    localStorage.setItem(STORAGE.favorites, JSON.stringify(favorites));
+                } catch (_) {}
+            }
+
+            function esc(value) {
+                return String(value ?? '').replace(/[&<>"']/g, c => ({
+                    '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+                })[c]);
+            }
+
+            function getVolume() {
+                const value = Number(localStorage.getItem(STORAGE.volume) ?? 0.7);
+                return Number.isFinite(value) && value >= 0 && value <= 1 ? value : 0.7;
+            }
+
+            function makeId(station) {
+                return station.stationuuid || station.url_resolved || station.url;
+            }
+
+            function isFavorite(station) {
+                return favorites.some(f => f.id === makeId(station));
+            }
+
+            function normalizeStation(station) {
+                return {
+                    id: makeId(station),
+                    name: station.name || 'Emisora sin nombre',
+                    url: station.url_resolved || station.url,
+                    country: station.country || 'País desconocido',
+                    countrycode: station.countrycode || '',
+                    language: station.language || '',
+                    tags: station.tags || '',
+                    favicon: station.favicon || '',
+                    codec: station.codec || '',
+                    bitrate: station.bitrate || 0,
+                    homepage: station.homepage || ''
+                };
+            }
+
+            async function apiFetch(path) {
+                let lastError;
+                for (let i = 0; i < API_SERVERS.length; i++) {
+                    const index = (apiIndex + i) % API_SERVERS.length;
+                    try {
+                        const response = await fetch(API_SERVERS[index] + path, { method: 'GET', cache: 'no-store' });
+                        if (!response.ok) throw new Error('HTTP ' + response.status);
+                        apiIndex = index;
+                        return await response.json();
+                    } catch (error) {
+                        lastError = error;
+                    }
+                }
+                throw lastError || new Error('No se pudo conectar al catálogo');
+            }
+
+            const results = document.getElementById('rmw-results');
+            const searchInput = document.getElementById('rmw-search');
+            const countrySelect = document.getElementById('rmw-country');
+            const genreSelect = document.getElementById('rmw-genre');
+            const allButton = document.getElementById('rmw-all');
+            const favButton = document.getElementById('rmw-favs');
+            const fileInput = document.getElementById('rmw-file-input');
+            const audio = document.getElementById('rmw-audio');
+
+            audio.volume = getVolume();
+
+            async function loadCountries() {
+                try {
+                    const countries = await apiFetch('/countries?order=stationcount&reverse=true');
+                    if (!Array.isArray(countries)) return;
+                    const current = countrySelect.value;
+                    countrySelect.innerHTML = '<option value="">🌐 Todos los países</option>' +
+                        countries.filter(c => c && c.name && Number(c.stationcount) > 0)
+                        .map(c => `<option value="${esc(c.name)}">${esc(c.name)} (${Number(c.stationcount)})</option>`).join('');
+                    if ([...countrySelect.options].some(o => o.value === current)) countrySelect.value = current;
+                } catch (_) {}
+            }
+
+            function setStatus(message) {
+                results.innerHTML = `<div class="rmw-status">${esc(message)}</div>`;
+            }
+
+            function updateModeButtons() {
+                allButton.classList.toggle('active', !showingFavorites);
+                favButton.classList.toggle('active', showingFavorites);
+            }
+
+            function getFilters() {
+                return {
+                    name: searchInput.value.trim(),
+                    country: countrySelect.value,
+                    genre: genreSelect.value === 'Todos los géneros' ? '' : genreSelect.value
+                };
+            }
+
+            async function loadStations(reset = false) {
+                if (showingFavorites) { renderFavorites(); return; }
+                if (loading && !reset) return;
+
+                if (reset) {
+                    offset = 0;
+                    currentStations = [];
+                    currentQuery = getFilters();
+                    requestNumber++;
+                    results.innerHTML = '';
+                }
+
+                const myRequest = requestNumber;
+                loading = true;
+                if (reset) setStatus('Buscando emisoras…');
+
+                try {
+                    const filters = currentQuery;
+                    const params = new URLSearchParams();
+                    params.set('limit', '50');
+                    params.set('offset', String(offset));
+                    params.set('hidebroken', 'true');
+                    params.set('order', 'clickcount');
+                    params.set('reverse', 'true');
+
+                    if (filters.name) params.set('name', filters.name);
+                    if (filters.country) params.set('country', filters.country);
+                    if (filters.genre) params.set('tag', filters.genre.toLowerCase());
+
+                    const data = await apiFetch('/stations/search?' + params.toString());
+                    if (myRequest !== requestNumber || !Array.isArray(data)) return;
+
+                    const stations = data.filter(s => s && (s.url_resolved || s.url) && s.stationuuid).map(normalizeStation);
+                    currentStations = reset ? stations : currentStations.concat(stations);
+                    offset += data.length;
+                    renderStations(stations, reset);
+
+                    if (reset && stations.length === 0) {
+                        setStatus('No se han encontrado emisoras. Prueba con otro país, género o búsqueda.');
+                    } else if (reset && stations.length > 0) {
+                        const count = document.createElement('div');
+                        count.className = 'rmw-status';
+                        count.textContent = 'Mostrando emisoras encontradas. Puedes cargar más al final.';
+                        results.prepend(count);
+                    }
+                } catch (_) {
+                    if (myRequest === requestNumber) {
+                        setStatus('No se pudo conectar al directorio. Comprueba la conexión y pulsa «Actualizar».');
+                    }
+                } finally {
+                    if (myRequest === requestNumber) loading = false;
+                }
+            }
+
+            function stationCard(station) {
+                const id = esc(station.id);
+                const active = playingStation && playingStation.id === station.id;
+                const favorite = isFavorite(station);
+                const tags = station.tags ? station.tags.split(',').slice(0, 4).join(' · ') : 'Sin etiquetas';
+
+                const card = document.createElement('div');
+                card.className = 'rmw-station' + (active ? ' rmw-playing' : '');
+                card.innerHTML = `
+                  ${station.favicon ? `<img class="rmw-logo" loading="lazy" alt="" src="\${esc(station.favicon)}" onerror="this.style.display='none'">` : `<div class="rmw-logo rmw-logo-placeholder">📻</div>`}
+                  <div class="rmw-stationinfo">
+                    <div class="rmw-stationname">${esc(station.name)}</div>
+                    <div class="rmw-meta">🌍 ${esc(station.country)}${station.bitrate ? ' · ' + Number(station.bitrate) + ' kbps' : ''}${station.codec ? ' · ' + esc(station.codec) : ''}<br>${esc(tags)}</div>
+                  </div>
+                  <button class="rmw-star ${favorite ? 'is-fav' : ''}" data-favorite="${id}" title="${favorite ? 'Quitar de favoritos' : 'Añadir a favoritos'}">${favorite ? '★' : '☆'}</button>
+                  <button class="rmw-play" data-play="${id}" title="Reproducir">${active && !audio.paused ? 'Ⅱ' : '▶'}</button>
+                `;
+
+                card.querySelector('[data-play]').addEventListener('click', () => {
+                    const isActive = playingStation && playingStation.id === station.id;
+                    if (isActive && !audio.paused) {
+                        userPaused = true;
+                        clearTimeout(retryTimer);
+                        audio.pause();
+                    } else {
+                        userPaused = false;
+                        playStation(station);
+                    }
+                });
+
+                card.querySelector('[data-favorite]').addEventListener('click', () => {
+                    toggleFavorite(station);
+                    const button = card.querySelector('[data-favorite]');
+                    const nowFavorite = isFavorite(station);
+                    button.classList.toggle('is-fav', nowFavorite);
+                    button.textContent = nowFavorite ? '★' : '☆';
+                    if (showingFavorites) renderFavorites();
+                });
+
+                return card;
+            }
+
+            function renderStations(stations, reset) {
+                if (reset) results.innerHTML = '';
+                stations.forEach(station => results.appendChild(stationCard(station)));
+
+                const oldMore = document.getElementById('rmw-more');
+                if (oldMore) oldMore.remove();
+
+                if (stations.length >= 50) {
+                    const more = document.createElement('button');
+                    more.id = 'rmw-more';
+                    more.className = 'rmw-more';
+                    more.textContent = 'Cargar más emisoras ↓';
+                    more.addEventListener('click', () => { more.remove(); loadStations(false); });
+                    results.appendChild(more);
+                }
+            }
+
+            function renderFavorites() {
+                results.innerHTML = '';
+                const manager = document.createElement('div');
+                manager.id = 'rmw-fav-manager';
+                manager.innerHTML = `
+                  <div class="rmw-fav-info">⭐ Guardadas: ${favorites.length} emisoras</div>
+                  <div class="rmw-fav-btns">
+                    <button class="rmw-mgr-btn" id="rmw-export-file">📥 Exportar Archivo</button>
+                    <button class="rmw-mgr-btn" id="rmw-import-file">📤 Importar Archivo</button>
+                    ${favorites.length ? `<button class="rmw-mgr-btn danger" id="rmw-clear-favs">🗑️ Vaciar todo</button>` : ''}
+                  </div>
+                `;
+                results.appendChild(manager);
+
+                manager.querySelector('#rmw-export-file').addEventListener('click', () => {
+                    if (!favorites.length) { alert('No tienes favoritos.'); return; }
+                    const dataStr = 'data:text/json;charset=utf-8,' + encodeURIComponent(JSON.stringify(favorites, null, 2));
+                    const a = document.createElement('a');
+                    a.href = dataStr; a.download = 'mis_emisoras_favoritas.json';
+                    document.body.appendChild(a); a.click(); a.remove();
+                });
+
+                manager.querySelector('#rmw-import-file').addEventListener('click', () => fileInput.click());
+
+                const clearBtn = manager.querySelector('#rmw-clear-favs');
+                if (clearBtn) {
+                    clearBtn.addEventListener('click', () => {
+                        if (confirm('¿Vaciar todos tus favoritos?')) {
+                            favorites = []; saveFavorites(); renderFavorites();
+                        }
+                    });
+                }
+
+                if (!favorites.length) {
+                    const empty = document.createElement('div');
+                    empty.className = 'rmw-status';
+                    empty.textContent = 'No tienes emisoras guardadas. Marca ★ o importa una copia de seguridad.';
+                    results.appendChild(empty);
+                    return;
+                }
+
+                const query = searchInput.value.trim().toLowerCase();
+                const country = countrySelect.value;
+                const genre = genreSelect.value === 'Todos los géneros' ? '' : genreSelect.value.toLowerCase();
+
+                const list = favorites.filter(station => {
+                    const matchesQuery = !query || (station.name + ' ' + station.country + ' ' + station.tags).toLowerCase().includes(query);
+                    const matchesCountry = !country || station.country === country;
+                    const matchesGenre = !genre || station.tags.toLowerCase().includes(genre);
+                    return matchesQuery && matchesCountry && matchesGenre;
+                });
+
+                if (!list.length) {
+                    const nomatch = document.createElement('div');
+                    nomatch.className = 'rmw-status';
+                    nomatch.textContent = 'No hay favoritos que coincidan con estos filtros.';
+                    results.appendChild(nomatch);
+                    return;
+                }
+
+                list.forEach(station => results.appendChild(stationCard(station)));
+            }
+
+            function toggleFavorite(station) {
+                const id = makeId(station);
+                if (isFavorite(station)) {
+                    favorites = favorites.filter(f => f.id !== id);
+                } else {
+                    favorites.push({
+                        id, name: station.name, url: station.url, country: station.country,
+                        countrycode: station.countrycode, language: station.language, tags: station.tags,
+                        favicon: station.favicon, codec: station.codec, bitrate: station.bitrate, homepage: station.homepage
+                    });
+                }
+                saveFavorites();
+            }
+
+            fileInput.addEventListener('change', event => {
+                const file = event.target.files[0];
+                if (!file) return;
+                const reader = new FileReader();
+                reader.onload = e => {
+                    try {
+                        const parsed = JSON.parse(e.target.result);
+                        if (Array.isArray(parsed)) {
+                            favorites = parsed;
+                            saveFavorites();
+                            alert(`¡Éxito! ${parsed.length} emisoras importadas.`);
+                            if (showingFavorites) renderFavorites();
+                        }
+                    } catch (_) { alert('Archivo JSON inválido.'); }
+                    fileInput.value = '';
+                };
+                reader.readAsText(file);
+            });
+
+            async function playStation(station) {
+                userPaused = false;
+                clearTimeout(retryTimer);
+                const normalized = normalizeStation(station);
+                playingStation = normalized;
+                document.getElementById('rmw-mini').classList.add('rmw-visible');
+                document.getElementById('rmw-mininame').textContent = normalized.name;
+                document.getElementById('rmw-ministatus').textContent = 'Conectando…';
+                document.getElementById('rmw-playpause').textContent = 'Ⅱ';
+
+                if (audio.src !== normalized.url) {
+                    audio.pause();
+                    audio.src = normalized.url;
+                    audio.load();
+                }
+
+                try {
+                    await audio.play();
+                    document.getElementById('rmw-ministatus').textContent = normalized.country + ' · En reproducción';
+                } catch (_) {
+                    document.getElementById('rmw-ministatus').textContent = 'Error al reproducir.';
+                    document.getElementById('rmw-playpause').textContent = '▶';
+                }
+                refreshPlayButtons();
+            }
+
+            function refreshPlayButtons() {
+                document.querySelectorAll('[data-play]').forEach(button => {
+                    const station = currentStations.find(s => s.id === button.getAttribute('data-play')) || favorites.find(s => s.id === button.getAttribute('data-play'));
+                    const active = station && playingStation && station.id === playingStation.id;
+                    button.textContent = active && !audio.paused ? 'Ⅱ' : '▶';
+                    button.closest('.rmw-station')?.classList.toggle('rmw-playing', Boolean(active));
+                });
+            }
+
+            document.getElementById('rmw-playpause').addEventListener('click', async () => {
+                if (!audio.src) return;
+                if (audio.paused) {
+                    userPaused = false;
+                    try { await audio.play(); } catch (_) {}
+                } else {
+                    userPaused = true;
+                    clearTimeout(retryTimer);
+                    audio.pause();
+                }
+            });
+
+            const volRange = document.getElementById('rmw-volume');
+            volRange.value = String(audio.volume);
+            volRange.addEventListener('input', e => {
+                audio.volume = Number(e.target.value);
+                localStorage.setItem(STORAGE.volume, String(audio.volume));
+            });
+
+            audio.addEventListener('playing', () => {
+                clearTimeout(retryTimer);
+                document.getElementById('rmw-ministatus').textContent = (playingStation?.country || '') + ' · En reproducción';
+                document.getElementById('rmw-playpause').textContent = 'Ⅱ';
+                refreshPlayButtons();
+            });
+
+            audio.addEventListener('pause', () => {
+                if (audio.src) {
+                    document.getElementById('rmw-ministatus').textContent = 'En pausa';
+                    document.getElementById('rmw-playpause').textContent = '▶';
+                }
+                refreshPlayButtons();
+            });
+
+            audio.addEventListener('waiting', () => { document.getElementById('rmw-ministatus').textContent = 'Cargando audio…'; });
+            audio.addEventListener('error', () => {
+                document.getElementById('rmw-ministatus').textContent = 'Error de streaming.';
+                document.getElementById('rmw-playpause').textContent = '▶';
+                refreshPlayButtons();
+            });
+
+            allButton.addEventListener('click', () => { showingFavorites = false; updateModeButtons(); loadStations(true); });
+            favButton.addEventListener('click', () => { showingFavorites = true; updateModeButtons(); renderFavorites(); });
+
+            function filtersChanged() {
+                clearTimeout(searchTimer);
+                searchTimer = setTimeout(() => {
+                    if (showingFavorites) renderFavorites();
+                    else loadStations(true);
+                }, 350);
+            }
+
+            searchInput.addEventListener('input', filtersChanged);
+            countrySelect.addEventListener('change', filtersChanged);
+            genreSelect.addEventListener('change', filtersChanged);
+
+            document.getElementById('rmw-refresh').addEventListener('click', async () => {
+                if (showingFavorites) renderFavorites();
+                else await loadStations(true);
+                loadCountries();
+            });
+
+            loadCountries();
+            loadStations(true);
+        })();
+    </script>
+</body>
+</html>
