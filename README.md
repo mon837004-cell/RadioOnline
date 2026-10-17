@@ -26,10 +26,3 @@
   * Búsqueda instantánea con retardo (*debounce*) para optimizar las peticiones al catálogo mientras escribes.
 
 ---
-
-## 🛠️ Especificaciones Técnicas
-
-* **Plataforma**: Tampermonkey / Violentmonkey / Greasemonkey.
-* **Sitios compatibles**: `https://www.google.com/*`, `https://google.com/*`.
-* **Permisos (`@grant`)**: `GM_getValue`, `GM_setValue`.
-* **Dependencias**: Ninguna (JavaScript vainilla optimizado para alto rendimiento y bajo consumo de recursos).
