@@ -23,13 +23,11 @@
 
 🎵 Reproductor Mini Fijo y Controles Multimedia: Reproductor inferior flotante con control de volumen fluido y soporte completo para la Media Session API (controla la reproducción desde los botones multimedia del teclado, auriculares o pantalla de bloqueo del móvil).
 
-🛠️ Tecnologías Utilizadas
+🛠️ Tecnologías Utilizadas:
+
 HTML5 Semantic (Estructura limpia y accesible).
-
 CSS3 Moderno (Variables CSS, Flexbox, Grid Layout, Gradientes y Animaciones fluidas).
-
 JavaScript Vanilla (ES6+) (Sin dependencias pesadas, alta velocidad de ejecución y uso de localStorage).
-
 API de Radio-Browser (Directorio libre y descentralizado de emisoras).
 
 Hecho con 💙 para la comunidad.
