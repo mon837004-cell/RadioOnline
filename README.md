@@ -1,28 +1,25 @@
-# 📻 Radio Mundial
+📻 Radio Forocochera
+Radio Forocochera es una aplicación web interactiva y ultraligera diseñada para explorar, buscar y reproducir miles de emisoras de radio en directo de todo el mundo de forma fluida. Combina una interfaz moderna con efectos visuales avanzados y un rendimiento optimizado para ofrecer la mejor experiencia tanto en ordenadores como en móviles.
 
-**Radio Mundial** es una página que te permite acceder a un directorio global de emisoras de radio de todo el planeta. Utiliza la API pública de *Radio-Browser* para ofrecer búsqueda en tiempo real, reproducción persistente y gestión avanzada de favoritos.
+✨ Características Principales:
 
-## ✨ Características Principales
+🌍 Búsqueda y Filtros Globales: Conexión en tiempo real con la API de Radio-Browser para encontrar emisoras al instante por nombre, ciudad, país o género musical.
+⭐ Gestión Avanzada de Favoritos: Guarda tus emisoras preferidas con un clic y exporta/importa tu lista mediante archivos JSON para tener siempre una copia de seguridad segura
+⏱️ Temporizador de Apagado Personalizable: Configura manualmente el tiempo exacto (en minutos u horas) que desees para que la radio se detenga automáticamente cuando tú quieras.
+💾 Memoria Inteligente: El sistema recuerda automáticamente tus preferencias de tema visual, país seleccionado y género al volver a abrir la aplicación.
+🎵 Reproductor Mini Fijo y Controles Multimedia: Reproductor inferior flotante con control de volumen fluido y soporte completo para la Media Session API (controla la reproducción desde los botones multimedia del teclado, auriculares o pantalla de bloqueo del móvil).
+🎨 Temas Visuales Espectaculares: Personaliza la estética de la aplicación con múltiples diseños:
 
-* **🌐 Directorio Global de Emisoras**: 
-  * Conexión inteligente a múltiples servidores espejo de la API de *Radio-Browser* con tolerancia a fallos.
-  * Listado filtrado por popularidad (número de clics) y capacidad de explorar emisoras de cualquier país o género musical.
+🔵 Clásico Azul (Tema por defecto)
+🌆 Cyberpunk Morado y 🌆 Cyberpunk Azul
+💻 Verde Matrix
+🔥 Atardecer Fuego
+🖤 OLED Puro
 
-* **⭐ Gestión Avanzada de Favoritos**:
-  * Sistema de marcado rápido con estrellas (`★` / `☆`) guardado de forma persistente mediante `GM_setValue` y respaldo en `localStorage`.
-  * **Exportación e Importación JSON**: Permite descargar tu lista de emisoras favoritas en un archivo `.json` o importar copias de seguridad fácilmente desde tu equipo.
-  * Opción para vaciar la lista completa con un solo clic.
+🛠️ Tecnologías Utilizadas
+HTML5 Semantic (Estructura limpia y accesible).
+CSS3 Moderno (Variables CSS, Flexbox, Grid Layout, Gradientes y Animaciones fluidas).
+JavaScript Vanilla (ES6+) (Sin dependencias pesadas, alta velocidad de ejecución y uso de localStorage).
+API de Radio-Browser (Directorio libre y descentralizado de emisoras).
 
-* **🎧 Reproductor Persistente y Mini-barra Flotante**:
-  * Barra de reproducción flotante e integrada que no se interrumpe al navegar.
-  * Control de volumen deslizante con sincronización y guardado automático de la preferencia del usuario.
-  * Indicadores visuales en tiempo real del estado de conexión, reproducción y carga de audio.
-
-* **🔄 Sistema de Autorreanudación Inteligente**:
-  * Detecta automáticamente si la reproducción se ha pausado debido a un evento externo o pérdida de foco y facilita su reanudación al interactuar de nuevo con la página o recuperar la visibilidad de la pestaña.
-
-* **🎨 Diseño y Usabilidad Adaptativa (Responsive)**:
-  * Interfaz modal moderna en modo oscuro, optimizada tanto para equipos de escritorio como para pantallas móviles.
-  * Búsqueda instantánea con retardo (*debounce*) para optimizar las peticiones al catálogo mientras escribes.
-
----
+Hecho con 💙 para la comunidad.
