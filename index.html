@@ -527,7 +527,7 @@
             const countrySelect = document.getElementById('rmw-country');
             const genreSelect = document.getElementById('rmw-genre');
 
-            // Restaurar país y género guardados (País por defecto: Spain si no hay nada guardado)
+            // Restaurar país y género guardados (País por defecto: Spain si no hay nada guardado en localStorage)
             const savedCountry = localStorage.getItem(STORAGE.country);
             if (savedCountry !== null) {
                 countrySelect.value = savedCountry;
@@ -685,7 +685,9 @@
 
                     countries.sort((a, b) => (a.name || '').localeCompare(b.name || ''));
 
-                    const targetCountry = localStorage.getItem(STORAGE.country) || 'Spain';
+                    const savedC = localStorage.getItem(STORAGE.country);
+                    const targetCountry = savedC !== null ? savedC : 'Spain';
+
                     countrySelect.innerHTML =
                         '<option value="">🌐 Todos los países</option>' +
                         countries
@@ -1254,7 +1256,7 @@
                 loadCountries();
             });
 
-            // Inicialización secuencial correcta: primero carga los países y aplica el guardado, luego busca las emisoras
+            // Inicialización secuencial: carga los países respetando la opción seleccionada y busca
             await loadCountries();
             loadStations(true);
         })();
