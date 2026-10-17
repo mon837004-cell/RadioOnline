@@ -14,6 +14,7 @@
         --accent-hover: #438cff;
         --text-main: #edf2ff;
         --text-sub: #9baac4;
+        --card-shadow: 0 8px 25px rgba(0, 0, 0, 0.35);
       }
 
       * {
@@ -24,21 +25,71 @@
 
       body {
         font-family: system-ui, -apple-system, sans-serif;
-        background-color: var(--bg-main);
         color: var(--text-main);
         min-height: 100vh;
         display: flex;
         flex-direction: column;
         padding-bottom: 90px;
+        transition: background 0.4s ease, color 0.3s ease;
+      }
+
+      /* Temas Espectaculares */
+      body.theme-classic {
+        background: linear-gradient(135deg, #0c1220 0%, #070a12 100%);
+        --bg-main: #0c1220; --bg-card: #141f32; --bg-tools: #0f1727;
+        --border-color: #273650; --accent: #3478df; --accent-hover: #438cff;
+        --text-main: #edf2ff; --text-sub: #9baac4;
+        --card-shadow: 0 8px 25px rgba(0, 0, 0, 0.4);
+      }
+
+      body.theme-cyberpunk {
+        background: linear-gradient(135deg, #120428 0%, #070114 100%);
+        --bg-main: #120428; --bg-card: #1f0a3a; --bg-tools: #170730;
+        --border-color: #6b21a8; --accent: #ec4899; --accent-hover: #f472b6;
+        --text-main: #fdf4ff; --text-sub: #e879f9;
+        --card-shadow: 0 8px 30px rgba(236, 72, 153, 0.2);
+      }
+
+      body.theme-cyberpunk-blue {
+        background: linear-gradient(135deg, #050b14 0%, #02050a 100%);
+        --bg-main: #050b14; --bg-card: #0b192c; --bg-tools: #071220;
+        --border-color: #1e3a8a; --accent: #00f0ff; --accent-hover: #33f3ff;
+        --text-main: #e0f2fe; --text-sub: #7dd3fc;
+        --card-shadow: 0 8px 30px rgba(0, 240, 255, 0.15);
+      }
+
+      body.theme-matrix {
+        background: linear-gradient(135deg, #020f07 0%, #010803 100%);
+        --bg-main: #020f07; --bg-card: #061c0e; --bg-tools: #04140a;
+        --border-color: #15803d; --accent: #22c55e; --accent-hover: #4ade80;
+        --text-main: #f0fdf4; --text-sub: #86efac;
+        --card-shadow: 0 8px 30px rgba(34, 197, 94, 0.15);
+      }
+
+      body.theme-sunset {
+        background: linear-gradient(135deg, #1a0808 0%, #0d0404 100%);
+        --bg-main: #1a0808; --bg-card: #2d1010; --bg-tools: #220c0c;
+        --border-color: #7f1d1d; --accent: #f97316; --accent-hover: #fb923c;
+        --text-main: #fff7ed; --text-sub: #fdba74;
+        --card-shadow: 0 8px 30px rgba(249, 115, 22, 0.15);
+      }
+
+      body.theme-oled {
+        background: #000000;
+        --bg-main: #000000; --bg-card: #0a0a0a; --bg-tools: #050505;
+        --border-color: #262626; --accent: #f59e0b; --accent-hover: #fbbf24;
+        --text-main: #ffffff; --text-sub: #a3a3a3;
+        --card-shadow: none;
       }
 
       header.rmw-header {
         display: flex;
         align-items: center;
         justify-content: space-between;
-        padding: 16px 20px;
-        background: #131d30;
-        border-bottom: 1px solid #293650;
+        padding: 18px 20px;
+        background: var(--bg-tools);
+        border-bottom: 1px solid var(--border-color);
+        box-shadow: 0 4px 20px rgba(0,0,0,0.2);
       }
 
       .rmw-brand {
@@ -65,16 +116,16 @@
 
       .rmw-subtitle {
         margin-top: 3px;
-        color: #8e9db8;
+        color: var(--text-sub);
         font-size: 13px;
       }
 
       .rmw-tools {
-        padding: 14px 20px;
+        padding: 16px 20px;
         display: grid;
         gap: 10px;
         background: var(--bg-tools);
-        border-bottom: 1px solid #293650;
+        border-bottom: 1px solid var(--border-color);
         max-width: 900px;
         width: 100%;
         margin: 0 auto;
@@ -89,28 +140,30 @@
         font: inherit;
         min-width: 0;
         width: 100%;
-        padding: 11px;
+        padding: 12px;
         color: var(--text-main);
-        background: #19253a;
-        border: 1px solid #33425e;
-        border-radius: 10px;
+        background: var(--bg-card);
+        border: 1px solid var(--border-color);
+        border-radius: 12px;
         outline: none;
+        transition: border-color 0.2s, box-shadow 0.2s;
       }
 
       input:focus, select:focus {
-        border-color: #63a4ff;
+        border-color: var(--accent);
+        box-shadow: 0 0 0 3px rgba(52, 120, 223, 0.15);
       }
 
       .rmw-filterrow {
         display: grid;
-        grid-template-columns: 1fr 1fr;
+        grid-template-columns: 1fr 1fr 1fr;
         gap: 8px;
       }
 
       .rmw-actions {
         display: flex;
         flex-wrap: wrap;
-        gap: 7px;
+        gap: 8px;
       }
 
       button {
@@ -119,18 +172,27 @@
       }
 
       .rmw-btn {
-        border: 1px solid #344562;
-        background: #1a2941;
-        color: #dce8ff;
-        border-radius: 9px;
-        padding: 9px 13px;
+        border: 1px solid var(--border-color);
+        background: var(--bg-card);
+        color: var(--text-main);
+        border-radius: 10px;
+        padding: 10px 15px;
         font-size: 13px;
+        font-weight: 600;
+        transition: background 0.2s, border-color 0.2s, transform 0.1s;
+      }
+      .rmw-btn:hover {
+        border-color: var(--accent);
+      }
+      .rmw-btn:active {
+        transform: scale(0.97);
       }
 
       .rmw-btn.active {
         color: white;
-        background: #2759a5;
-        border-color: #4688ee;
+        background: var(--accent);
+        border-color: var(--accent-hover);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.2);
       }
 
       .rmw-container {
@@ -144,21 +206,22 @@
       }
 
       #rmw-fav-manager {
-        background: #141f33;
-        border: 1px solid #283a5a;
-        border-radius: 12px;
-        padding: 12px;
-        margin-bottom: 12px;
+        background: var(--bg-card);
+        border: 1px solid var(--border-color);
+        border-radius: 14px;
+        padding: 14px;
+        margin-bottom: 15px;
         display: flex;
         flex-wrap: wrap;
         align-items: center;
         justify-content: space-between;
         gap: 10px;
+        box-shadow: var(--card-shadow);
       }
 
       .rmw-fav-info {
         font-weight: 600;
-        color: #b0c4de;
+        color: var(--text-sub);
       }
 
       .rmw-fav-btns {
@@ -168,14 +231,15 @@
       }
 
       .rmw-mgr-btn {
-        border: 1px solid #3b4e70;
-        background: #1d2d47;
-        color: #e1ecff;
-        padding: 7px 12px;
-        border-radius: 8px;
+        border: 1px solid var(--border-color);
+        background: var(--bg-tools);
+        color: var(--text-main);
+        padding: 8px 14px;
+        border-radius: 9px;
         font-size: 13px;
+        font-weight: 500;
       }
-      .rmw-mgr-btn:hover { background: #283d5e; border-color: #5272a3; }
+      .rmw-mgr-btn:hover { background: var(--bg-card); border-color: var(--accent); }
 
       .rmw-results {
         flex: 1;
@@ -184,40 +248,52 @@
 
       .rmw-status {
         color: var(--text-sub);
-        padding: 15px 5px;
+        padding: 20px 5px;
         line-height: 1.5;
+        text-align: center;
+        font-size: 14px;
       }
 
       .rmw-station {
         display: flex;
         align-items: center;
-        gap: 12px;
-        padding: 12px;
-        margin-bottom: 9px;
+        gap: 14px;
+        padding: 14px;
+        margin-bottom: 12px;
         background: var(--bg-card);
         border: 1px solid var(--border-color);
-        border-radius: 13px;
+        border-radius: 16px;
+        box-shadow: var(--card-shadow);
+        transition: transform 0.2s ease, border-color 0.2s ease;
+      }
+
+      .rmw-station:hover {
+        border-color: var(--accent);
+        transform: translateY(-2px);
       }
 
       .rmw-station.rmw-playing {
-        border-color: #438cff;
-        background: #172944;
+        border-color: var(--accent);
+        background: var(--bg-tools);
+        box-shadow: 0 0 20px rgba(52, 120, 223, 0.25);
       }
 
       .rmw-logo {
         flex: none;
-        width: 44px;
-        height: 44px;
-        border-radius: 9px;
-        background: #25334c;
+        width: 48px;
+        height: 48px;
+        border-radius: 12px;
+        background: var(--bg-tools);
         object-fit: contain;
+        padding: 4px;
+        border: 1px solid var(--border-color);
       }
 
       .rmw-logo-placeholder {
         display: flex;
         align-items: center;
         justify-content: center;
-        font-size: 21px;
+        font-size: 22px;
       }
 
       .rmw-stationinfo {
@@ -227,15 +303,16 @@
 
       .rmw-stationname {
         font-weight: 700;
-        color: #f1f5ff;
+        color: var(--text-main);
+        font-size: 15px;
         line-height: 1.35;
         overflow-wrap: anywhere;
       }
 
       .rmw-meta {
-        margin-top: 4px;
-        color: #91a1bd;
-        font-size: 11px;
+        margin-top: 5px;
+        color: var(--text-sub);
+        font-size: 12px;
         line-height: 1.5;
         overflow-wrap: anywhere;
       }
@@ -243,33 +320,43 @@
       .rmw-play {
         flex: none;
         border: 0;
-        border-radius: 10px;
+        border-radius: 12px;
         background: var(--accent);
         color: white;
-        width: 41px;
-        height: 41px;
+        width: 44px;
+        height: 44px;
         font-size: 18px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+        transition: background 0.2s, transform 0.1s;
       }
+      .rmw-play:hover { background: var(--accent-hover); }
+      .rmw-play:active { transform: scale(0.95); }
 
       .rmw-star {
         flex: none;
         border: 0;
         background: transparent;
-        color: #a5b2c9;
-        font-size: 23px;
+        color: var(--text-sub);
+        font-size: 24px;
         padding: 5px;
+        transition: color 0.2s, transform 0.1s;
       }
-      .rmw-star.is-fav { color: #ffd166; }
+      .rmw-star:hover { transform: scale(1.1); }
+      .rmw-star.is-fav { color: #ffd166; text-shadow: 0 0 10px rgba(255, 209, 102, 0.4); }
 
       .rmw-more {
         width: 100%;
-        padding: 13px;
-        margin: 10px 0 20px;
-        border: 1px solid #334562;
-        border-radius: 10px;
-        color: #eaf1ff;
-        background: #19263c;
+        padding: 14px;
+        margin: 15px 0 25px;
+        border: 1px solid var(--border-color);
+        border-radius: 12px;
+        color: var(--text-main);
+        background: var(--bg-card);
+        font-weight: 600;
+        box-shadow: var(--card-shadow);
+        transition: background 0.2s, border-color 0.2s;
       }
+      .rmw-more:hover { border-color: var(--accent); background: var(--bg-tools); }
 
       /* Reproductor Mini Fijo Inferior */
       #rmw-mini {
@@ -278,30 +365,32 @@
         z-index: 1000;
         display: none;
         align-items: center;
-        gap: 12px;
-        padding: 12px 20px;
-        background: #111b2c;
-        border-top: 1px solid #344563;
-        box-shadow: 0 -4px 20px #0008;
+        gap: 14px;
+        padding: 14px 24px;
+        background: var(--bg-tools);
+        border-top: 1px solid var(--border-color);
+        box-shadow: 0 -8px 30px rgba(0,0,0,0.5);
+        backdrop-filter: blur(10px);
       }
       #rmw-mini.rmw-visible { display: flex; }
       .rmw-miniinfo { flex: 1; min-width: 0; }
-      .rmw-mininame { font-weight: 700; font-size: 13px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-      .rmw-ministatus { margin-top: 3px; font-size: 11px; color: #9eafca; }
+      .rmw-mininame { font-weight: 700; font-size: 14px; color: var(--text-main); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+      .rmw-ministatus { margin-top: 3px; font-size: 12px; color: var(--text-sub); }
       .rmw-minibtn {
-        flex: none; width: 38px; height: 38px; border: 0; border-radius: 9px;
-        background: #263956; color: white; font-size: 17px;
+        flex: none; width: 40px; height: 40px; border: 0; border-radius: 10px;
+        background: var(--bg-card); color: var(--text-main); font-size: 17px;
+        border: 1px solid var(--border-color);
       }
-      .rmw-minibtn.rmw-on { background: #2759a5; font-size: 11px; font-weight: 700; }
-      .rmw-volume { width: 90px; flex: none; accent-color: #5a9bff; }
+      .rmw-minibtn.rmw-on { background: var(--accent); color: #fff; font-size: 12px; font-weight: 700; border-color: transparent; }
+      .rmw-volume { width: 100px; flex: none; accent-color: var(--accent); cursor: pointer; }
 
       /* Toast Notification */
       #rmw-toast {
-        position: fixed; z-index: 2147483002; left: 50%; bottom: 90px;
+        position: fixed; z-index: 2147483002; left: 50%; bottom: 95px;
         transform: translateX(-50%); display: none;
-        max-width: min(90vw, 420px); padding: 11px 16px;
-        color: #f0f5ff; background: #111b2c; border: 1px solid #344563;
-        border-radius: 12px; box-shadow: 0 4px 20px #0008;
+        max-width: min(90vw, 420px); padding: 12px 18px;
+        color: var(--text-main); background: var(--bg-tools); border: 1px solid var(--border-color);
+        border-radius: 14px; box-shadow: 0 8px 25px rgba(0,0,0,0.5);
         font: 14px/1.4 system-ui, -apple-system, sans-serif; text-align: center;
       }
       #rmw-toast.rmw-visible { display: block; }
@@ -309,23 +398,27 @@
       /* Temporizador Menu */
       #rmw-timer-menu {
         position: fixed; z-index: 2147483000; display: none;
-        min-width: 190px; padding: 6px; color: #f0f5ff; background: #111b2c;
-        border: 1px solid #344563; border-radius: 13px; box-shadow: 0 4px 20px #0008;
+        min-width: 200px; padding: 8px; color: var(--text-main); background: var(--bg-tools);
+        border: 1px solid var(--border-color); border-radius: 14px; box-shadow: 0 10px 30px rgba(0,0,0,0.5);
       }
       #rmw-timer-menu.rmw-visible { display: block; }
-      #rmw-timer-menu .rmw-timer-title { padding: 6px 10px 8px; font-size: 11px; color: #9eafca; }
+      #rmw-timer-menu .rmw-timer-title { padding: 8px 10px 10px; font-size: 12px; color: var(--text-sub); font-weight: 600; }
       #rmw-timer-menu button {
         display: block; width: 100%; text-align: left; font: inherit; font-size: 13px;
-        padding: 9px 10px; border: 0; border-radius: 8px; cursor: pointer;
-        color: #e1ecff; background: transparent;
+        padding: 10px; border: 0; border-radius: 8px; cursor: pointer;
+        color: var(--text-main); background: transparent; transition: background 0.15s;
       }
-      #rmw-timer-menu button:hover { background: #263956; }
-      #rmw-timer-menu button.rmw-sel { background: #2759a5; color: #fff; }
+      #rmw-timer-menu button:hover { background: var(--bg-card); }
+      #rmw-timer-menu button.rmw-sel { background: var(--accent); color: #fff; font-weight: 600; }
       #rmw-timer-menu button.rmw-off { color: #ffb3b8; }
+
+      @media (max-width: 700px) {
+        .rmw-filterrow { grid-template-columns: 1fr; }
+      }
 
       @media (min-width: 700px) {
         .rmw-container { padding: 20px; }
-        #rmw-mini { max-width: 900px; left: 50%; transform: translateX(-50%); border-radius: 14px 14px 0 0; }
+        #rmw-mini { max-width: 900px; left: 50%; transform: translateX(-50%); border-radius: 16px 16px 0 0; }
       }
     </style>
 </head>
@@ -337,7 +430,7 @@
                 <span>Radio Forocochera</span>
                 <img class="rmw-title-icon" src="https://raw.githubusercontent.com/mon837004-cell/RadioOnline/main/Icono.png" alt="Logo">
             </div>
-            <div class="rmw-subtitle">Emisoras de todo el planeta</div>
+            <div class="rmw-subtitle">Directorio Mundial de Emisoras</div>
         </div>
     </header>
 
@@ -348,56 +441,29 @@
         <div class="rmw-filterrow">
             <select id="rmw-country" aria-label="Filtrar por país">
                 <option value="">🌐 Todos los países</option>
-                <option value="Spain" selected>Spain</option>
+                <option value="Spain">Spain</option>
             </select>
             <select id="rmw-genre" aria-label="Filtrar por género">
                 <option value="Todos los géneros">Todos los géneros</option>
-                <option value="80s">80s</option>
-                <option value="90s">90s</option>
-                <option value="2000s">2000s</option>
-                <option value="Alternative">Alternative</option>
-                <option value="Ambient">Ambient</option>
-                <option value="Blues">Blues</option>
-                <option value="Chillout">Chillout</option>
-                <option value="Classic Hits">Classic Hits</option>
-                <option value="Classic Rock">Classic Rock</option>
-                <option value="Classical">Classical</option>
-                <option value="Country">Country</option>
-                <option value="Dance">Dance</option>
-                <option value="Disco">Disco</option>
-                <option value="EDM">EDM</option>
-                <option value="Electronic">Electronic</option>
-                <option value="Flamenco">Flamenco</option>
-                <option value="Folk">Folk</option>
-                <option value="Funk">Funk</option>
-                <option value="Hard Rock">Hard Rock</option>
-                <option value="Heavy Metal">Heavy Metal</option>
-                <option value="Hip Hop">Hip Hop</option>
-                <option value="Hits">Hits</option>
-                <option value="Indie">Indie</option>
-                <option value="Jazz">Jazz</option>
-                <option value="Latin">Latin</option>
-                <option value="Lounge">Lounge</option>
-                <option value="Metal">Metal</option>
-                <option value="News">News</option>
-                <option value="Oldies">Oldies</option>
-                <option value="Opera">Opera</option>
-                <option value="Pop">Pop</option>
-                <option value="Punk">Punk</option>
-                <option value="Rap">Rap</option>
-                <option value="R&B">R&B</option>
-                <option value="Reggae">Reggae</option>
-                <option value="Rock">Rock</option>
-                <option value="Salsa">Salsa</option>
-                <option value="Ska">Ska</option>
-                <option value="Soul">Soul</option>
-                <option value="Soundtracks">Soundtracks</option>
-                <option value="Sports">Sports</option>
-                <option value="Talk">Talk</option>
-                <option value="Techno">Techno</option>
-                <option value="Top 40">Top 40</option>
-                <option value="Trance">Trance</option>
-                <option value="World Music">World Music</option>
+                <option value="80s">80s</option><option value="90s">90s</option><option value="2000s">2000s</option>
+                <option value="Alternative">Alternative</option><option value="Ambient">Ambient</option><option value="Blues">Blues</option>
+                <option value="Chillout">Chillout</option><option value="Classic Hits">Classic Hits</option><option value="Classic Rock">Classic Rock</option>
+                <option value="Classical">Classical</option><option value="Country">Country</option><option value="Dance">Dance</option>
+                <option value="Disco">Disco</option><option value="EDM">EDM</option><option value="Electronic">Electronic</option>
+                <option value="Flamenco">Flamenco</option><option value="Folk">Folk</option><option value="Funk">Funk</option>
+                <option value="Hard Rock">Hard Rock</option><option value="Heavy Metal">Heavy Metal</option><option value="Hip Hop">Hip Hop</option>
+                <option value="Hits">Hits</option><option value="Indie">Indie</option><option value="Jazz">Jazz</option>
+                <option value="Latin">Latin</option><option value="Lounge">Lounge</option><option value="Metal">Metal</option>
+                <option value="News">News</option><option value="Oldies">Oldies</option><option value="Opera">Opera</option><option value="Pop">Pop</option><option value="Punk">Punk</option><option value="Rap">Rap</option><option value="R&B">R&B</option><option value="Reggae">Reggae</option><option value="Rock">Rock</option>
+                <option value="Salsa">Salsa</option><option value="Ska">Ska</option><option value="Soul">Soul</option><option value="Soundtracks">Soundtracks</option><option value="Sports">Sports</option><option value="Talk">Talk</option><option value="Techno">Techno</option><option value="Top 40">Top 40</option><option value="Trance">Trance</option><option value="World Music">World Music</option>
+            </select>
+            <select id="rmw-theme" aria-label="Seleccionar tema visual">
+                <option value="classic">🔵 Clásico Azul</option>
+                <option value="cyberpunk">🌆 Cyberpunk Morado</option>
+                <option value="cyberpunk-blue">🌆 Cyberpunk Azul</option>
+                <option value="matrix">💻 Verde Matrix</option>
+                <option value="sunset">🔥 Atardecer Fuego</option>
+                <option value="oled">🖤 OLED Puro</option>
             </select>
         </div>
         <div class="rmw-actions">
@@ -429,8 +495,58 @@
     <div id="rmw-toast" role="status" aria-live="polite"></div>
 
     <script>
-        (() => {
+        (async () => {
             'use strict';
+
+            const STORAGE = {
+                favorites: 'rmw_favorites_v1',
+                volume: 'rmw_volume_v1',
+                theme: 'rmw_theme_v1',
+                country: 'rmw_country_v1',
+                genre: 'rmw_genre_v1'
+            };
+
+            // Gestión de Temas Visuales
+            function applyTheme(themeName) {
+                document.body.className = 'theme-' + themeName;
+                localStorage.setItem(STORAGE.theme, themeName);
+            }
+
+            const savedTheme = localStorage.getItem(STORAGE.theme) || 'classic';
+            applyTheme(savedTheme);
+
+            const themeSelect = document.getElementById('rmw-theme');
+            if (themeSelect) {
+                themeSelect.value = savedTheme;
+                themeSelect.addEventListener('change', (e) => {
+                    applyTheme(e.target.value);
+                });
+            }
+
+            // Referencias de filtros
+            const countrySelect = document.getElementById('rmw-country');
+            const genreSelect = document.getElementById('rmw-genre');
+
+            // Restaurar país y género guardados (País por defecto: Spain si no hay nada guardado)
+            const savedCountry = localStorage.getItem(STORAGE.country);
+            if (savedCountry !== null) {
+                countrySelect.value = savedCountry;
+            } else {
+                countrySelect.value = 'Spain';
+            }
+
+            const savedGenre = localStorage.getItem(STORAGE.genre);
+            if (savedGenre !== null) {
+                genreSelect.value = savedGenre;
+            }
+
+            countrySelect.addEventListener('change', () => {
+                localStorage.setItem(STORAGE.country, countrySelect.value);
+            });
+
+            genreSelect.addEventListener('change', () => {
+                localStorage.setItem(STORAGE.genre, genreSelect.value);
+            });
 
             const API_SERVERS = [
                 'https://de1.api.radio-browser.info/json',
@@ -440,11 +556,6 @@
 
             const ICON_URL = 'https://raw.githubusercontent.com/mon837004-cell/RadioOnline/main/Icono.png';
             const API_TIMEOUT_MS = 8000;
-
-            const STORAGE = {
-                favorites: 'rmw_favorites_v1',
-                volume: 'rmw_volume_v1'
-            };
 
             let apiIndex = 0;
             let favorites = loadGlobalFavorites();
@@ -552,8 +663,6 @@
 
             const results = document.getElementById('rmw-results');
             const searchInput = document.getElementById('rmw-search');
-            const countrySelect = document.getElementById('rmw-country');
-            const genreSelect = document.getElementById('rmw-genre');
             const allButton = document.getElementById('rmw-all');
             const favButton = document.getElementById('rmw-favs');
             const fileInput = document.getElementById('rmw-file-input');
@@ -574,10 +683,9 @@
                     const countries = await apiFetch('/countries');
                     if (!Array.isArray(countries)) return;
 
-                    // Ordenar países estrictamente alfabéticamente
                     countries.sort((a, b) => (a.name || '').localeCompare(b.name || ''));
 
-                    const current = countrySelect.value || 'Spain';
+                    const targetCountry = localStorage.getItem(STORAGE.country) || 'Spain';
                     countrySelect.innerHTML =
                         '<option value="">🌐 Todos los países</option>' +
                         countries
@@ -585,9 +693,9 @@
                             .map(c => `<option value="${esc(c.name)}">${esc(c.name)} (${Number(c.stationcount)})</option>`)
                             .join('');
 
-                    if ([...countrySelect.options].some(o => o.value === current)) {
-                        countrySelect.value = current;
-                    } else if ([...countrySelect.options].some(o => o.value === 'Spain')) {
+                    if ([...countrySelect.options].some(o => o.value === targetCountry)) {
+                        countrySelect.value = targetCountry;
+                    } else {
                         countrySelect.value = 'Spain';
                     }
                 } catch (_) {}
@@ -1146,7 +1254,8 @@
                 loadCountries();
             });
 
-            loadCountries();
+            // Inicialización secuencial correcta: primero carga los países y aplica el guardado, luego busca las emisoras
+            await loadCountries();
             loadStations(true);
         })();
     </script>
