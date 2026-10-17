@@ -395,23 +395,15 @@
       }
       #rmw-toast.rmw-visible { display: block; }
 
-      /* Temporizador Menu */
+      /* Temporizador Menu Modal */
       #rmw-timer-menu {
         position: fixed; z-index: 2147483000; display: none;
-        min-width: 200px; padding: 8px; color: var(--text-main); background: var(--bg-tools);
-        border: 1px solid var(--border-color); border-radius: 14px; box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        min-width: 220px; padding: 12px; color: var(--text-main); background: var(--bg-tools);
+        border: 1px solid var(--border-color); border-radius: 16px; box-shadow: 0 10px 30px rgba(0,0,0,0.5);
       }
       #rmw-timer-menu.rmw-visible { display: block; }
-      #rmw-timer-menu .rmw-timer-title { padding: 8px 10px 10px; font-size: 12px; color: var(--text-sub); font-weight: 600; }
-      #rmw-timer-menu button {
-        display: block; width: 100%; text-align: left; font: inherit; font-size: 13px;
-        padding: 10px; border: 0; border-radius: 8px; cursor: pointer;
-        color: var(--text-main); background: transparent; transition: background 0.15s;
-      }
-      #rmw-timer-menu button:hover { background: var(--bg-card); }
-      #rmw-timer-menu button.rmw-sel { background: var(--accent); color: #fff; font-weight: 600; }
-      #rmw-timer-menu button.rmw-off { color: #ffb3b8; }
-
+      #rmw-timer-menu .rmw-timer-title { padding: 4px 4px 10px; font-size: 12px; color: var(--text-sub); font-weight: 600; }
+      
       @media (max-width: 700px) {
         .rmw-filterrow { grid-template-columns: 1fr; }
       }
@@ -527,7 +519,7 @@
             const countrySelect = document.getElementById('rmw-country');
             const genreSelect = document.getElementById('rmw-genre');
 
-            // Restaurar país y género guardados (País por defecto: Spain si no hay nada guardado en localStorage)
+            // Restaurar país y género guardados (País por defecto: Spain si no hay nada guardado)
             const savedCountry = localStorage.getItem(STORAGE.country);
             if (savedCountry !== null) {
                 countrySelect.value = savedCountry;
@@ -1126,23 +1118,13 @@
                 audio.addEventListener('pause', () => { navigator.mediaSession.playbackState = 'paused'; });
             }
 
-            // Temporizador de Apagado
-            const TIMER_OPTIONS = [
-                { label: '15 minutos', min: 15 },
-                { label: '30 minutos', min: 30 },
-                { label: '45 minutos', min: 45 },
-                { label: '1 hora', min: 60 },
-                { label: '2 horas', min: 120 },
-                { label: '4 horas', min: 240 },
-                { label: '6 horas', min: 360 }
-            ];
+            // Temporizador de Apagado Personalizado (Modal Input + Unidades)
             const timerBtn = document.getElementById('rmw-timer');
             const timerMenu = document.createElement('div');
             timerMenu.id = 'rmw-timer-menu';
             document.body.appendChild(timerMenu);
 
             let sleepEnd = 0;
-            let sleepMinutes = 0;
             let sleepTimeout = null;
             let sleepTick = null;
 
@@ -1170,7 +1152,6 @@
                 sleepTimeout = null;
                 sleepTick = null;
                 sleepEnd = 0;
-                sleepMinutes = 0;
                 updateTimerButton();
             }
 
@@ -1181,10 +1162,11 @@
             }
 
             function startSleepTimer(minutes) {
+                if (isNaN(minutes) || minutes <= 0) return;
                 cancelSleepTimer();
-                sleepMinutes = minutes;
-                sleepEnd = Date.now() + minutes * 60000;
-                sleepTimeout = setTimeout(finishSleepTimer, minutes * 60000);
+                const ms = minutes * 60000;
+                sleepEnd = Date.now() + ms;
+                sleepTimeout = setTimeout(finishSleepTimer, ms);
                 sleepTick = setInterval(() => {
                     if (Date.now() >= sleepEnd) finishSleepTimer();
                     else updateTimerButton();
@@ -1193,12 +1175,18 @@
             }
 
             function renderTimerMenu() {
-                timerMenu.innerHTML =
-                    '<div class="rmw-timer-title">Apagar la radio en…</div>' +
-                    TIMER_OPTIONS.map(opt =>
-                        `<button type="button" data-min="${opt.min}" class="${sleepMinutes === opt.min ? 'rmw-sel' : ''}">${opt.label}</button>`
-                    ).join('') +
-                    (sleepEnd ? '<button type="button" data-min="0" class="rmw-off">Cancelar temporizador</button>' : '');
+                timerMenu.innerHTML = `
+                    <div class="rmw-timer-title">Apagar la radio en...</div>
+                    <div style="display: flex; gap: 6px; margin-bottom: 8px;">
+                        <input type="number" id="rmw-timer-num" min="1" value="30" style="width: 70px; padding: 8px; border-radius: 8px; border: 1px solid var(--border-color); background: var(--bg-card); color: var(--text-main); text-align: center; font: inherit; outline: none;">
+                        <select id="rmw-timer-unit" style="flex: 1; padding: 8px; border-radius: 8px; border: 1px solid var(--border-color); background: var(--bg-card); color: var(--text-main); font: inherit; outline: none;">
+                            <option value="min">Minutos</option>
+                            <option value="hour">Horas</option>
+                        </select>
+                    </div>
+                    <button type="button" id="rmw-timer-set" style="display: block; width: 100%; text-align: center; font: inherit; font-size: 13px; font-weight: 600; padding: 9px 10px; border: 0; border-radius: 8px; cursor: pointer; color: #fff; background: var(--accent); margin-bottom: 6px;">Activar</button>
+                    ${sleepEnd ? '<button type="button" id="rmw-timer-cancel" style="display: block; width: 100%; text-align: left; font: inherit; font-size: 13px; padding: 9px 10px; border: 0; border-radius: 8px; cursor: pointer; color: #ffb3b8; background: transparent;">Cancelar temporizador</button>' : ''}
+                `;
             }
 
             function closeTimerMenu() {
@@ -1212,20 +1200,33 @@
                 timerMenu.style.right = Math.max(8, root.clientWidth - rect.right) + 'px';
                 timerMenu.style.bottom = (root.clientHeight - rect.top + 8) + 'px';
                 timerMenu.classList.add('rmw-visible');
+
+                const setBtn = timerMenu.querySelector('#rmw-timer-set');
+                const cancelBtn = timerMenu.querySelector('#rmw-timer-cancel');
+
+                if (setBtn) {
+                    setBtn.addEventListener('click', () => {
+                        const num = Number(timerMenu.querySelector('#rmw-timer-num').value);
+                        const unit = timerMenu.querySelector('#rmw-timer-unit').value;
+                        const totalMinutes = unit === 'hour' ? num * 60 : num;
+                        if (totalMinutes > 0) {
+                            startSleepTimer(totalMinutes);
+                        }
+                        closeTimerMenu();
+                    });
+                }
+
+                if (cancelBtn) {
+                    cancelBtn.addEventListener('click', () => {
+                        cancelSleepTimer();
+                        closeTimerMenu();
+                    });
+                }
             }
 
             timerBtn.addEventListener('click', () => {
                 if (timerMenu.classList.contains('rmw-visible')) closeTimerMenu();
                 else openTimerMenu();
-            });
-
-            timerMenu.addEventListener('click', event => {
-                const option = event.target.closest('button[data-min]');
-                if (!option) return;
-                const minutes = Number(option.getAttribute('data-min'));
-                if (minutes > 0) startSleepTimer(minutes);
-                else cancelSleepTimer();
-                closeTimerMenu();
             });
 
             document.addEventListener('click', event => {
@@ -1256,7 +1257,7 @@
                 loadCountries();
             });
 
-            // Inicialización secuencial: carga los países respetando la opción seleccionada y busca
+            // Inicialización secuencial
             await loadCountries();
             loadStations(true);
         })();
