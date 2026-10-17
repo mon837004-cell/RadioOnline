@@ -86,7 +86,7 @@
         display: flex;
         align-items: center;
         justify-content: space-between;
-        padding: 18px 20px;
+        padding: 12px 16px;
         background: var(--bg-tools);
         border-bottom: 1px solid var(--border-color);
         box-shadow: 0 4px 20px rgba(0,0,0,0.2);
@@ -99,31 +99,31 @@
       }
 
       .rmw-title {
-        font-size: 22px;
+        font-size: 19px;
         font-weight: 800;
         letter-spacing: .3px;
         display: flex;
         align-items: center;
-        gap: 10px;
+        gap: 8px;
       }
 
       .rmw-title-icon {
-        height: 34px;
+        height: 28px;
         width: auto;
         flex: none;
         display: block;
       }
 
       .rmw-subtitle {
-        margin-top: 3px;
+        margin-top: 2px;
         color: var(--text-sub);
-        font-size: 13px;
+        font-size: 12px;
       }
 
       .rmw-tools {
-        padding: 16px 20px;
+        padding: 10px 14px;
         display: grid;
-        gap: 10px;
+        gap: 8px;
         background: var(--bg-tools);
         border-bottom: 1px solid var(--border-color);
         max-width: 900px;
@@ -140,11 +140,12 @@
         font: inherit;
         min-width: 0;
         width: 100%;
-        padding: 12px;
+        padding: 9px 10px;
+        font-size: 13px;
         color: var(--text-main);
         background: var(--bg-card);
         border: 1px solid var(--border-color);
-        border-radius: 12px;
+        border-radius: 10px;
         outline: none;
         transition: border-color 0.2s, box-shadow 0.2s;
       }
@@ -157,13 +158,12 @@
       .rmw-filterrow {
         display: grid;
         grid-template-columns: 1fr 1fr 1fr;
-        gap: 8px;
+        gap: 6px;
       }
 
       .rmw-actions {
         display: flex;
-        flex-wrap: wrap;
-        gap: 8px;
+        gap: 6px;
       }
 
       button {
@@ -172,13 +172,16 @@
       }
 
       .rmw-btn {
+        flex: 1;
         border: 1px solid var(--border-color);
         background: var(--bg-card);
         color: var(--text-main);
-        border-radius: 10px;
-        padding: 10px 15px;
-        font-size: 13px;
+        border-radius: 9px;
+        padding: 8px 10px;
+        font-size: 12px;
         font-weight: 600;
+        text-align: center;
+        white-space: nowrap;
         transition: background 0.2s, border-color 0.2s, transform 0.1s;
       }
       .rmw-btn:hover {
@@ -200,7 +203,7 @@
         max-width: 900px;
         width: 100%;
         margin: 0 auto;
-        padding: 15px 20px;
+        padding: 12px 14px;
         display: flex;
         flex-direction: column;
       }
@@ -208,25 +211,26 @@
       #rmw-fav-manager {
         background: var(--bg-card);
         border: 1px solid var(--border-color);
-        border-radius: 14px;
-        padding: 14px;
-        margin-bottom: 15px;
+        border-radius: 12px;
+        padding: 10px 12px;
+        margin-bottom: 12px;
         display: flex;
         flex-wrap: wrap;
         align-items: center;
         justify-content: space-between;
-        gap: 10px;
+        gap: 8px;
         box-shadow: var(--card-shadow);
       }
 
       .rmw-fav-info {
         font-weight: 600;
+        font-size: 13px;
         color: var(--text-sub);
       }
 
       .rmw-fav-btns {
         display: flex;
-        gap: 8px;
+        gap: 6px;
         flex-wrap: wrap;
       }
 
@@ -234,9 +238,9 @@
         border: 1px solid var(--border-color);
         background: var(--bg-tools);
         color: var(--text-main);
-        padding: 8px 14px;
-        border-radius: 9px;
-        font-size: 13px;
+        padding: 6px 10px;
+        border-radius: 8px;
+        font-size: 12px;
         font-weight: 500;
       }
       .rmw-mgr-btn:hover { background: var(--bg-card); border-color: var(--accent); }
@@ -248,28 +252,28 @@
 
       .rmw-status {
         color: var(--text-sub);
-        padding: 20px 5px;
+        padding: 16px 5px;
         line-height: 1.5;
         text-align: center;
-        font-size: 14px;
+        font-size: 13px;
       }
 
       .rmw-station {
         display: flex;
         align-items: center;
-        gap: 14px;
-        padding: 14px;
-        margin-bottom: 12px;
+        gap: 12px;
+        padding: 10px 12px;
+        margin-bottom: 10px;
         background: var(--bg-card);
         border: 1px solid var(--border-color);
-        border-radius: 16px;
+        border-radius: 14px;
         box-shadow: var(--card-shadow);
         transition: transform 0.2s ease, border-color 0.2s ease;
       }
 
       .rmw-station:hover {
         border-color: var(--accent);
-        transform: translateY(-2px);
+        transform: translateY(-1px);
       }
 
       .rmw-station.rmw-playing {
@@ -280,12 +284,12 @@
 
       .rmw-logo {
         flex: none;
-        width: 48px;
-        height: 48px;
-        border-radius: 12px;
+        width: 42px;
+        height: 42px;
+        border-radius: 10px;
         background: var(--bg-tools);
         object-fit: contain;
-        padding: 4px;
+        padding: 3px;
         border: 1px solid var(--border-color);
       }
 
@@ -293,7 +297,7 @@
         display: flex;
         align-items: center;
         justify-content: center;
-        font-size: 22px;
+        font-size: 20px;
       }
 
       .rmw-stationinfo {
@@ -304,28 +308,28 @@
       .rmw-stationname {
         font-weight: 700;
         color: var(--text-main);
-        font-size: 15px;
-        line-height: 1.35;
+        font-size: 14px;
+        line-height: 1.3;
         overflow-wrap: anywhere;
       }
 
       .rmw-meta {
-        margin-top: 5px;
+        margin-top: 3px;
         color: var(--text-sub);
-        font-size: 12px;
-        line-height: 1.5;
+        font-size: 11px;
+        line-height: 1.4;
         overflow-wrap: anywhere;
       }
 
       .rmw-play {
         flex: none;
         border: 0;
-        border-radius: 12px;
+        border-radius: 10px;
         background: var(--accent);
         color: white;
-        width: 44px;
-        height: 44px;
-        font-size: 18px;
+        width: 38px;
+        height: 38px;
+        font-size: 16px;
         box-shadow: 0 4px 12px rgba(0,0,0,0.2);
         transition: background 0.2s, transform 0.1s;
       }
@@ -337,8 +341,8 @@
         border: 0;
         background: transparent;
         color: var(--text-sub);
-        font-size: 24px;
-        padding: 5px;
+        font-size: 22px;
+        padding: 4px;
         transition: color 0.2s, transform 0.1s;
       }
       .rmw-star:hover { transform: scale(1.1); }
@@ -346,13 +350,14 @@
 
       .rmw-more {
         width: 100%;
-        padding: 14px;
-        margin: 15px 0 25px;
+        padding: 12px;
+        margin: 10px 0 20px;
         border: 1px solid var(--border-color);
-        border-radius: 12px;
+        border-radius: 10px;
         color: var(--text-main);
         background: var(--bg-card);
         font-weight: 600;
+        font-size: 13px;
         box-shadow: var(--card-shadow);
         transition: background 0.2s, border-color 0.2s;
       }
@@ -365,8 +370,8 @@
         z-index: 1000;
         display: none;
         align-items: center;
-        gap: 14px;
-        padding: 14px 24px;
+        gap: 10px;
+        padding: 10px 14px;
         background: var(--bg-tools);
         border-top: 1px solid var(--border-color);
         box-shadow: 0 -8px 30px rgba(0,0,0,0.5);
@@ -374,43 +379,68 @@
       }
       #rmw-mini.rmw-visible { display: flex; }
       .rmw-miniinfo { flex: 1; min-width: 0; }
-      .rmw-mininame { font-weight: 700; font-size: 14px; color: var(--text-main); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-      .rmw-ministatus { margin-top: 3px; font-size: 12px; color: var(--text-sub); }
+      .rmw-mininame { font-weight: 700; font-size: 13px; color: var(--text-main); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+      .rmw-ministatus { margin-top: 2px; font-size: 11px; color: var(--text-sub); }
       .rmw-minibtn {
-        flex: none; width: 40px; height: 40px; border: 0; border-radius: 10px;
-        background: var(--bg-card); color: var(--text-main); font-size: 17px;
+        flex: none; width: 36px; height: 36px; border: 0; border-radius: 9px;
+        background: var(--bg-card); color: var(--text-main); font-size: 15px;
         border: 1px solid var(--border-color);
       }
-      .rmw-minibtn.rmw-on { background: var(--accent); color: #fff; font-size: 12px; font-weight: 700; border-color: transparent; }
-      .rmw-volume { width: 100px; flex: none; accent-color: var(--accent); cursor: pointer; }
+      .rmw-minibtn.rmw-on { background: var(--accent); color: #fff; font-size: 11px; font-weight: 700; border-color: transparent; }
+      .rmw-volume { width: 70px; flex: none; accent-color: var(--accent); cursor: pointer; }
 
       /* Toast Notification */
       #rmw-toast {
-        position: fixed; z-index: 2147483002; left: 50%; bottom: 95px;
+        position: fixed; z-index: 2147483002; left: 50%; bottom: 85px;
         transform: translateX(-50%); display: none;
-        max-width: min(90vw, 420px); padding: 12px 18px;
+        max-width: min(90vw, 420px); padding: 10px 14px;
         color: var(--text-main); background: var(--bg-tools); border: 1px solid var(--border-color);
-        border-radius: 14px; box-shadow: 0 8px 25px rgba(0,0,0,0.5);
-        font: 14px/1.4 system-ui, -apple-system, sans-serif; text-align: center;
+        border-radius: 12px; box-shadow: 0 8px 25px rgba(0,0,0,0.5);
+        font: 13px/1.4 system-ui, -apple-system, sans-serif; text-align: center;
       }
       #rmw-toast.rmw-visible { display: block; }
 
       /* Temporizador Menu Modal */
       #rmw-timer-menu {
         position: fixed; z-index: 2147483000; display: none;
-        min-width: 220px; padding: 12px; color: var(--text-main); background: var(--bg-tools);
-        border: 1px solid var(--border-color); border-radius: 16px; box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        min-width: 210px; padding: 10px; color: var(--text-main); background: var(--bg-tools);
+        border: 1px solid var(--border-color); border-radius: 14px; box-shadow: 0 10px 30px rgba(0,0,0,0.5);
       }
       #rmw-timer-menu.rmw-visible { display: block; }
-      #rmw-timer-menu .rmw-timer-title { padding: 4px 4px 10px; font-size: 12px; color: var(--text-sub); font-weight: 600; }
+      #rmw-timer-menu .rmw-timer-title { padding: 4px 4px 8px; font-size: 11px; color: var(--text-sub); font-weight: 600; }
       
-      @media (max-width: 700px) {
-        .rmw-filterrow { grid-template-columns: 1fr; }
+      /* Adaptación ultra compacta para móviles */
+      @media (max-width: 650px) {
+        .rmw-filterrow {
+          grid-template-columns: 1fr 1fr;
+        }
+        #rmw-theme {
+          grid-column: span 2;
+        }
+        .rmw-volume {
+          width: 55px;
+        }
       }
 
       @media (min-width: 700px) {
+        header.rmw-header { padding: 18px 20px; }
+        .rmw-title { font-size: 22px; gap: 10px; }
+        .rmw-title-icon { height: 34px; }
+        .rmw-subtitle { font-size: 13px; }
+        .rmw-tools { padding: 16px 20px; gap: 10px; }
+        input, select { padding: 12px; font-size: 14px; }
+        .rmw-btn { padding: 10px 15px; font-size: 13px; flex: initial; }
         .rmw-container { padding: 20px; }
-        #rmw-mini { max-width: 900px; left: 50%; transform: translateX(-50%); border-radius: 16px 16px 0 0; }
+        .rmw-station { padding: 14px; gap: 14px; margin-bottom: 12px; }
+        .rmw-logo { width: 48px; height: 48px; border-radius: 12px; }
+        .rmw-stationname { font-size: 15px; }
+        .rmw-meta { font-size: 12px; }
+        .rmw-play { width: 44px; height: 44px; font-size: 18px; border-radius: 12px; }
+        #rmw-mini { max-width: 900px; left: 50%; transform: translateX(-50%); border-radius: 16px 16px 0 0; padding: 14px 24px; gap: 14px; }
+        .rmw-mininame { font-size: 14px; }
+        .rmw-ministatus { font-size: 12px; }
+        .rmw-minibtn { width: 40px; height: 40px; font-size: 17px; }
+        .rmw-volume { width: 100px; }
       }
     </style>
 </head>
@@ -1178,14 +1208,14 @@
                 timerMenu.innerHTML = `
                     <div class="rmw-timer-title">Apagar la radio en...</div>
                     <div style="display: flex; gap: 6px; margin-bottom: 8px;">
-                        <input type="number" id="rmw-timer-num" min="1" value="30" style="width: 70px; padding: 8px; border-radius: 8px; border: 1px solid var(--border-color); background: var(--bg-card); color: var(--text-main); text-align: center; font: inherit; outline: none;">
-                        <select id="rmw-timer-unit" style="flex: 1; padding: 8px; border-radius: 8px; border: 1px solid var(--border-color); background: var(--bg-card); color: var(--text-main); font: inherit; outline: none;">
+                        <input type="number" id="rmw-timer-num" min="1" value="30" style="width: 65px; padding: 6px; border-radius: 8px; border: 1px solid var(--border-color); background: var(--bg-card); color: var(--text-main); text-align: center; font: inherit; outline: none;">
+                        <select id="rmw-timer-unit" style="flex: 1; padding: 6px; border-radius: 8px; border: 1px solid var(--border-color); background: var(--bg-card); color: var(--text-main); font: inherit; outline: none;">
                             <option value="min">Minutos</option>
                             <option value="hour">Horas</option>
                         </select>
                     </div>
-                    <button type="button" id="rmw-timer-set" style="display: block; width: 100%; text-align: center; font: inherit; font-size: 13px; font-weight: 600; padding: 9px 10px; border: 0; border-radius: 8px; cursor: pointer; color: #fff; background: var(--accent); margin-bottom: 6px;">Activar</button>
-                    ${sleepEnd ? '<button type="button" id="rmw-timer-cancel" style="display: block; width: 100%; text-align: left; font: inherit; font-size: 13px; padding: 9px 10px; border: 0; border-radius: 8px; cursor: pointer; color: #ffb3b8; background: transparent;">Cancelar temporizador</button>' : ''}
+                    <button type="button" id="rmw-timer-set" style="display: block; width: 100%; text-align: center; font: inherit; font-size: 12px; font-weight: 600; padding: 8px; border: 0; border-radius: 8px; cursor: pointer; color: #fff; background: var(--accent); margin-bottom: 6px;">Activar</button>
+                    ${sleepEnd ? '<button type="button" id="rmw-timer-cancel" style="display: block; width: 100%; text-align: left; font: inherit; font-size: 12px; padding: 6px 8px; border: 0; border-radius: 8px; cursor: pointer; color: #ffb3b8; background: transparent;">Cancelar temporizador</button>' : ''}
                 `;
             }
 
