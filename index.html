@@ -1118,6 +1118,26 @@
             // Media Session API Support
             const hasMediaSession = 'mediaSession' in navigator;
 
+            // Carátula: se descarga el icono una vez y se entrega embebido (data URL),
+            // porque algunos móviles no cargan la carátula desde una URL externa.
+            let mediaArtwork = [{ src: ICON_URL, type: 'image/png' }];
+
+            async function loadMediaArtwork() {
+                try {
+                    const blob = await (await fetch(ICON_URL)).blob();
+                    const bitmap = await createImageBitmap(blob);
+                    const scale = Math.min(1, 256 / Math.max(bitmap.width, bitmap.height));
+                    const width = Math.round(bitmap.width * scale);
+                    const height = Math.round(bitmap.height * scale);
+                    const canvas = document.createElement('canvas');
+                    canvas.width = width;
+                    canvas.height = height;
+                    canvas.getContext('2d').drawImage(bitmap, 0, 0, width, height);
+                    mediaArtwork = [{ src: canvas.toDataURL('image/png'), sizes: width + 'x' + height, type: 'image/png' }];
+                    if (playingStation) updateMediaSession(playingStation);
+                } catch (_) {}
+            }
+
             function updateMediaSession(station) {
                 if (!hasMediaSession) return;
                 try {
@@ -1125,10 +1145,12 @@
                         title: station.name,
                         artist: station.country || 'Radio Forocochera',
                         album: 'Radio Forocochera',
-                        artwork: [{ src: ICON_URL, sizes: '447x440', type: 'image/png' }]
+                        artwork: mediaArtwork
                     });
                 } catch (_) {}
             }
+
+            if (hasMediaSession) loadMediaArtwork();
 
             if (hasMediaSession) {
                 const setHandler = (action, handler) => {
