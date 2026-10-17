@@ -1,6 +1,6 @@
-# 📻 Radio Mundial (Tampermonkey UserScript)
+# 📻 Radio Mundial
 
-**Radio Mundial** es un script de usuario avanzado diseñado para Tampermonkey que te permite acceder a un directorio global de emisoras de radio de todo el planeta directamente desde Google. Utiliza la API pública de *Radio-Browser* para ofrecer búsqueda en tiempo real, reproducción persistente y gestión avanzada de favoritos.
+**Radio Mundial** es una página que te permite acceder a un directorio global de emisoras de radio de todo el planeta. Utiliza la API pública de *Radio-Browser* para ofrecer búsqueda en tiempo real, reproducción persistente y gestión avanzada de favoritos.
 
 ## ✨ Características Principales
 
