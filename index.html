@@ -348,56 +348,25 @@
         <div class="rmw-filterrow">
             <select id="rmw-country" aria-label="Filtrar por país">
                 <option value="">🌐 Todos los países</option>
-                <option value="Spain" selected>Spain</option>
             </select>
             <select id="rmw-genre" aria-label="Filtrar por género">
                 <option value="Todos los géneros">Todos los géneros</option>
-                <option value="80s">80s</option>
-                <option value="90s">90s</option>
-                <option value="2000s">2000s</option>
-                <option value="Alternative">Alternative</option>
-                <option value="Ambient">Ambient</option>
-                <option value="Blues">Blues</option>
-                <option value="Chillout">Chillout</option>
-                <option value="Classic Hits">Classic Hits</option>
-                <option value="Classic Rock">Classic Rock</option>
-                <option value="Classical">Classical</option>
-                <option value="Country">Country</option>
-                <option value="Dance">Dance</option>
-                <option value="Disco">Disco</option>
-                <option value="EDM">EDM</option>
-                <option value="Electronic">Electronic</option>
-                <option value="Flamenco">Flamenco</option>
-                <option value="Folk">Folk</option>
-                <option value="Funk">Funk</option>
-                <option value="Hard Rock">Hard Rock</option>
-                <option value="Heavy Metal">Heavy Metal</option>
-                <option value="Hip Hop">Hip Hop</option>
-                <option value="Hits">Hits</option>
-                <option value="Indie">Indie</option>
-                <option value="Jazz">Jazz</option>
-                <option value="Latin">Latin</option>
-                <option value="Lounge">Lounge</option>
-                <option value="Metal">Metal</option>
-                <option value="News">News</option>
-                <option value="Oldies">Oldies</option>
-                <option value="Opera">Opera</option>
-                <option value="Pop">Pop</option>
-                <option value="Punk">Punk</option>
-                <option value="Rap">Rap</option>
-                <option value="R&B">R&B</option>
-                <option value="Reggae">Reggae</option>
-                <option value="Rock">Rock</option>
-                <option value="Salsa">Salsa</option>
-                <option value="Ska">Ska</option>
-                <option value="Soul">Soul</option>
-                <option value="Soundtracks">Soundtracks</option>
-                <option value="Sports">Sports</option>
-                <option value="Talk">Talk</option>
-                <option value="Techno">Techno</option>
-                <option value="Top 40">Top 40</option>
-                <option value="Trance">Trance</option>
-                <option value="World Music">World Music</option>
+                <option value="Rock">Rock</option><option value="Classic Rock">Classic Rock</option><option value="Hard Rock">Hard Rock</option>
+                <option value="Metal">Metal</option><option value="Heavy Metal">Heavy Metal</option><option value="Pop">Pop</option>
+                <option value="Dance">Dance</option><option value="Electronic">Electronic</option><option value="Techno">Techno</option>
+                <option value="House">House</option><option value="Trance">Trance</option><option value="EDM">EDM</option>
+                <option value="Disco">Disco</option><option value="80s">80s</option><option value="90s">90s</option>
+                <option value="2000s">2000s</option><option value="Oldies">Oldies</option><option value="Classic Hits">Classic Hits</option>
+                <option value="Hits">Hits</option><option value="Top 40">Top 40</option><option value="Alternative">Alternative</option>
+                <option value="Indie">Indie</option><option value="Punk">Punk</option><option value="Jazz">Jazz</option>
+                <option value="Blues">Blues</option><option value="Soul">Soul</option><option value="Funk">Funk</option>
+                <option value="Reggae">Reggae</option><option value="Ska">Ska</option><option value="Hip Hop">Hip Hop</option>
+                <option value="Rap">Rap</option><option value="R&B">R&B</option><option value="Latin">Latin</option>
+                <option value="Salsa">Salsa</option><option value="Flamenco">Flamenco</option><option value="Classical">Classical</option>
+                <option value="Opera">Opera</option><option value="Ambient">Ambient</option><option value="Chillout">Chillout</option>
+                <option value="Lounge">Lounge</option><option value="Country">Country</option><option value="Folk">Folk</option>
+                <option value="World Music">World Music</option><option value="Soundtracks">Soundtracks</option><option value="News">News</option>
+                <option value="Talk">Talk</option><option value="Sports">Sports</option>
             </select>
         </div>
         <div class="rmw-actions">
@@ -574,10 +543,7 @@
                     const countries = await apiFetch('/countries?order=stationcount&reverse=true');
                     if (!Array.isArray(countries)) return;
 
-                    // Ordenar países alfabéticamente por nombre
-                    countries.sort((a, b) => (a.name || '').localeCompare(b.name || ''));
-
-                    const current = countrySelect.value || 'Spain';
+                    const current = countrySelect.value;
                     countrySelect.innerHTML =
                         '<option value="">🌐 Todos los países</option>' +
                         countries
@@ -587,8 +553,6 @@
 
                     if ([...countrySelect.options].some(o => o.value === current)) {
                         countrySelect.value = current;
-                    } else if ([...countrySelect.options].some(o => o.value === 'Spain')) {
-                        countrySelect.value = 'Spain';
                     }
                 } catch (_) {}
             }
@@ -1017,7 +981,15 @@
             }
 
             // Temporizador de Apagado
-            const TIMER_OPTIONS = [15, 30, 45, 60, 90];
+            const TIMER_OPTIONS = [
+                { label: '15 minutos', min: 15 },
+                { label: '30 minutos', min: 30 },
+                { label: '45 minutos', min: 45 },
+                { label: '1 hora', min: 60 },
+                { label: '2 horas', min: 120 },
+                { label: '4 horas', min: 240 },
+                { label: '6 horas', min: 360 }
+            ];
             const timerBtn = document.getElementById('rmw-timer');
             const timerMenu = document.createElement('div');
             timerMenu.id = 'rmw-timer-menu';
@@ -1077,8 +1049,8 @@
             function renderTimerMenu() {
                 timerMenu.innerHTML =
                     '<div class="rmw-timer-title">Apagar la radio en…</div>' +
-                    TIMER_OPTIONS.map(min =>
-                        `<button type="button" data-min="${min}" class="${sleepMinutes === min ? 'rmw-sel' : ''}">${min} minutos</button>`
+                    TIMER_OPTIONS.map(opt =>
+                        `<button type="button" data-min="${opt.min}" class="${sleepMinutes === opt.min ? 'rmw-sel' : ''}">${opt.label}</button>`
                     ).join('') +
                     (sleepEnd ? '<button type="button" data-min="0" class="rmw-off">Cancelar temporizador</button>' : '');
             }
