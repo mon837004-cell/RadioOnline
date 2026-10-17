@@ -1,5 +1,4 @@
-📻 Radio Forocochera
-Radio Forocochera es una aplicación web interactiva y ultraligera diseñada para explorar, buscar y reproducir miles de emisoras de radio en directo de todo el mundo de forma fluida. Combina una interfaz moderna con efectos visuales avanzados y un rendimiento optimizado para ofrecer la mejor experiencia tanto en ordenadores como en móviles.
+📻 Radio Forocochera es una aplicación web interactiva y ultraligera diseñada para explorar, buscar y reproducir miles de emisoras de radio en directo de todo el mundo de forma fluida. Combina una interfaz moderna con efectos visuales avanzados y un rendimiento optimizado para ofrecer la mejor experiencia tanto en ordenadores como en móviles.
 
 ✨ Características Principales
 🌍 Búsqueda y Filtros Globales: Conexión en tiempo real con la API de Radio-Browser para encontrar emisoras al instante por nombre, ciudad, país o género musical.
