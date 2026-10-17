@@ -348,25 +348,56 @@
         <div class="rmw-filterrow">
             <select id="rmw-country" aria-label="Filtrar por país">
                 <option value="">🌐 Todos los países</option>
+                <option value="Spain" selected>Spain</option>
             </select>
             <select id="rmw-genre" aria-label="Filtrar por género">
                 <option value="Todos los géneros">Todos los géneros</option>
-                <option value="Rock">Rock</option><option value="Classic Rock">Classic Rock</option><option value="Hard Rock">Hard Rock</option>
-                <option value="Metal">Metal</option><option value="Heavy Metal">Heavy Metal</option><option value="Pop">Pop</option>
-                <option value="Dance">Dance</option><option value="Electronic">Electronic</option><option value="Techno">Techno</option>
-                <option value="House">House</option><option value="Trance">Trance</option><option value="EDM">EDM</option>
-                <option value="Disco">Disco</option><option value="80s">80s</option><option value="90s">90s</option>
-                <option value="2000s">2000s</option><option value="Oldies">Oldies</option><option value="Classic Hits">Classic Hits</option>
-                <option value="Hits">Hits</option><option value="Top 40">Top 40</option><option value="Alternative">Alternative</option>
-                <option value="Indie">Indie</option><option value="Punk">Punk</option><option value="Jazz">Jazz</option>
-                <option value="Blues">Blues</option><option value="Soul">Soul</option><option value="Funk">Funk</option>
-                <option value="Reggae">Reggae</option><option value="Ska">Ska</option><option value="Hip Hop">Hip Hop</option>
-                <option value="Rap">Rap</option><option value="R&B">R&B</option><option value="Latin">Latin</option>
-                <option value="Salsa">Salsa</option><option value="Flamenco">Flamenco</option><option value="Classical">Classical</option>
-                <option value="Opera">Opera</option><option value="Ambient">Ambient</option><option value="Chillout">Chillout</option>
-                <option value="Lounge">Lounge</option><option value="Country">Country</option><option value="Folk">Folk</option>
-                <option value="World Music">World Music</option><option value="Soundtracks">Soundtracks</option><option value="News">News</option>
-                <option value="Talk">Talk</option><option value="Sports">Sports</option>
+                <option value="80s">80s</option>
+                <option value="90s">90s</option>
+                <option value="2000s">2000s</option>
+                <option value="Alternative">Alternative</option>
+                <option value="Ambient">Ambient</option>
+                <option value="Blues">Blues</option>
+                <option value="Chillout">Chillout</option>
+                <option value="Classic Hits">Classic Hits</option>
+                <option value="Classic Rock">Classic Rock</option>
+                <option value="Classical">Classical</option>
+                <option value="Country">Country</option>
+                <option value="Dance">Dance</option>
+                <option value="Disco">Disco</option>
+                <option value="EDM">EDM</option>
+                <option value="Electronic">Electronic</option>
+                <option value="Flamenco">Flamenco</option>
+                <option value="Folk">Folk</option>
+                <option value="Funk">Funk</option>
+                <option value="Hard Rock">Hard Rock</option>
+                <option value="Heavy Metal">Heavy Metal</option>
+                <option value="Hip Hop">Hip Hop</option>
+                <option value="Hits">Hits</option>
+                <option value="Indie">Indie</option>
+                <option value="Jazz">Jazz</option>
+                <option value="Latin">Latin</option>
+                <option value="Lounge">Lounge</option>
+                <option value="Metal">Metal</option>
+                <option value="News">News</option>
+                <option value="Oldies">Oldies</option>
+                <option value="Opera">Opera</option>
+                <option value="Pop">Pop</option>
+                <option value="Punk">Punk</option>
+                <option value="Rap">Rap</option>
+                <option value="R&B">R&B</option>
+                <option value="Reggae">Reggae</option>
+                <option value="Rock">Rock</option>
+                <option value="Salsa">Salsa</option>
+                <option value="Ska">Ska</option>
+                <option value="Soul">Soul</option>
+                <option value="Soundtracks">Soundtracks</option>
+                <option value="Sports">Sports</option>
+                <option value="Talk">Talk</option>
+                <option value="Techno">Techno</option>
+                <option value="Top 40">Top 40</option>
+                <option value="Trance">Trance</option>
+                <option value="World Music">World Music</option>
             </select>
         </div>
         <div class="rmw-actions">
@@ -543,7 +574,10 @@
                     const countries = await apiFetch('/countries?order=stationcount&reverse=true');
                     if (!Array.isArray(countries)) return;
 
-                    const current = countrySelect.value;
+                    // Ordenar países alfabéticamente por nombre
+                    countries.sort((a, b) => (a.name || '').localeCompare(b.name || ''));
+
+                    const current = countrySelect.value || 'Spain';
                     countrySelect.innerHTML =
                         '<option value="">🌐 Todos los países</option>' +
                         countries
@@ -553,6 +587,8 @@
 
                     if ([...countrySelect.options].some(o => o.value === current)) {
                         countrySelect.value = current;
+                    } else if ([...countrySelect.options].some(o => o.value === 'Spain')) {
+                        countrySelect.value = 'Spain';
                     }
                 } catch (_) {}
             }
@@ -1107,4 +1143,4 @@
         })();
     </script>
 </body>
-    </html>
+</html>
