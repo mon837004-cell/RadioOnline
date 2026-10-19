@@ -374,7 +374,7 @@
       }
       .rmw-more:hover { border-color: var(--accent); background: var(--bg-tools); }
 
-      /* Reproductor Mini Fijo & Ecualizador Visual */
+      /* Reproductor Mini Fijo & Ecualizador Dinámico */
       #rmw-mini {
         position: fixed;
         left: 0; right: 0; bottom: 0;
@@ -403,17 +403,7 @@
         background: var(--accent);
         border-radius: 2px;
         height: 4px;
-      }
-      #rmw-mini.is-playing .rmw-bar {
-        animation: soundBars 0.35s infinite ease-in-out alternate;
-      }
-      #rmw-mini.is-playing .rmw-bar:nth-child(1) { animation-delay: 0.05s; }
-      #rmw-mini.is-playing .rmw-bar:nth-child(2) { animation-delay: 0.15s; height: 12px; }
-      #rmw-mini.is-playing .rmw-bar:nth-child(3) { animation-delay: 0.1s; height: 8px; }
-
-      @keyframes soundBars {
-        0% { height: 3px; }
-        100% { height: 18px; }
+        transition: height 0.08s ease-in-out;
       }
 
       .rmw-miniinfo { flex: 1; min-width: 0; }
@@ -545,7 +535,7 @@
         </div>
     </div>
 
-    <!-- Reproductor Mini Fijo con Ecualizador Animado -->
+    <!-- Reproductor Mini Fijo con Ecualizador Dinámico -->
     <div id="rmw-mini">
         <div class="rmw-visualizer" id="rmw-visualizer" title="Ecualizador activo">
             <div class="rmw-bar"></div>
@@ -1226,11 +1216,33 @@
                 document.removeEventListener('visibilitychange', onVisibilityResume);
             }
 
+            // Ecualizador Dinámico Aleatorio en Tiempo Real
+            const visualizerBars = document.querySelectorAll('.rmw-bar');
+            let visualizerTimer = null;
+
+            function startDynamicVisualizer() {
+                if (visualizerTimer) return;
+                visualizerTimer = setInterval(() => {
+                    if (audio.paused || !miniPlayer.classList.contains('is-playing')) return;
+                    visualizerBars.forEach(bar => {
+                        const randomHeight = Math.floor(Math.random() * 15) + 4; // Altura entre 4px y 19px
+                        bar.style.height = randomHeight + 'px';
+                    });
+                }, 100);
+            }
+
+            function stopDynamicVisualizer() {
+                clearInterval(visualizerTimer);
+                visualizerTimer = null;
+                visualizerBars.forEach(bar => bar.style.height = '4px');
+            }
+
             audio.addEventListener('playing', () => {
                 disarmAutoResume();
                 document.getElementById('rmw-ministatus').textContent = (playingStation?.country || '') + ' · En reproducción';
                 document.getElementById('rmw-playpause').textContent = 'Ⅱ';
                 miniPlayer.classList.add('is-playing');
+                startDynamicVisualizer();
                 refreshPlayButtons();
             });
 
@@ -1240,6 +1252,7 @@
                     document.getElementById('rmw-playpause').textContent = '▶';
                 }
                 miniPlayer.classList.remove('is-playing');
+                stopDynamicVisualizer();
                 refreshPlayButtons();
 
                 if (!userPaused) armAutoResume();
@@ -1248,12 +1261,14 @@
             audio.addEventListener('waiting', () => { 
                 document.getElementById('rmw-ministatus').textContent = 'Cargando audio…'; 
                 miniPlayer.classList.remove('is-playing');
+                stopDynamicVisualizer();
             });
             
             audio.addEventListener('error', () => {
                 document.getElementById('rmw-ministatus').textContent = 'Error de streaming. Prueba otra emisora.';
                 document.getElementById('rmw-playpause').textContent = '▶';
                 miniPlayer.classList.remove('is-playing');
+                stopDynamicVisualizer();
                 refreshPlayButtons();
             });
 
