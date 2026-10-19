@@ -503,13 +503,7 @@
                 <option value="Alternative">Alternative</option><option value="Ambient">Ambient</option><option value="Blues">Blues</option>
                 <option value="Chillout">Chillout</option><option value="Classic Hits">Classic Hits</option><option value="Classic Rock">Classic Rock</option>
                 <option value="Classical">Classical</option><option value="Country">Country</option><option value="Dance">Dance</option>
-                <option value="Disco">Disco</option><option value="EDM">EDM</option><option value="Electronic">Electronic</option>
-                <option value="Flamenco">Flamenco</option><option value="Folk">Folk</option><option value="Funk">Funk</option>
-                <option value="Hard Rock">Hard Rock</option><option value="Heavy Metal">Heavy Metal</option><option value="Hip Hop">Hip Hop</option>
-                <option value="Hits">Hits</option><option value="Indie">Indie</option><option value="Jazz">Jazz</option>
-                <option value="Latin">Latin</option><option value="Lounge">Lounge</option><option value="Metal">Metal</option>
-                <option value="News">News</option><option value="Oldies">Oldies</option><option value="Opera">Opera</option><option value="Pop">Pop</option><option value="Punk">Punk</option><option value="Rap">Rap</option><option value="R&B">R&B</option><option value="Reggae">Reggae</option><option value="Rock">Rock</option>
-                <option value="Salsa">Salsa</option><option value="Ska">Ska</option><option value="Soul">Soul</option><option value="Soundtracks">Soundtracks</option><option value="Sports">Sports</option><option value="Talk">Talk</option><option value="Techno">Techno</option><option value="Top 40">Top 40</option><option value="Trance">Trance</option><option value="World Music">World Music</option>
+                <option value="Disco">Disco</option><option value="EDM">EDM</option><option value="Electronic">Electronic</option><option value="Flamenco">Flamenco</option><option value="Folk">Folk</option><option value="Funk">Funk</option><option value="Hard Rock">Hard Rock</option><option value="Heavy Metal">Heavy Metal</option><option value="Hip Hop">Hip Hop</option><option value="Hits">Hits</option><option value="Indie">Indie</option><option value="Jazz">Jazz</option><option value="Latin">Latin</option><option value="Lounge">Lounge</option><option value="Metal">Metal</option><option value="News">News</option><option value="Oldies">Oldies</option><option value="Opera">Opera</option><option value="Pop">Pop</option><option value="Punk">Punk</option><option value="Rap">Rap</option><option value="R&B">R&B</option><option value="Reggae">Reggae</option><option value="Rock">Rock</option><option value="Salsa">Salsa</option><option value="Ska">Ska</option><option value="Soul">Soul</option><option value="Soundtracks">Soundtracks</option><option value="Sports">Sports</option><option value="Talk">Talk</option><option value="Techno">Techno</option><option value="Top 40">Top 40</option><option value="Trance">Trance</option><option value="World Music">World Music</option>
             </select>
             <select id="rmw-theme" aria-label="Seleccionar tema visual">
                 <option value="classic">🔵 Clásico Azul</option>
@@ -870,39 +864,30 @@
                 }
             }
 
-            let stationCountCache = 0;
-
-            async function getStationCount() {
-                if (stationCountCache) return stationCountCache;
-                try {
-                    const stats = await apiFetch('/stats');
-                    const total = Number(stats.stations) - Number(stats.stations_broken || 0);
-                    if (total > 0) stationCountCache = total;
-                } catch (_) {}
-                return stationCountCache || 20000;
-            }
-
             async function playRandomStation() {
                 if (currentMode !== 'catalog') return;
-                showToast('🎲 Buscando emisora aleatoria en el mundo…');
+                showToast('🎲 Buscando emisora aleatoria según filtros…');
                 try {
-                    let total = await getStationCount();
-                    let data = [];
+                    const filters = getFilters();
+                    const params = new URLSearchParams();
+                    params.set('limit', '30');
+                    params.set('hidebroken', 'true');
+                    params.set('order', 'random');
+                    params.set('_t', Date.now()); // Parámetro anti-caché para aleatoriedad real
 
-                    // Una posición distinta cada vez; si se pasa del final, se reduce el rango
-                    for (let attempt = 0; attempt < 4; attempt++) {
-                        const randomOffset = Math.floor(Math.random() * total);
-                        data = await apiFetch('/stations/search?limit=1&offset=' + randomOffset + '&hidebroken=true');
-                        if (Array.isArray(data) && data.length > 0 && !(playingStation && makeId(data[0]) === playingStation.id)) break;
-                        if (!Array.isArray(data) || data.length === 0) total = Math.max(1, Math.floor(total / 2));
-                    }
+                    if (filters.country) params.set('country', filters.country);
+                    if (filters.genre) params.set('tag', filters.genre.toLowerCase());
 
-                    if (!Array.isArray(data) || data.length === 0) {
-                        data = await apiFetch('/stations/search?limit=1&offset=15&hidebroken=true');
+                    let data = await apiFetch('/stations/search?' + params.toString());
+
+                    if (!Array.isArray(data) || data.length === 0 && filters.genre) {
+                        params.delete('tag');
+                        data = await apiFetch('/stations/search?' + params.toString());
                     }
 
                     if (Array.isArray(data) && data.length > 0) {
-                        const station = normalizeStation(data[0]);
+                        const randomIndex = Math.floor(Math.random() * data.length);
+                        const station = normalizeStation(data[randomIndex]);
 
                         const oldBanner = results.querySelector('.rmw-random-banner');
                         const oldCard = results.querySelector('.rmw-random-card');
@@ -926,7 +911,7 @@
                         playStation(station);
                         showToast(`🎲 Reproduciendo: ${station.name} (${station.country})`);
                     } else {
-                        showToast('No se encontró ninguna emisora. Inténtalo de nuevo.');
+                        showToast('No se encontró ninguna emisora con los filtros seleccionados.');
                     }
                 } catch (_) {
                     showToast('Error al conectar con la ruleta aleatoria.');
@@ -1239,8 +1224,7 @@
                 document.removeEventListener('visibilitychange', onVisibilityResume);
             }
 
-            // Ecualizador: sigue el audio real cuando la emisora lo permite (CORS)
-            // y, si no, usa un movimiento aleatorio como respaldo.
+            // Ecualizador Dinámico y Real
             const visualizerBars = document.querySelectorAll('.rmw-bar');
             const corsBlockedHosts = new Set();
             const SIGNAL_GRACE_MS = 5000;
@@ -1311,8 +1295,6 @@
                 return (sum / (to - from + 1)) * 0.5 + peak * 0.5;
             }
 
-            // Cada barra se compara con el rango reciente de su propia banda:
-            // así sube con los golpes y baja entre ellos, aunque la música sea fuerte.
             function normalizeLevel(i, raw) {
                 bandMax[i] = Math.max(raw, bandMax[i] * 0.995);
                 bandMin[i] = raw < bandMin[i] ? raw : bandMin[i] + (raw - bandMin[i]) * 0.01;
@@ -1328,20 +1310,6 @@
                 });
             }
 
-            // Solo hay "sonido" si no está en pausa, hay datos suficientes y el tiempo avanza.
-            let lastPlayTime = -1;
-            let lastAdvanceAt = 0;
-
-            function isAudioFlowing() {
-                if (audio.paused || audio.readyState < 3) return false;
-                const now = performance.now();
-                if (audio.currentTime !== lastPlayTime) {
-                    lastPlayTime = audio.currentTime;
-                    lastAdvanceAt = now;
-                }
-                return now - lastAdvanceAt < 1200;
-            }
-
             function resetBars() {
                 for (let i = 0; i < 3; i++) barLevels[i] = 0;
                 visualizerBars.forEach(bar => {
@@ -1350,7 +1318,7 @@
             }
 
             function visualizerTick() {
-                if (!miniPlayer.classList.contains('is-playing') || !isAudioFlowing()) {
+                if (audio.paused || !miniPlayer.classList.contains('is-playing')) {
                     resetBars();
                     return;
                 }
@@ -1363,7 +1331,9 @@
                         bandLevel(6, 40),    // medios
                         bandLevel(41, 200)   // agudos
                     ];
-                    if (levels[0] + levels[1] + levels[2] > 0) lastSignalAt = Date.now();
+                    if (levels[0] + levels[1] + levels[2] > 0) {
+                        lastSignalAt = Date.now();
+                    }
                     if (Date.now() - lastSignalAt < SIGNAL_GRACE_MS) {
                         setBarHeights(levels);
                         return;
@@ -1372,7 +1342,7 @@
 
                 if (visualizerFrame % 3) return;
                 visualizerBars.forEach(bar => {
-                    bar.style.height = (Math.floor(Math.random() * 15) + 4) + 'px'; // Altura entre 4px y 19px
+                    bar.style.height = (Math.floor(Math.random() * 15) + 4) + 'px';
                 });
             }
 
@@ -1384,7 +1354,7 @@
             function stopDynamicVisualizer() {
                 clearInterval(visualizerTimer);
                 visualizerTimer = null;
-                visualizerBars.forEach(bar => bar.style.height = '4px');
+                resetBars();
             }
 
             audio.addEventListener('playing', () => {
@@ -1416,12 +1386,11 @@
             audio.addEventListener('waiting', () => { 
                 document.getElementById('rmw-ministatus').textContent = 'Cargando audio…'; 
                 miniPlayer.classList.remove('is-playing');
-                stopDynamicVisualizer();
+                resetBars();
             });
             
             audio.addEventListener('error', () => {
                 if (audio.crossOrigin && audio.src) {
-                    // Puede ser que la emisora no admita CORS: se reintenta sin él (sin ecualizador real)
                     corsRetryPending = true;
                     corsRetryHost = hostOf(loadedUrl);
                     realAudio = false;
