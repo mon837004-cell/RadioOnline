@@ -1262,16 +1262,15 @@
             function updateMediaSession(station) {
                 if (!hasMediaSession) return;
                 try {
-                    const logoUrl = station.favicon || ICON_URL;
                     navigator.mediaSession.metadata = new MediaMetadata({
                         title: station.name,
                         artist: station.country || 'Radio Forocochera',
                         album: 'Radio Forocochera',
                         artwork: [
-                            { src: logoUrl, sizes: '96x96', type: 'image/png' },
-                            { src: logoUrl, sizes: '128x128', type: 'image/png' },
-                            { src: logoUrl, sizes: '192x192', type: 'image/png' },
-                            { src: logoUrl, sizes: '512x512', type: 'image/png' }
+                            { src: ICON_URL, sizes: '96x96', type: 'image/png' },
+                            { src: ICON_URL, sizes: '128x128', type: 'image/png' },
+                            { src: ICON_URL, sizes: '192x192', type: 'image/png' },
+                            { src: ICON_URL, sizes: '512x512', type: 'image/png' }
                         ]
                     });
                 } catch (_) {}
