@@ -870,13 +870,33 @@
                 }
             }
 
+            let stationCountCache = 0;
+
+            async function getStationCount() {
+                if (stationCountCache) return stationCountCache;
+                try {
+                    const stats = await apiFetch('/stats');
+                    const total = Number(stats.stations) - Number(stats.stations_broken || 0);
+                    if (total > 0) stationCountCache = total;
+                } catch (_) {}
+                return stationCountCache || 20000;
+            }
+
             async function playRandomStation() {
                 if (currentMode !== 'catalog') return;
                 showToast('🎲 Buscando emisora aleatoria en el mundo…');
                 try {
-                    const randomOffset = Math.floor(Math.random() * 3000);
-                    let data = await apiFetch('/stations/search?limit=1&offset=' + randomOffset + '&hidebroken=true');
-                    
+                    let total = await getStationCount();
+                    let data = [];
+
+                    // Una posición distinta cada vez; si se pasa del final, se reduce el rango
+                    for (let attempt = 0; attempt < 4; attempt++) {
+                        const randomOffset = Math.floor(Math.random() * total);
+                        data = await apiFetch('/stations/search?limit=1&offset=' + randomOffset + '&hidebroken=true');
+                        if (Array.isArray(data) && data.length > 0 && !(playingStation && makeId(data[0]) === playingStation.id)) break;
+                        if (!Array.isArray(data) || data.length === 0) total = Math.max(1, Math.floor(total / 2));
+                    }
+
                     if (!Array.isArray(data) || data.length === 0) {
                         data = await apiFetch('/stations/search?limit=1&offset=15&hidebroken=true');
                     }
@@ -904,7 +924,7 @@
                         results.scrollTop = 0;
 
                         playStation(station);
-                        showToast(`🎲 ¡Teletransporte a: ${station.name} (${station.country})!`);
+                        showToast(`🎲 Reproduciendo: ${station.name} (${station.country})`);
                     } else {
                         showToast('No se encontró ninguna emisora. Inténtalo de nuevo.');
                     }
@@ -1308,8 +1328,32 @@
                 });
             }
 
+            // Solo hay "sonido" si no está en pausa, hay datos suficientes y el tiempo avanza.
+            let lastPlayTime = -1;
+            let lastAdvanceAt = 0;
+
+            function isAudioFlowing() {
+                if (audio.paused || audio.readyState < 3) return false;
+                const now = performance.now();
+                if (audio.currentTime !== lastPlayTime) {
+                    lastPlayTime = audio.currentTime;
+                    lastAdvanceAt = now;
+                }
+                return now - lastAdvanceAt < 1200;
+            }
+
+            function resetBars() {
+                for (let i = 0; i < 3; i++) barLevels[i] = 0;
+                visualizerBars.forEach(bar => {
+                    if (bar.style.height !== '4px') bar.style.height = '4px';
+                });
+            }
+
             function visualizerTick() {
-                if (audio.paused || !miniPlayer.classList.contains('is-playing')) return;
+                if (!miniPlayer.classList.contains('is-playing') || !isAudioFlowing()) {
+                    resetBars();
+                    return;
+                }
                 visualizerFrame++;
 
                 if (realAudio && analyser) {
