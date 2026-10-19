@@ -409,6 +409,7 @@
       .rmw-miniinfo { flex: 1; min-width: 0; }
       .rmw-mininame { font-weight: 700; font-size: 13px; color: var(--text-main); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
       .rmw-ministatus { margin-top: 2px; font-size: 11px; color: var(--text-sub); }
+      .rmw-nowplaying { display: none; margin-top: 2px; font-size: 11px; color: var(--accent); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
       .rmw-minibtn {
         flex: none; width: 36px; height: 36px; border: 0; border-radius: 9px;
         background: var(--bg-card); color: var(--text-main); font-size: 15px;
@@ -471,6 +472,7 @@
         #rmw-mini { max-width: 900px; left: 50%; transform: translateX(-50%); border-radius: 16px 16px 0 0; padding: 14px 24px; gap: 14px; }
         .rmw-mininame { font-size: 14px; }
         .rmw-ministatus { font-size: 12px; }
+        .rmw-nowplaying { font-size: 12px; }
         .rmw-minibtn { width: 40px; height: 40px; font-size: 17px; }
         .rmw-volume { width: 100px; }
       }
@@ -538,6 +540,7 @@
         </div>
         <div class="rmw-miniinfo">
             <div class="rmw-mininame" id="rmw-mininame">Radio Forocochera</div>
+            <div class="rmw-nowplaying" id="rmw-nowplaying"></div>
             <div class="rmw-ministatus" id="rmw-ministatus">Selecciona una emisora</div>
         </div>
         <button class="rmw-minibtn" id="rmw-playpause" title="Reproducir o pausar">▶</button>
@@ -1189,6 +1192,7 @@
 
                 if (loadedUrl !== normalized.url || !audio.src) {
                     audio.pause();
+                    resetNowPlaying();
                     corsRetryPending = false;
                     configureCors(normalized.url);
                     audio.src = normalized.url;
@@ -1396,6 +1400,122 @@
                 resetBars();
             }
 
+            // ---------------------- CANCIÓN QUE ESTÁ SONANDO (metadatos ICY) ----------------------
+            // Se abre una segunda conexión corta a la emisora pidiendo los metadatos.
+            // Solo funciona si el servidor de la emisora lo permite (CORS); si no, no se muestra nada.
+            const NOW_PLAYING_INTERVAL_MS = 20000;
+            const NOW_PLAYING_MAX_FAILURES = 2;
+            const nowPlayingFailures = new Map();
+            const nowPlayingEl = document.getElementById('rmw-nowplaying');
+            let nowPlayingTimer = null;
+            let nowPlayingController = null;
+            let lastNowPlayingAt = 0;
+            let currentSong = '';
+
+            function setNowPlaying(text) {
+                if (text === currentSong) return;
+                currentSong = text;
+                nowPlayingEl.textContent = text;
+                nowPlayingEl.title = text;
+                nowPlayingEl.style.display = text ? 'block' : 'none';
+                if (playingStation) updateMediaSession(playingStation);
+            }
+
+            function decodeIcyText(bytes) {
+                try {
+                    return new TextDecoder('utf-8', { fatal: true }).decode(bytes);
+                } catch (_) {
+                    return new TextDecoder('windows-1252').decode(bytes);
+                }
+            }
+
+            function icyUrlFor(url) {
+                // Una página https no puede pedir recursos http: se prueba la versión segura
+                if (location.protocol === 'https:' && url.startsWith('http:')) return 'https:' + url.slice(5);
+                return url;
+            }
+
+            // Devuelve el título (string, puede ser vacío), o null si este bloque no trae metadatos.
+            // Lanza un error si la emisora no admite metadatos o el navegador no los deja leer.
+            async function readIcyTitle(url, signal) {
+                const response = await fetch(icyUrlFor(url), { headers: { 'Icy-MetaData': '1' }, cache: 'no-store', signal });
+                const metaInt = parseInt(response.headers.get('icy-metaint'), 10);
+                if (!response.ok || !metaInt || !response.body) throw new Error('sin metadatos');
+
+                const reader = response.body.getReader();
+                let buffer = new Uint8Array(0);
+                const append = chunk => {
+                    const merged = new Uint8Array(buffer.length + chunk.length);
+                    merged.set(buffer);
+                    merged.set(chunk, buffer.length);
+                    buffer = merged;
+                };
+
+                try {
+                    while (buffer.length < metaInt + 1) {
+                        const { done, value } = await reader.read();
+                        if (done) throw new Error('flujo cerrado');
+                        append(value);
+                    }
+                    const metaLength = buffer[metaInt] * 16;
+                    if (metaLength === 0) return null;
+
+                    while (buffer.length < metaInt + 1 + metaLength) {
+                        const { done, value } = await reader.read();
+                        if (done) throw new Error('flujo cerrado');
+                        append(value);
+                    }
+                    const text = decodeIcyText(buffer.slice(metaInt + 1, metaInt + 1 + metaLength));
+                    const match = text.match(/StreamTitle='([\s\S]*?)';/) || text.match(/StreamTitle='([\s\S]*?)'/);
+                    return match ? match[1].trim() : '';
+                } finally {
+                    reader.cancel().catch(() => {});
+                }
+            }
+
+            async function pollNowPlaying() {
+                if (!playingStation || !loadedUrl || audio.paused) return;
+                const url = loadedUrl;
+                if ((nowPlayingFailures.get(url) || 0) >= NOW_PLAYING_MAX_FAILURES) return;
+
+                if (nowPlayingController) nowPlayingController.abort();
+                const controller = new AbortController();
+                nowPlayingController = controller;
+                const timeout = setTimeout(() => controller.abort(), 8000);
+                lastNowPlayingAt = Date.now();
+
+                try {
+                    const title = await readIcyTitle(url, controller.signal);
+                    if (url !== loadedUrl) return;
+                    nowPlayingFailures.set(url, 0);
+                    if (title !== null) setNowPlaying(title);
+                } catch (_) {
+                    if (controller.signal.aborted && url !== loadedUrl) return;
+                    nowPlayingFailures.set(url, (nowPlayingFailures.get(url) || 0) + 1);
+                } finally {
+                    clearTimeout(timeout);
+                }
+            }
+
+            function stopNowPlaying() {
+                clearInterval(nowPlayingTimer);
+                nowPlayingTimer = null;
+                if (nowPlayingController) nowPlayingController.abort();
+                nowPlayingController = null;
+            }
+
+            function startNowPlaying() {
+                if (nowPlayingTimer) return;
+                if (Date.now() - lastNowPlayingAt > 5000) pollNowPlaying();
+                nowPlayingTimer = setInterval(pollNowPlaying, NOW_PLAYING_INTERVAL_MS);
+            }
+
+            function resetNowPlaying() {
+                stopNowPlaying();
+                lastNowPlayingAt = 0;
+                setNowPlaying('');
+            }
+
             audio.addEventListener('playing', () => {
                 disarmAutoResume();
                 if (corsRetryPending) {
@@ -1407,6 +1527,7 @@
                 document.getElementById('rmw-playpause').textContent = 'Ⅱ';
                 miniPlayer.classList.add('is-playing');
                 startDynamicVisualizer();
+                startNowPlaying();
                 refreshPlayButtons();
             });
 
@@ -1417,6 +1538,7 @@
                 }
                 miniPlayer.classList.remove('is-playing');
                 stopDynamicVisualizer();
+                stopNowPlaying();
                 refreshPlayButtons();
 
                 if (!userPaused) armAutoResume();
@@ -1440,6 +1562,7 @@
                     return;
                 }
                 corsRetryPending = false;
+                stopNowPlaying();
                 document.getElementById('rmw-ministatus').textContent = 'Error de streaming. Prueba otra emisora.';
                 document.getElementById('rmw-playpause').textContent = '▶';
                 miniPlayer.classList.remove('is-playing');
@@ -1453,8 +1576,8 @@
                 if (!hasMediaSession) return;
                 try {
                     navigator.mediaSession.metadata = new MediaMetadata({
-                        title: station.name,
-                        artist: station.country || 'Radio Forocochera',
+                        title: currentSong || station.name,
+                        artist: currentSong ? station.name : (station.country || 'Radio Forocochera'),
                         album: 'Radio Forocochera',
                         artwork: [
                             { src: ICON_URL, sizes: '96x96', type: 'image/png' },
