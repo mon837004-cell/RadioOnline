@@ -590,8 +590,14 @@
                 genreSelect.value = savedGenre;
             }
 
-            countrySelect.addEventListener('change', () => localStorage.setItem(STORAGE.country, countrySelect.value));
-            genreSelect.addEventListener('change', () => localStorage.setItem(STORAGE.genre, genreSelect.value));
+            countrySelect.addEventListener('change', () => {
+                localStorage.setItem(STORAGE.country, countrySelect.value);
+                randomPoolCache.stations = []; // Invalidar caché random al cambiar de país
+            });
+            genreSelect.addEventListener('change', () => {
+                localStorage.setItem(STORAGE.genre, genreSelect.value);
+                randomPoolCache.stations = []; // Invalidar caché random al cambiar de género
+            });
 
             const API_SERVERS = [
                 'https://de1.api.radio-browser.info/json',
@@ -615,6 +621,11 @@
             let loadedUrl = '';
             let autoResumeArmed = false;
             let toastTimer = null;
+            
+            // Mapa para almacenar el número real de emisoras de cada país consultado a la API
+            const countryStationCounts = {};
+            // Caché en memoria para aleatoriedad total basada en el 100% de emisoras del país
+            let randomPoolCache = { key: '', stations: [] };
 
             function sanitizeFavorites(list) {
                 const seen = new Set();
@@ -735,6 +746,12 @@
                     if (!Array.isArray(countries)) return;
 
                     countries.sort((a, b) => (a.name || '').localeCompare(b.name || ''));
+
+                    countries.forEach(c => {
+                        if (c && c.name) {
+                            countryStationCounts[c.name] = Number(c.stationcount) || 0;
+                        }
+                    });
 
                     const savedC = localStorage.getItem(STORAGE.country);
                     const targetCountry = savedC !== null ? savedC : 'Spain';
@@ -866,53 +883,75 @@
 
             async function playRandomStation() {
                 if (currentMode !== 'catalog') return;
-                showToast('🎲 Buscando emisora aleatoria según filtros…');
                 try {
                     const filters = getFilters();
-                    const params = new URLSearchParams();
-                    params.set('limit', '30');
-                    params.set('hidebroken', 'true');
-                    params.set('order', 'random');
-                    params.set('_t', Date.now()); // Parámetro anti-caché para aleatoriedad real
+                    const cacheKey = `${filters.country}_${filters.genre}`;
 
-                    if (filters.country) params.set('country', filters.country);
-                    if (filters.genre) params.set('tag', filters.genre.toLowerCase());
+                    if (!randomPoolCache.stations.length || randomPoolCache.key !== cacheKey) {
+                        const params = new URLSearchParams();
+                        
+                        let exactCount = 3000;
+                        if (filters.country && countryStationCounts[filters.country]) {
+                            exactCount = countryStationCounts[filters.country] + 100;
+                        } else if (!filters.country) {
+                            exactCount = 5000;
+                        }
 
-                    let data = await apiFetch('/stations/search?' + params.toString());
+                        params.set('limit', String(exactCount));
+                        params.set('hidebroken', 'true');
 
-                    if (!Array.isArray(data) || data.length === 0 && filters.genre) {
-                        params.delete('tag');
-                        data = await apiFetch('/stations/search?' + params.toString());
+                        if (filters.country) params.set('country', filters.country);
+                        if (filters.genre) params.set('tag', filters.genre.toLowerCase());
+
+                        let data = await apiFetch('/stations/search?' + params.toString());
+
+                        if ((!Array.isArray(data) || data.length === 0) && filters.genre) {
+                            params.delete('tag');
+                            data = await apiFetch('/stations/search?' + params.toString());
+                        }
+
+                        if (Array.isArray(data) && data.length > 0) {
+                            randomPoolCache.stations = data.map(normalizeStation);
+                            randomPoolCache.key = cacheKey;
+                        } else {
+                            showToast('No se encontró ninguna emisora con los filtros seleccionados.');
+                            return;
+                        }
                     }
 
-                    if (Array.isArray(data) && data.length > 0) {
-                        const randomIndex = Math.floor(Math.random() * data.length);
-                        const station = normalizeStation(data[randomIndex]);
-
-                        const oldBanner = results.querySelector('.rmw-random-banner');
-                        const oldCard = results.querySelector('.rmw-random-card');
-                        if (oldBanner) oldBanner.remove();
-                        if (oldCard) oldCard.remove();
-
-                        const banner = document.createElement('div');
-                        banner.className = 'rmw-status rmw-random-banner';
-                        banner.style.padding = '8px';
-                        banner.style.fontWeight = 'bold';
-                        banner.textContent = '🎲 Emisora aleatoria obtenida:';
-
-                        const card = stationCard(station);
-                        card.classList.add('rmw-random-card');
-
-                        results.prepend(card);
-                        results.prepend(banner);
-
-                        results.scrollTop = 0;
-
-                        playStation(station);
-                        showToast(`🎲 Reproduciendo: ${station.name} (${station.country})`);
-                    } else {
-                        showToast('No se encontró ninguna emisora con los filtros seleccionados.');
+                    const pool = randomPoolCache.stations;
+                    if (pool.length === 0) {
+                        showToast('No hay emisoras disponibles en este filtro.');
+                        return;
                     }
+
+                    let randomIndex = Math.floor(Math.random() * pool.length);
+                    if (pool.length > 1 && playingStation && pool[randomIndex].id === playingStation.id) {
+                        randomIndex = (randomIndex + 1) % pool.length;
+                    }
+
+                    const station = pool[randomIndex];
+
+                    const oldBanner = results.querySelector('.rmw-random-banner');
+                    const oldCard = results.querySelector('.rmw-random-card');
+                    if (oldBanner) oldBanner.remove();
+                    if (oldCard) oldCard.remove();
+
+                    const banner = document.createElement('div');
+                    banner.className = 'rmw-status rmw-random-banner';
+                    banner.style.padding = '8px';
+                    banner.style.fontWeight = 'bold';
+                    banner.textContent = '🎲 Emisora aleatoria obtenida';
+
+                    const card = stationCard(station);
+                    card.classList.add('rmw-random-card');
+
+                    results.prepend(card);
+                    results.prepend(banner);
+
+                    results.scrollTop = 0;
+
+                    playStation(station);
                 } catch (_) {
                     showToast('Error al conectar con la ruleta aleatoria.');
                 }
@@ -1579,6 +1618,7 @@
             genreSelect.addEventListener('change', filtersChanged);
 
             document.getElementById('rmw-refresh').addEventListener('click', async () => {
+                randomPoolCache.stations = []; // Forzar recarga completa del pool aleatorio
                 if (currentMode === 'favorites') renderFavorites();
                 else if (currentMode === 'top') loadTopStations();
                 else await loadStations(true);
