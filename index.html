@@ -403,7 +403,7 @@
         background: var(--accent);
         border-radius: 2px;
         height: 4px;
-        transition: height 0.08s ease-in-out;
+        transition: height 0.05s ease-out;
       }
 
       .rmw-miniinfo { flex: 1; min-width: 0; }
@@ -1145,6 +1145,8 @@
 
                 if (loadedUrl !== normalized.url || !audio.src) {
                     audio.pause();
+                    corsRetryPending = false;
+                    configureCors(normalized.url);
                     audio.src = normalized.url;
                     loadedUrl = normalized.url;
                     audio.load();
@@ -1153,6 +1155,7 @@
                 try {
                     await audio.play();
                 } catch (_) {
+                    if (corsRetryPending) return;
                     document.getElementById('rmw-ministatus').textContent = 'No se pudo reproducir. Prueba otra emisora.';
                     document.getElementById('rmw-playpause').textContent = '▶';
                 }
@@ -1216,19 +1219,122 @@
                 document.removeEventListener('visibilitychange', onVisibilityResume);
             }
 
-            // Ecualizador Dinámico Aleatorio en Tiempo Real
+            // Ecualizador: sigue el audio real cuando la emisora lo permite (CORS)
+            // y, si no, usa un movimiento aleatorio como respaldo.
             const visualizerBars = document.querySelectorAll('.rmw-bar');
+            const corsBlockedHosts = new Set();
+            const SIGNAL_GRACE_MS = 5000;
             let visualizerTimer = null;
+            let visualizerFrame = 0;
+            let corsRetryPending = false;
+            let corsRetryHost = '';
+            let analyserCtx = null;
+            let analyser = null;
+            let analyserSource = null;
+            let analyserUrl = '';
+            let freqData = null;
+            let realAudio = false;
+            let lastSignalAt = 0;
+            const bandMax = [0, 0, 0];
+            const bandMin = [255, 255, 255];
+            const barLevels = [0, 0, 0];
+
+            function hostOf(url) {
+                try { return new URL(url).host; } catch (_) { return ''; }
+            }
+
+            function configureCors(url) {
+                const canCapture = typeof audio.captureStream === 'function' || typeof audio.mozCaptureStream === 'function';
+                if (canCapture && !corsBlockedHosts.has(hostOf(url))) audio.crossOrigin = 'anonymous';
+                else audio.removeAttribute('crossorigin');
+            }
+
+            function setupRealAnalyser() {
+                if (realAudio && analyserUrl === loadedUrl) return;
+                realAudio = false;
+                if (!audio.crossOrigin) return;
+                try {
+                    const capture = audio.captureStream || audio.mozCaptureStream;
+                    const stream = capture.call(audio);
+                    if (!stream.getAudioTracks().length) return;
+                    const AudioCtx = window.AudioContext || window.webkitAudioContext;
+                    if (!AudioCtx) return;
+                    if (!analyserCtx) analyserCtx = new AudioCtx();
+                    if (analyserCtx.state === 'suspended') analyserCtx.resume().catch(() => {});
+                    if (!analyser) {
+                        analyser = analyserCtx.createAnalyser();
+                        analyser.fftSize = 1024;
+                        analyser.smoothingTimeConstant = 0.35;
+                        analyser.minDecibels = -90;
+                        analyser.maxDecibels = -20;
+                        freqData = new Uint8Array(analyser.frequencyBinCount);
+                    }
+                    if (analyserSource) analyserSource.disconnect();
+                    analyserSource = analyserCtx.createMediaStreamSource(stream);
+                    analyserSource.connect(analyser);
+                    analyserUrl = loadedUrl;
+                    for (let i = 0; i < 3; i++) { bandMax[i] = 0; bandMin[i] = 255; barLevels[i] = 0; }
+                    lastSignalAt = Date.now();
+                    realAudio = true;
+                } catch (_) {
+                    realAudio = false;
+                }
+            }
+
+            function bandLevel(from, to) {
+                let sum = 0;
+                let peak = 0;
+                for (let i = from; i <= to; i++) {
+                    sum += freqData[i];
+                    if (freqData[i] > peak) peak = freqData[i];
+                }
+                return (sum / (to - from + 1)) * 0.5 + peak * 0.5;
+            }
+
+            // Cada barra se compara con el rango reciente de su propia banda:
+            // así sube con los golpes y baja entre ellos, aunque la música sea fuerte.
+            function normalizeLevel(i, raw) {
+                bandMax[i] = Math.max(raw, bandMax[i] * 0.995);
+                bandMin[i] = raw < bandMin[i] ? raw : bandMin[i] + (raw - bandMin[i]) * 0.01;
+                const span = Math.max(20, bandMax[i] - bandMin[i]);
+                return Math.min(1, Math.max(0, (raw - bandMin[i]) / span));
+            }
+
+            function setBarHeights(rawLevels) {
+                visualizerBars.forEach((bar, i) => {
+                    const level = Math.pow(normalizeLevel(i, rawLevels[i]), 1.5);
+                    barLevels[i] = Math.max(level, barLevels[i] * 0.7);
+                    bar.style.height = Math.round(4 + barLevels[i] * 15) + 'px';
+                });
+            }
+
+            function visualizerTick() {
+                if (audio.paused || !miniPlayer.classList.contains('is-playing')) return;
+                visualizerFrame++;
+
+                if (realAudio && analyser) {
+                    analyser.getByteFrequencyData(freqData);
+                    const levels = [
+                        bandLevel(1, 5),     // graves
+                        bandLevel(6, 40),    // medios
+                        bandLevel(41, 200)   // agudos
+                    ];
+                    if (levels[0] + levels[1] + levels[2] > 0) lastSignalAt = Date.now();
+                    if (Date.now() - lastSignalAt < SIGNAL_GRACE_MS) {
+                        setBarHeights(levels);
+                        return;
+                    }
+                }
+
+                if (visualizerFrame % 3) return;
+                visualizerBars.forEach(bar => {
+                    bar.style.height = (Math.floor(Math.random() * 15) + 4) + 'px'; // Altura entre 4px y 19px
+                });
+            }
 
             function startDynamicVisualizer() {
                 if (visualizerTimer) return;
-                visualizerTimer = setInterval(() => {
-                    if (audio.paused || !miniPlayer.classList.contains('is-playing')) return;
-                    visualizerBars.forEach(bar => {
-                        const randomHeight = Math.floor(Math.random() * 15) + 4; // Altura entre 4px y 19px
-                        bar.style.height = randomHeight + 'px';
-                    });
-                }, 100);
+                visualizerTimer = setInterval(visualizerTick, 40);
             }
 
             function stopDynamicVisualizer() {
@@ -1239,6 +1345,11 @@
 
             audio.addEventListener('playing', () => {
                 disarmAutoResume();
+                if (corsRetryPending) {
+                    if (corsRetryHost) corsBlockedHosts.add(corsRetryHost);
+                    corsRetryPending = false;
+                }
+                setupRealAnalyser();
                 document.getElementById('rmw-ministatus').textContent = (playingStation?.country || '') + ' · En reproducción';
                 document.getElementById('rmw-playpause').textContent = 'Ⅱ';
                 miniPlayer.classList.add('is-playing');
@@ -1265,6 +1376,18 @@
             });
             
             audio.addEventListener('error', () => {
+                if (audio.crossOrigin && audio.src) {
+                    // Puede ser que la emisora no admita CORS: se reintenta sin él (sin ecualizador real)
+                    corsRetryPending = true;
+                    corsRetryHost = hostOf(loadedUrl);
+                    realAudio = false;
+                    audio.removeAttribute('crossorigin');
+                    audio.src = loadedUrl;
+                    audio.load();
+                    if (!userPaused) audio.play().catch(() => {});
+                    return;
+                }
+                corsRetryPending = false;
                 document.getElementById('rmw-ministatus').textContent = 'Error de streaming. Prueba otra emisora.';
                 document.getElementById('rmw-playpause').textContent = '▶';
                 miniPlayer.classList.remove('is-playing');
