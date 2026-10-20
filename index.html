@@ -7,7 +7,7 @@
     <title>Radio Forocochera - Directorio Mundial de Emisoras</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Orbitron:wght@400..900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wdth,wght@12..96,75..100,400..800&family=DM+Mono:wght@400;500&family=Orbitron:wght@400;500;700;800;900&display=swap" rel="stylesheet">
     <style>
       :root {
         --bg-main: #0c1220;
@@ -93,7 +93,7 @@
          ===================================================================== */
       :root {
         --on-accent: #ffffff;
-        --f-display: 'Orbitron', 'Segoe UI', system-ui, sans-serif;
+        --f-display: 'Bricolage Grotesque', 'Segoe UI', system-ui, sans-serif;
         --f-mono: 'DM Mono', ui-monospace, SFMono-Regular, Consolas, monospace;
         --sw: clamp(140px, min(13vw, 20vh), 190px);
         --sh: calc(var(--sw) * 1.14);
@@ -165,9 +165,7 @@
 
       .rmw-miniinfo { min-width: 0; }
       .rmw-mininame {
-        font-family: var(--f-display); font-weight: 800; font-size: clamp(24px, min(3.8vw, 8vh), 64px); 
-        line-height: 1.2; /* Espacio vertical suficiente para que no se corten las letras p, y, g, j */
-        padding-bottom: 8px;  /* Margen inferior de seguridad */
+        font-family: var(--f-display); font-weight: 800; font-stretch: 80%; font-size: clamp(38px, min(5.4vw, 11vh), 92px); line-height: .92;
         letter-spacing: -.025em; color: var(--text-main); overflow-wrap: anywhere;
         display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden;
       }
@@ -275,7 +273,7 @@
       .rmw-logo-placeholder { display: flex; align-items: center; justify-content: center; font-size: calc(var(--sw) * .13); padding: 0; }
       .rmw-stationinfo { left: 11px; right: 11px; bottom: 11px; min-width: 0; }
       .rmw-stationname {
-        font-family: var(--f-display); font-weight: 700; font-size: clamp(13px, calc(var(--sw) * .09), 18px); line-height: 1.1; letter-spacing: -.015em;
+        font-family: var(--f-display); font-weight: 800; font-stretch: 85%; font-size: clamp(16px, calc(var(--sw) * .115), 23px); line-height: 1; letter-spacing: -.015em;
         color: var(--text-main); overflow-wrap: anywhere; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
       }
       .rmw-meta {
@@ -361,6 +359,24 @@
       @keyframes loadbars { 0%, 100% { height: 4px; } 50% { height: 16px; } }
       @keyframes loadblink { 0%, 100% { opacity: 1; } 50% { opacity: .4; } }
 
+      /* ---------- Fuente Orbitron: reproductor y emisoras del cajón ---------- */
+      :root { --f-orb: 'Orbitron', 'Eurostile', 'Segoe UI', system-ui, sans-serif; }
+      .np-fm, .rmw-onair, .rmw-ministatus, .rmw-nowplaying { font-family: var(--f-orb); }
+      .rmw-mininame {
+        font-family: var(--f-orb); font-weight: 800; font-stretch: normal; letter-spacing: 0; line-height: 1.3;
+        padding-bottom: .12em; font-size: clamp(22px, min(2.8vw, 5.8vh), 40px);
+      }
+      .rmw-nowplaying { font-size: 12px; letter-spacing: .02em; }
+      .rmw-ministatus, .np-fm, .rmw-onair { letter-spacing: .12em; font-size: 9.5px; }
+      .fader { font-family: var(--f-orb); }
+      .rmw-stationname {
+        font-family: var(--f-orb); font-weight: 700; font-stretch: normal; letter-spacing: 0; line-height: 1.12;
+        font-size: clamp(11px, calc(var(--sw) * .082), 15px);
+      }
+      .rmw-meta { font-family: var(--f-orb); font-size: 8px; letter-spacing: .04em; line-height: 1.6; }
+      .rmw-playing .rmw-stationinfo::before { font-family: var(--f-orb); font-size: 7.5px; }
+      
+
       /* ---------- Animaciones ---------- */
       @keyframes rise { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: none; } }
       @supports (animation-timeline: view()) {
@@ -384,7 +400,7 @@
         .rmw-subtitle { display: none; }
         .hero { flex-direction: column; gap: 22px; padding-top: 4px; }
         #rmw-mini { align-items: center; text-align: center; }
-        .rmw-mininame { font-size: clamp(24px, 8vw, 42px); -webkit-line-clamp: 2; }
+        .rmw-mininame { font-size: clamp(20px, 7.4vw, 32px); -webkit-line-clamp: 3; }
         .rmw-nowplaying { white-space: normal; }
         .np-controls { justify-content: center; }
         #rmw-playpause { width: 72px; height: 72px; font-size: 24px; }
@@ -502,6 +518,7 @@
                 genre: 'rmw_genre_v1'
             };
 
+            // localStorage puede lanzar excepciones (modo privado, almacenamiento bloqueado): nunca debe romper la radio
             const store = {
                 get(key) { try { return localStorage.getItem(key); } catch (_) { return null; } },
                 set(key, value) { try { localStorage.setItem(key, value); } catch (_) {} }
@@ -534,9 +551,11 @@
 
             countrySelect.addEventListener('change', () => {
                 store.set(STORAGE.country, countrySelect.value);
+                randomPoolCache.stations = []; // Invalidar caché random al cambiar de país
             });
             genreSelect.addEventListener('change', () => {
                 store.set(STORAGE.genre, genreSelect.value);
+                randomPoolCache.stations = []; // Invalidar caché random al cambiar de género
             });
 
             const API_SERVERS = [
@@ -551,7 +570,7 @@
             let apiIndex = 0;
             let favorites = loadGlobalFavorites();
             let playingStation = null;
-            let currentMode = 'catalog';
+            let currentMode = 'catalog'; // 'catalog', 'favorites', 'top'
             let searchTimer = null;
             let requestNumber = 0;
             let offset = 0;
@@ -563,8 +582,10 @@
             let autoResumeArmed = false;
             let toastTimer = null;
             
-            let recentRandomIds = [];
+            // Mapa para almacenar el número real de emisoras de cada país consultado a la API
             const countryStationCounts = {};
+            // Caché en memoria para aleatoriedad total basada en el 100% de emisoras del país
+            let randomPoolCache = { key: '', stations: [] };
 
             function sanitizeFavorites(list) {
                 const seen = new Set();
@@ -682,34 +703,58 @@
                 toastTimer = setTimeout(() => toast.classList.remove('rmw-visible'), 4000);
             }
 
-            async function loadCountries() {
-                try {
-                    const countries = await apiFetch('/countries');
-                    if (!Array.isArray(countries)) return;
+            const COUNTRIES_CACHE_KEY = 'rmw_countries_cache_v1';
 
-                    countries.sort((a, b) => (a.name || '').localeCompare(b.name || ''));
+            function applyCountries(countries) {
+                countries.forEach(c => {
+                    if (c && c.name) {
+                        countryStationCounts[c.name] = Number(c.stationcount) || 0;
+                    }
+                });
 
-                    countries.forEach(c => {
-                        if (c && c.name) {
-                            countryStationCounts[c.name] = Number(c.stationcount) || 0;
-                        }
-                    });
+                const savedC = store.get(STORAGE.country);
+                const targetCountry = savedC !== null ? savedC : DEFAULT_COUNTRY;
 
-                    const savedC = store.get(STORAGE.country);
-                    const targetCountry = savedC !== null ? savedC : DEFAULT_COUNTRY;
+                countrySelect.innerHTML =
+                    '<option value="">🌐 Todos los países</option>' +
+                    countries
+                        .filter(c => c && c.name && Number(c.stationcount) > 0)
+                        .map(c => `<option value="${esc(c.name)}">${esc(c.name)} (${Number(c.stationcount)})</option>`)
+                        .join('');
 
-                    countrySelect.innerHTML =
-                        '<option value="">🌐 Todos los países</option>' +
-                        countries
-                            .filter(c => c && c.name && Number(c.stationcount) > 0)
-                            .map(c => `<option value="${esc(c.name)}">${esc(c.name)} (${Number(c.stationcount)})</option>`)
-                            .join('');
-
-                    const hasTarget = [...countrySelect.options].some(o => o.value === targetCountry);
-                    countrySelect.value = hasTarget ? targetCountry : DEFAULT_COUNTRY;
-                } catch (_) {}
+                const hasTarget = [...countrySelect.options].some(o => o.value === targetCountry);
+                countrySelect.value = hasTarget ? targetCountry : DEFAULT_COUNTRY;
             }
 
+            function readCountriesCache() {
+                try {
+                    const cached = JSON.parse(localStorage.getItem(COUNTRIES_CACHE_KEY));
+                    return Array.isArray(cached) && cached.length > 20 ? cached : null;
+                } catch (_) { return null; }
+            }
+
+            async function loadCountries(isRetry = false) {
+                // 1) Lista guardada de otras veces: se muestra al instante
+                const cached = readCountriesCache();
+                if (cached) applyCountries(cached);
+                // 2) Lista actualizada desde la API
+                try {
+                    const countries = await apiFetch('/countries');
+                    if (!Array.isArray(countries) || !countries.length) throw new Error('lista vacía');
+                    countries.sort((a, b) => (a.name || '').localeCompare(b.name || ''));
+                    applyCountries(countries);
+                    try {
+                        localStorage.setItem(COUNTRIES_CACHE_KEY, JSON.stringify(
+                            countries.filter(c => c && c.name).map(c => ({ name: c.name, stationcount: c.stationcount }))
+                        ));
+                    } catch (_) {}
+                } catch (_) {
+                    // Si la API falla, un único reintento a los pocos segundos
+                    if (!isRetry) setTimeout(() => loadCountries(true), 5000);
+                }
+            }
+
+            // Invalida cualquier carga del catálogo que siga en vuelo (evita que pise Favoritos o el Ranking)
             function cancelPendingLoads() {
                 requestNumber++;
                 loading = false;
@@ -828,43 +873,54 @@
                 if (currentMode !== 'catalog') return;
                 try {
                     const filters = getFilters();
-                    const params = new URLSearchParams();
-                    
-                    params.set('limit', '50');
-                    params.set('hidebroken', 'true');
-                    params.set('order', 'random');
-                    params.set('_', Date.now());
+                    const cacheKey = `${filters.country}_${filters.genre}`;
 
-                    if (filters.country) params.set('country', filters.country);
-                    if (filters.genre) params.set('tag', filters.genre.toLowerCase());
+                    if (!randomPoolCache.stations.length || randomPoolCache.key !== cacheKey) {
+                        const params = new URLSearchParams();
+                        
+                        let exactCount = 3000;
+                        if (filters.country && countryStationCounts[filters.country]) {
+                            exactCount = countryStationCounts[filters.country] + 100;
+                        } else if (!filters.country) {
+                            exactCount = 5000;
+                        }
 
-                    let data = await apiFetch('/stations/search?' + params.toString());
+                        params.set('limit', String(exactCount));
+                        params.set('hidebroken', 'true');
 
-                    if ((!Array.isArray(data) || data.length === 0) && filters.genre) {
-                        params.delete('tag');
-                        data = await apiFetch('/stations/search?' + params.toString());
+                        if (filters.country) params.set('country', filters.country);
+                        if (filters.genre) params.set('tag', filters.genre.toLowerCase());
+
+                        let data = await apiFetch('/stations/search?' + params.toString());
+
+                        if ((!Array.isArray(data) || data.length === 0) && filters.genre) {
+                            params.delete('tag');
+                            data = await apiFetch('/stations/search?' + params.toString());
+                        }
+
+                        if (Array.isArray(data) && data.length > 0) {
+                            randomPoolCache.stations = data.map(normalizeStation);
+                            randomPoolCache.key = cacheKey;
+                        } else {
+                            showToast('No se encontró ninguna emisora con los filtros seleccionados.');
+                            return;
+                        }
                     }
 
-                    if (!Array.isArray(data) || data.length === 0) {
-                        showToast('No se encontró ninguna emisora con los filtros seleccionados.');
+                    if (currentMode !== 'catalog') return;
+
+                    const pool = randomPoolCache.stations;
+                    if (pool.length === 0) {
+                        showToast('No hay emisoras disponibles en este filtro.');
                         return;
                     }
 
-                    const stations = data.map(normalizeStation);
-                    
-                    let availableStations = stations.filter(s => !recentRandomIds.includes(s.id));
-                    if (availableStations.length === 0) {
-                        recentRandomIds = [];
-                        availableStations = stations;
+                    let randomIndex = Math.floor(Math.random() * pool.length);
+                    if (pool.length > 1 && playingStation && pool[randomIndex].id === playingStation.id) {
+                        randomIndex = (randomIndex + 1) % pool.length;
                     }
 
-                    let randomIndex = Math.floor(Math.random() * availableStations.length);
-                    const station = availableStations[randomIndex];
-
-                    recentRandomIds.push(station.id);
-                    if (recentRandomIds.length > 30) {
-                        recentRandomIds.shift();
-                    }
+                    const station = pool[randomIndex];
 
                     const oldCard = results.querySelector('.rmw-random-card');
                     const oldSpacer = results.querySelector('.rmw-random-spacer');
@@ -874,6 +930,7 @@
                     const card = stationCard(station);
                     card.classList.add('rmw-random-card');
 
+                    // Hueco vacío a la izquierda para que la emisora aleatoria quede centrada en pantalla
                     const spacer = document.createElement('div');
                     spacer.className = 'rmw-random-spacer';
                     spacer.style.cssText = 'flex: none; width: 0;';
@@ -1075,7 +1132,7 @@
 
             fileInput.addEventListener('change', event => {
                 const file = event.target.files[0];
-                fileInput.value = '';
+                fileInput.value = ''; // permite volver a elegir el mismo archivo
                 if (!file) return;
 
                 const reader = new FileReader();
@@ -1083,6 +1140,7 @@
                     try {
                         const imported = sanitizeFavorites(JSON.parse(e.target.result));
                         if (imported.length > 0) {
+                            // Fusionar: se conservan las actuales y solo se añaden las nuevas (sin duplicados)
                             const before = favorites.length;
                             favorites = sanitizeFavorites([...favorites, ...imported]);
                             const added = favorites.length - before;
@@ -1112,7 +1170,7 @@
                 playPauseBtn.textContent = 'Ⅱ';
 
                 if (loadedUrl !== normalized.url || !audio.src) {
-                    if (!audio.paused) switchingStation = true;
+                    if (!audio.paused) switchingStation = true; // el 'pause' que sigue es un cambio de emisora, no una pausa real
                     audio.pause();
                     resetNowPlaying();
                     corsRetryPending = false;
@@ -1125,6 +1183,7 @@
                 try {
                     await audio.play();
                 } catch (err) {
+                    // AbortError = se ha elegido otra emisora mientras esta cargaba: no es un fallo
                     if (corsRetryPending || err?.name === 'AbortError' || playingStation !== normalized) return;
                     miniStatus.textContent = 'No se pudo reproducir. Prueba otra emisora.';
                     playPauseBtn.textContent = '▶';
@@ -1143,27 +1202,10 @@
             }
 
             playPauseBtn.addEventListener('click', async () => {
-                if (!audio.src && !playingStation) return;
+                if (!audio.src) return;
                 if (audio.paused) {
                     userPaused = false;
-                    try {
-                        // Si hubo un corte de red y el reproductor quedó en error, recargamos el stream limpio
-                        if (audio.error || audio.networkState === HTMLMediaElement.NETWORK_NO_SOURCE || audio.networkState === HTMLMediaElement.NETWORK_EMPTY) {
-                            if (playingStation) {
-                                playStation(playingStation);
-                                return;
-                            }
-                            audio.src = loadedUrl;
-                            audio.load();
-                        }
-                        await audio.play();
-                    } catch (_) {
-                        if (playingStation) {
-                            playStation(playingStation);
-                        } else {
-                            miniStatus.textContent = 'No se pudo reanudar la emisora.';
-                        }
-                    }
+                    try { await audio.play(); } catch (_) { miniStatus.textContent = 'No se pudo reanudar la emisora.'; }
                 } else {
                     userPaused = true;
                     audio.pause();
@@ -1206,14 +1248,7 @@
                 document.removeEventListener('visibilitychange', onVisibilityResume);
             }
 
-            // Detector automático cuando vuelve el internet tras un corte de red
-            window.addEventListener('online', () => {
-                showToast('¡Internet restablecido! Reconectando emisora...');
-                if (playingStation && !userPaused) {
-                    playStation(playingStation);
-                }
-            });
-
+            // Ecualizador Dinámico y Real
             const visualizerBars = document.querySelectorAll('.rmw-bar');
             const corsBlockedHosts = new Set();
             const SIGNAL_GRACE_MS = 5000;
@@ -1316,9 +1351,9 @@
                 if (realAudio && analyser) {
                     analyser.getByteFrequencyData(freqData);
                     const levels = [
-                        bandLevel(1, 5),
-                        bandLevel(6, 40),
-                        bandLevel(41, 200)
+                        bandLevel(1, 5),     // graves
+                        bandLevel(6, 40),    // medios
+                        bandLevel(41, 200)   // agudos
                     ];
                     if (levels[0] + levels[1] + levels[2] > 0) {
                         lastSignalAt = Date.now();
@@ -1346,6 +1381,9 @@
                 resetBars();
             }
 
+            // ---------------------- CANCIÓN QUE ESTÁ SONANDO (metadatos ICY) ----------------------
+            // Se abre una segunda conexión corta a la emisora pidiendo los metadatos.
+            // Solo funciona si el servidor de la emisora lo permite (CORS); si no, no se muestra nada.
             const NOW_PLAYING_INTERVAL_MS = 20000;
             const NOW_PLAYING_MAX_FAILURES = 2;
             const nowPlayingFailures = new Map();
@@ -1373,10 +1411,13 @@
             }
 
             function icyUrlFor(url) {
+                // Una página https no puede pedir recursos http: se prueba la versión segura
                 if (location.protocol === 'https:' && url.startsWith('http:')) return 'https:' + url.slice(5);
                 return url;
             }
 
+            // Devuelve el título (string, puede ser vacío), o null si este bloque no trae metadatos.
+            // Lanza un error si la emisora no admite metadatos o el navegador no los deja leer.
             async function readIcyTitle(url, signal) {
                 const response = await fetch(icyUrlFor(url), { headers: { 'Icy-MetaData': '1' }, cache: 'no-store', signal });
                 const metaInt = parseInt(response.headers.get('icy-metaint'), 10);
@@ -1550,6 +1591,7 @@
                 audio.addEventListener('pause', () => { navigator.mediaSession.playbackState = 'paused'; });
             }
 
+            // Temporizador de Apagado
             const timerBtn = document.getElementById('rmw-timer');
             const timerMenu = document.createElement('div');
             timerMenu.id = 'rmw-timer-menu';
@@ -1664,6 +1706,7 @@
                 closeTimerMenu();
             });
 
+            // Botones de Modo
             allButton.addEventListener('click', () => { updateModeButtons('catalog'); loadStations(true); });
             favButton.addEventListener('click', () => renderFavorites());
             topButton.addEventListener('click', () => loadTopStations());
@@ -1682,17 +1725,20 @@
             genreSelect.addEventListener('change', filtersChanged);
 
             document.getElementById('rmw-refresh').addEventListener('click', async () => {
+                randomPoolCache.stations = []; // Forzar recarga completa del pool aleatorio
                 if (currentMode === 'favorites') renderFavorites();
                 else if (currentMode === 'top') loadTopStations();
                 else await loadStations(true);
                 loadCountries();
             });
 
-            await loadCountries();
+            const countriesReady = loadCountries();
+            if (!readCountriesCache()) await countriesReady; // con lista guardada no hace falta esperar a la API
             loadStations(true);
         })();
     </script>
     <script>
+        // Navegación del cajón (solo interfaz; no toca la lógica de la radio)
         (() => {
             const track = document.getElementById('rmw-results');
             const prev = document.getElementById('crate-prev');
@@ -1702,6 +1748,7 @@
             prev && prev.addEventListener('click', () => track.scrollBy({ left: -step(), behavior: 'smooth' }));
             next && next.addEventListener('click', () => track.scrollBy({ left: step(), behavior: 'smooth' }));
 
+            // La rueda del ratón desplaza el cajón de lado
             track.addEventListener('wheel', e => {
                 if (track.scrollWidth <= track.clientWidth) return;
                 if (Math.abs(e.deltaY) <= Math.abs(e.deltaX)) return;
@@ -1712,6 +1759,8 @@
                 e.preventDefault();
             }, { passive: false });
 
+            // Nueva búsqueda o emisora aleatoria: volver al principio
+            // Quitar/poner una estrella no debe mover el cajón (en Favoritos la lista se redibuja)
             let keepScroll = false;
             document.addEventListener('click', e => {
                 if (!e.target.closest('.rmw-star')) return;
@@ -1729,6 +1778,7 @@
                 lastCount = track.children.length;
             }).observe(track, { childList: true });
 
+            // La emisora que suena se centra sola en el cajón (a mano o con "Emisora Random")
             const centerCard = card => {
                 if (!card || !track.contains(card)) return;
                 const t = track.getBoundingClientRect();
@@ -1742,7 +1792,7 @@
                 if (playing && playing !== lastPlaying) centerCard(playing);
                 lastPlaying = playing;
             }).observe(track, { subtree: true, attributes: true, attributeFilter: ['class'] });
-
+            // Al entrar en Favoritos, la primera emisora queda centrada (el bloque Exportar/Importar queda a su izquierda)
             let pendingFavCenter = false;
             document.addEventListener('click', e => {
                 if (e.target.closest('#rmw-favs')) pendingFavCenter = true;
@@ -1756,13 +1806,14 @@
                 const c = first.getBoundingClientRect();
                 track.scrollTo({ left: Math.max(0, track.scrollLeft + (c.left + c.width / 2) - (t.left + t.width / 2)), behavior: 'auto' });
             }).observe(track, { childList: true });
-
+            // Al pulsar una emisora se centra enseguida, sin esperar a que cargue el audio
             track.addEventListener('click', e => {
                 if (e.target.closest('[data-play]')) centerCard(e.target.closest('.rmw-station'));
             });
         })();
     </script>
     <script>
+        // Animación de carga del reproductor (solo interfaz; no toca la lógica de la radio)
         (() => {
             const audio = document.getElementById('rmw-audio');
             const mini = document.getElementById('rmw-mini');
