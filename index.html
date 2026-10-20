@@ -485,9 +485,7 @@
                 </label>
                 <div class="rmw-actions">
                     <button class="rmw-btn active" id="rmw-all">📚 Catálogo</button>
-                    <button class="rmw-btn" id="rmw-random">🎲 Emisora Random</button>
                     <button class="rmw-btn" id="rmw-favs">⭐ Favoritos</button>
-                    <button class="rmw-btn" id="rmw-refresh">↻ Actualizar</button>
                 </div>
             </div>
             <div class="crate-nav">
@@ -551,11 +549,9 @@
 
             countrySelect.addEventListener('change', () => {
                 store.set(STORAGE.country, countrySelect.value);
-                randomPoolCache.stations = []; // Invalidar caché random al cambiar de país
             });
             genreSelect.addEventListener('change', () => {
                 store.set(STORAGE.genre, genreSelect.value);
-                randomPoolCache.stations = []; // Invalidar caché random al cambiar de género
             });
 
             const API_SERVERS = [
@@ -578,17 +574,15 @@
             let offset = 0;
             let loading = false;
             let currentQuery = {};
+            let catalogSnapshot = null;
+            let favoritesScrollLeft = null;
             let userPaused = false;
             let switchingStation = false;
             let loadedUrl = '';
             let autoResumeArmed = false;
             let toastTimer = null;
+            const countryCounts = {};
             
-            // Mapa para almacenar el número real de emisoras de cada país consultado a la API
-            const countryStationCounts = {};
-            // Caché en memoria para aleatoriedad total basada en el 100% de emisoras del país
-            let randomPoolCache = { key: '', stations: [] };
-
             function sanitizeFavorites(list) {
                 const seen = new Set();
                 return (Array.isArray(list) ? list : [])
@@ -686,7 +680,6 @@
             const searchInput = document.getElementById('rmw-search');
             const allButton = document.getElementById('rmw-all');
             const favButton = document.getElementById('rmw-favs');
-            const randomButton = document.getElementById('rmw-random');
             const fileInput = document.getElementById('rmw-file-input');
             const audio = document.getElementById('rmw-audio');
             const toast = document.getElementById('rmw-toast');
@@ -708,9 +701,7 @@
 
             function applyCountries(countries) {
                 countries.forEach(c => {
-                    if (c && c.name) {
-                        countryStationCounts[c.name] = Number(c.stationcount) || 0;
-                    }
+                    if (c && c.name) countryCounts[c.name] = Number(c.stationcount) || 0;
                 });
 
                 const savedC = store.get(STORAGE.country);
@@ -769,7 +760,6 @@
                 currentMode = mode;
                 allButton.classList.toggle('active', mode === 'catalog');
                 favButton.classList.toggle('active', mode === 'favorites');
-                randomButton.disabled = (mode !== 'catalog');
             }
 
             function getFilters() {
@@ -781,6 +771,99 @@
             }
 
             let autoRetried = false;
+
+            // Listado aleatorio: sin descargar el catálogo. Se piden varios trozos pequeños en posiciones
+            // al azar de la lista del país/género elegido (o de todo el mundo) y se mezclan.
+            const RANDOM_SLICES = 10;
+            const RANDOM_SLICE_SIZE = 5;
+            const SMALL_LIST_LIMIT = 60;
+            const knownTotals = new Map();
+            const shownIds = new Set();
+            const shownNames = new Set();
+
+            const filterKeyOf = f => `${f.country}|${f.genre}`;
+            const nameKeyOf = name => String(name || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim();
+
+            function shuffleInPlace(list) {
+                for (let i = list.length - 1; i > 0; i--) {
+                    const j = Math.floor(Math.random() * (i + 1));
+                    [list[i], list[j]] = [list[j], list[i]];
+                }
+                return list;
+            }
+
+            function estimateTotal(filters) {
+                const key = filterKeyOf(filters);
+                if (knownTotals.has(key)) return knownTotals.get(key);
+                if (filters.country) return countryCounts[filters.country] || 200;
+                return Object.values(countryCounts).reduce((a, b) => a + b, 0) || 20000;
+            }
+
+            async function fetchSlice(filters, sliceOffset, size) {
+                const params = new URLSearchParams();
+                params.set('limit', String(size));
+                params.set('offset', String(sliceOffset));
+                params.set('hidebroken', 'true');
+                params.set('order', 'clickcount');
+                params.set('reverse', 'true');
+                if (filters.country) params.set('country', filters.country);
+                if (filters.genre) params.set('tag', filters.genre.toLowerCase());
+                const data = await apiFetch('/stations/search?' + params.toString());
+                return Array.isArray(data) ? data : [];
+            }
+
+            async function fetchRandomSlice(filters) {
+                const key = filterKeyOf(filters);
+                let total = estimateTotal(filters);
+                for (let attempt = 0; attempt < 8; attempt++) {
+                    const sliceOffset = Math.floor(Math.random() * Math.max(1, total - RANDOM_SLICE_SIZE + 1));
+                    const data = await fetchSlice(filters, sliceOffset, RANDOM_SLICE_SIZE);
+                    if (data.length > 0) {
+                        if (data.length < RANDOM_SLICE_SIZE) knownTotals.set(key, sliceOffset + data.length);
+                        return data;
+                    }
+                    // La posición se pasaba del final: el total es como mucho esa posición
+                    const bound = knownTotals.get(key);
+                    knownTotals.set(key, bound === undefined ? sliceOffset : Math.min(bound, sliceOffset));
+                    total = Math.max(1, Math.floor(sliceOffset / 2));
+                }
+                return [];
+            }
+
+            async function fetchRandomBatch(filters, reset) {
+                if (reset) { shownIds.clear(); shownNames.clear(); }
+
+                const collect = raw => {
+                    const list = [];
+                    raw.forEach(d => {
+                        if (!d || !(d.url_resolved || d.url) || !d.stationuuid) return;
+                        const station = normalizeStation(d);
+                        const nameKey = nameKeyOf(station.name);
+                        if (shownIds.has(station.id) || (nameKey && shownNames.has(nameKey))) return;
+                        shownIds.add(station.id);
+                        if (nameKey) shownNames.add(nameKey);
+                        list.push(station);
+                    });
+                    return shuffleInPlace(list);
+                };
+
+                // Pocas emisoras: se muestran todas, en orden aleatorio
+                if (estimateTotal(filters) <= SMALL_LIST_LIMIT) {
+                    const all = collect(await fetchSlice(filters, 0, SMALL_LIST_LIMIT));
+                    return { stations: all, hasMore: false };
+                }
+
+                const settled = await Promise.allSettled(Array.from({ length: RANDOM_SLICES }, () => fetchRandomSlice(filters)));
+                if (settled.every(r => r.status === 'rejected')) throw settled[0].reason;
+
+                let stations = collect(settled.flatMap(r => (r.status === 'fulfilled' ? r.value : [])));
+
+                // Si salió muy poco, se usa la primera página normal para no dejar la lista vacía
+                if (reset && stations.length < 10) {
+                    stations = stations.concat(collect(await fetchSlice(filters, 0, 50)));
+                }
+                return { stations, hasMore: stations.length > 0 };
+            }
 
             async function loadStations(reset = false) {
                 if (currentMode === 'favorites') {
@@ -804,6 +887,18 @@
 
                 try {
                     const filters = currentQuery;
+
+                    // Sin texto de búsqueda: listado aleatorio
+                    if (!filters.name) {
+                        const batch = await fetchRandomBatch(filters, reset);
+                        if (myRequest !== requestNumber) return;
+                        renderStations(batch.stations, reset, batch.hasMore);
+                        if (reset && batch.stations.length === 0) {
+                            setStatus('No se han encontrado emisoras. Prueba con otro país, género o búsqueda.');
+                        }
+                        return;
+                    }
+
                     const params = new URLSearchParams();
                     params.set('limit', '50');
                     params.set('offset', String(offset));
@@ -837,185 +932,11 @@
                             setStatus('Reconectando con el directorio…');
                             setTimeout(() => { if (myRequest === requestNumber) loadStations(true); }, 1200);
                         } else {
-                            setStatus('No se pudo conectar al directorio. Comprueba la conexión y pulsa «Actualizar».');
+                            setStatus('No se pudo conectar al directorio. Comprueba la conexión y recarga la página.');
                         }
                     }
                 } finally {
                     if (myRequest === requestNumber) loading = false;
-                }
-            }
-
-            // Aleatoria ligera: sin descargar el catálogo. Se sortea un país (con peso suave según su
-            // tamaño) y una posición al azar dentro de él; se pide solo esa emisora (~1 KB).
-            // Se mantiene una cola precargada para que el botón responda al instante y un
-            // historial para no repetir emisoras.
-            const randomQueue = { key: '', items: [], filling: false };
-            const recentRandom = [];
-
-            const randomKey = f => `${f.country}|${f.genre}`;
-            const randInt = n => Math.floor(Math.random() * n);
-
-            function pickWeightedCountry(countries, skip) {
-                let total = 0;
-                const weights = countries.map(c => {
-                    const w = skip.has(c) ? 0 : Math.sqrt(countryStationCounts[c] || 1);
-                    total += w;
-                    return w;
-                });
-                if (total <= 0) return null;
-                let r = Math.random() * total;
-                for (let i = 0; i < countries.length; i++) {
-                    r -= weights[i];
-                    if (r <= 0 && weights[i] > 0) return countries[i];
-                }
-                return countries.find((c, i) => weights[i] > 0) || null;
-            }
-
-            async function fetchOneRandom(filters, avoid) {
-                const all = Object.keys(countryStationCounts).filter(c => countryStationCounts[c] > 0);
-                if (!filters.country && !all.length) return null;
-                const skip = new Set();
-                for (let i = 0; i < 12; i++) {
-                    const country = filters.country || pickWeightedCountry(all, skip);
-                    if (!country) break;
-                    skip.add(country);
-                    const count = countryStationCounts[country] || 50;
-                    let offset = randInt(Math.max(1, count));
-                    for (let step = 0; step < 5; step++) {
-                        const params = new URLSearchParams({ hidebroken: 'true', limit: '1' });
-                        params.set('offset', String(offset));
-                        params.set('country', country);
-                        if (filters.genre) params.set('tag', filters.genre.toLowerCase());
-                        const data = await apiFetch('/stations/search?' + params.toString());
-                        const x = Array.isArray(data) ? data.find(d => d && (d.url_resolved || d.url) && d.stationuuid) : null;
-                        if (x) {
-                            if (!avoid(x.stationuuid)) return normalizeStation(x);
-                            break; // repetida: probar otro país/posición
-                        }
-                        if (offset === 0) break;       // el país no tiene emisoras con ese filtro
-                        offset = Math.floor(offset / 2); // la posición se pasaba del final: acercarse
-                    }
-                    if (filters.country && i >= 4) break;
-                }
-                return null;
-            }
-
-            const isRecent = id => recentRandom.includes(id) || (playingStation && playingStation.id === id) || randomQueue.items.some(q => q.id === id);
-
-            async function refillRandomQueue(filters) {
-                if (randomQueue.filling) return;
-                randomQueue.filling = true;
-                const key = randomKey(filters);
-                if (randomQueue.key !== key) { randomQueue.key = key; randomQueue.items = []; }
-                try {
-                    while (randomQueue.key === key && randomQueue.items.length < 3) {
-                        const st = await fetchOneRandom(filters, isRecent);
-                        if (!st || randomQueue.key !== key) break;
-                        randomQueue.items.push(st);
-                    }
-                } catch (_) {
-                } finally {
-                    randomQueue.filling = false;
-                }
-            }
-
-            async function takeRandom(filters) {
-                const key = randomKey(filters);
-                if (randomQueue.key !== key) { randomQueue.key = key; randomQueue.items = []; }
-                let st = randomQueue.items.shift() || null;
-                if (!st) st = await fetchOneRandom(filters, id => recentRandom.includes(id) || (playingStation && playingStation.id === id));
-                if (st) {
-                    recentRandom.push(st.id);
-                    if (recentRandom.length > 60) recentRandom.shift();
-                }
-                refillRandomQueue(filters); // en segundo plano, para el siguiente clic
-                return st;
-            }
-
-            async function playRandomStation() {
-                if (currentMode !== 'catalog') return;
-                try {
-                    const filters = getFilters();
-                    let station = null;
-                    try { station = await takeRandom(filters); } catch (_) { station = null; }
-                    if (currentMode !== 'catalog') return;
-                    if (!station) {
-                    // Si la vía ligera no da resultado, se usa el método anterior
-                    const cacheKey = `${filters.country}_${filters.genre}`;
-
-                    if (!randomPoolCache.stations.length || randomPoolCache.key !== cacheKey) {
-                        const params = new URLSearchParams();
-                        
-                        let exactCount = 3000;
-                        if (filters.country && countryStationCounts[filters.country]) {
-                            exactCount = countryStationCounts[filters.country] + 100;
-                        } else if (!filters.country) {
-                            exactCount = 5000;
-                        }
-
-                        params.set('limit', String(exactCount));
-                        params.set('hidebroken', 'true');
-
-                        if (filters.country) params.set('country', filters.country);
-                        if (filters.genre) params.set('tag', filters.genre.toLowerCase());
-
-                        let data = await apiFetch('/stations/search?' + params.toString());
-
-                        if ((!Array.isArray(data) || data.length === 0) && filters.genre) {
-                            params.delete('tag');
-                            data = await apiFetch('/stations/search?' + params.toString());
-                        }
-
-                        if (Array.isArray(data) && data.length > 0) {
-                            randomPoolCache.stations = data.map(normalizeStation);
-                            randomPoolCache.key = cacheKey;
-                        } else {
-                            showToast('No se encontró ninguna emisora con los filtros seleccionados.');
-                            return;
-                        }
-                    }
-
-                    if (currentMode !== 'catalog') return;
-
-                    const pool = randomPoolCache.stations;
-                    if (pool.length === 0) {
-                        showToast('No hay emisoras disponibles en este filtro.');
-                        return;
-                    }
-
-                    let randomIndex = Math.floor(Math.random() * pool.length);
-                    if (pool.length > 1 && playingStation && pool[randomIndex].id === playingStation.id) {
-                        randomIndex = (randomIndex + 1) % pool.length;
-                    }
-
-                    station = pool[randomIndex];
-                    }
-
-                    if (currentMode !== 'catalog') return;
-
-                    const oldCard = results.querySelector('.rmw-random-card');
-                    const oldSpacer = results.querySelector('.rmw-random-spacer');
-                    if (oldCard) oldCard.remove();
-                    if (oldSpacer) oldSpacer.remove();
-
-                    const card = stationCard(station);
-                    card.classList.add('rmw-random-card');
-
-                    // Hueco vacío a la izquierda para que la emisora aleatoria quede centrada en pantalla
-                    const spacer = document.createElement('div');
-                    spacer.className = 'rmw-random-spacer';
-                    spacer.style.cssText = 'flex: none; width: 0;';
-
-                    results.prepend(card);
-                    results.prepend(spacer);
-                    const cardCenter = card.offsetLeft - results.offsetLeft + card.offsetWidth / 2;
-                    spacer.style.width = Math.max(0, results.clientWidth / 2 - cardCenter) + 'px';
-
-                    results.scrollTop = 0;
-
-                    playStation(station);
-                } catch (_) {
-                    showToast('Error al conectar con la ruleta aleatoria.');
                 }
             }
 
@@ -1129,7 +1050,42 @@
                 }
             }
 
+            // Al ir a Favoritos se guarda el catálogo tal como está (emisoras y posición) para recuperarlo al volver
+            function saveCatalogSnapshot() {
+                if (!results.querySelector('.rmw-station')) { catalogSnapshot = null; return; }
+                catalogSnapshot = {
+                    nodes: Array.from(results.children),
+                    scrollLeft: results.scrollLeft,
+                    query: JSON.stringify(currentQuery)
+                };
+            }
+
+            // Devuelve true si se ha recuperado el catálogo guardado (siempre que los filtros sigan siendo los mismos)
+            function restoreCatalogSnapshot() {
+                const snap = catalogSnapshot;
+                catalogSnapshot = null;
+                if (!snap || snap.query !== JSON.stringify(getFilters())) return false;
+
+                cancelPendingLoads();
+                results.innerHTML = '';
+                snap.nodes.forEach(node => results.appendChild(node));
+
+                // Los favoritos pueden haber cambiado mientras tanto
+                results.querySelectorAll('.rmw-star').forEach(star => {
+                    const nowFavorite = favorites.some(f => f.id === star.getAttribute('data-favorite'));
+                    star.classList.toggle('is-fav', nowFavorite);
+                    star.textContent = nowFavorite ? '★' : '☆';
+                });
+                refreshPlayButtons();
+
+                const restoreScroll = () => results.scrollTo({ left: snap.scrollLeft, behavior: 'instant' });
+                restoreScroll();
+                requestAnimationFrame(restoreScroll);
+                return true;
+            }
+
             function renderFavorites() {
+                if (currentMode === 'catalog') saveCatalogSnapshot();
                 updateModeButtons('favorites');
                 cancelPendingLoads();
                 results.innerHTML = '';
@@ -1778,9 +1734,22 @@
             });
 
             // Botones de Modo
-            allButton.addEventListener('click', () => { updateModeButtons('catalog'); loadStations(true); });
-            favButton.addEventListener('click', () => renderFavorites());
-            randomButton.addEventListener('click', () => playRandomStation());
+            allButton.addEventListener('click', () => {
+                if (currentMode === 'favorites') favoritesScrollLeft = results.scrollLeft;
+                updateModeButtons('catalog');
+                if (!restoreCatalogSnapshot()) loadStations(true);
+            });
+            favButton.addEventListener('click', () => {
+                const comingFromCatalog = currentMode === 'catalog';
+                renderFavorites();
+                // Al volver a Favoritos desde el catálogo, se recupera la posición en que se dejó
+                if (comingFromCatalog && favoritesScrollLeft !== null) {
+                    const left = favoritesScrollLeft;
+                    const restoreScroll = () => results.scrollTo({ left, behavior: 'instant' });
+                    restoreScroll();
+                    requestAnimationFrame(restoreScroll);
+                }
+            });
 
             function filtersChanged() {
                 clearTimeout(searchTimer);
@@ -1794,17 +1763,9 @@
             countrySelect.addEventListener('change', filtersChanged);
             genreSelect.addEventListener('change', filtersChanged);
 
-            document.getElementById('rmw-refresh').addEventListener('click', async () => {
-                randomPoolCache.stations = []; // Forzar recarga completa del pool aleatorio
-                if (currentMode === 'favorites') renderFavorites();
-                else await loadStations(true);
-                loadCountries();
-            });
-
             const countriesReady = loadCountries();
             if (!readCountriesCache()) await countriesReady; // con lista guardada no hace falta esperar a la API
             loadStations(true);
-            setTimeout(() => { try { refillRandomQueue(getFilters()); } catch (_) {} }, 1500);
         })();
     </script>
     <script>
@@ -1829,7 +1790,7 @@
                 e.preventDefault();
             }, { passive: false });
 
-            // Nueva búsqueda o emisora aleatoria: volver al principio
+            // Nueva búsqueda: volver al principio
             // Quitar/poner una estrella no debe mover el cajón (en Favoritos la lista se redibuja)
             let keepScroll = false;
             document.addEventListener('click', e => {
@@ -1837,18 +1798,18 @@
                 keepScroll = true;
                 setTimeout(() => { keepScroll = false; }, 0);
             }, true);
-            let lastCount = track.children.length;
-            let lastRandom = null;
+            // El botón "Cargar más" no cuenta: al pulsarlo desaparece, pero eso no es una búsqueda nueva
+            const countItems = () => Array.from(track.children).filter(c => c.id !== 'rmw-more').length;
+            let lastCount = countItems();
             new MutationObserver(() => {
-                const random = track.querySelector('.rmw-random-card');
-                if (!keepScroll && (track.children.length < lastCount || (random && random !== lastRandom))) {
-                    track.scrollTo({ left: 0, behavior: random && random !== lastRandom ? 'smooth' : 'auto' });
+                const count = countItems();
+                if (!keepScroll && count < lastCount) {
+                    track.scrollTo({ left: 0, behavior: 'auto' });
                 }
-                lastRandom = random;
-                lastCount = track.children.length;
+                lastCount = count;
             }).observe(track, { childList: true });
 
-            // La emisora que suena se centra sola en el cajón (a mano o con "Emisora Random")
+            // La emisora que suena se centra sola en el cajón
             const centerCard = card => {
                 if (!card || !track.contains(card)) return;
                 const t = track.getBoundingClientRect();
