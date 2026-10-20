@@ -486,7 +486,6 @@
                 <div class="rmw-actions">
                     <button class="rmw-btn active" id="rmw-all">📚 Catálogo</button>
                     <button class="rmw-btn" id="rmw-favs">⭐ Favoritos</button>
-                    <button class="rmw-btn" id="rmw-top">🔥 Ranking</button>
                     <button class="rmw-btn" id="rmw-random">🎲 Emisora Random</button>
                     <button class="rmw-btn" id="rmw-refresh">↻ Actualizar</button>
                 </div>
@@ -573,7 +572,7 @@
             let apiIndex = Math.floor(Math.random() * API_SERVERS.length); // reparte la carga entre servidores
             let favorites = loadGlobalFavorites();
             let playingStation = null;
-            let currentMode = 'catalog'; // 'catalog', 'favorites', 'top'
+            let currentMode = 'catalog'; // 'catalog', 'favorites'
             let searchTimer = null;
             let requestNumber = 0;
             let offset = 0;
@@ -687,7 +686,6 @@
             const searchInput = document.getElementById('rmw-search');
             const allButton = document.getElementById('rmw-all');
             const favButton = document.getElementById('rmw-favs');
-            const topButton = document.getElementById('rmw-top');
             const randomButton = document.getElementById('rmw-random');
             const fileInput = document.getElementById('rmw-file-input');
             const audio = document.getElementById('rmw-audio');
@@ -771,7 +769,6 @@
                 currentMode = mode;
                 allButton.classList.toggle('active', mode === 'catalog');
                 favButton.classList.toggle('active', mode === 'favorites');
-                topButton.classList.toggle('active', mode === 'top');
                 randomButton.disabled = (mode !== 'catalog');
             }
 
@@ -788,10 +785,6 @@
             async function loadStations(reset = false) {
                 if (currentMode === 'favorites') {
                     renderFavorites();
-                    return;
-                }
-                if (currentMode === 'top') {
-                    loadTopStations();
                     return;
                 }
 
@@ -849,34 +842,6 @@
                     }
                 } finally {
                     if (myRequest === requestNumber) loading = false;
-                }
-            }
-
-            async function loadTopStations() {
-                updateModeButtons('top');
-                cancelPendingLoads();
-                const myRequest = requestNumber;
-                results.innerHTML = '';
-                setStatus('Cargando el ranking mundial de emisoras más populares…');
-                try {
-                    const data = await apiFetch('/stations/topclick/50');
-                    if (myRequest !== requestNumber) return;
-                    if (!Array.isArray(data)) throw new Error('respuesta no válida');
-                    const stations = data.filter(s => s && (s.url_resolved || s.url) && s.stationuuid).map(normalizeStation);
-                    
-                    results.innerHTML = '';
-                    const title = document.createElement('div');
-                    title.className = 'rmw-status';
-                    title.textContent = '🔥 Top 50 Emisoras más escuchadas en todo el mundo';
-                    results.appendChild(title);
-
-                    if (stations.length === 0) {
-                        setStatus('No se pudieron cargar las emisoras populares.');
-                        return;
-                    }
-                    stations.forEach(station => results.appendChild(stationCard(station)));
-                } catch (_) {
-                    if (myRequest === requestNumber) setStatus('Error al cargar el ranking mundial.');
                 }
             }
 
@@ -1815,7 +1780,6 @@
             // Botones de Modo
             allButton.addEventListener('click', () => { updateModeButtons('catalog'); loadStations(true); });
             favButton.addEventListener('click', () => renderFavorites());
-            topButton.addEventListener('click', () => loadTopStations());
             randomButton.addEventListener('click', () => playRandomStation());
 
             function filtersChanged() {
@@ -1833,7 +1797,6 @@
             document.getElementById('rmw-refresh').addEventListener('click', async () => {
                 randomPoolCache.stations = []; // Forzar recarga completa del pool aleatorio
                 if (currentMode === 'favorites') renderFavorites();
-                else if (currentMode === 'top') loadTopStations();
                 else await loadStations(true);
                 loadCountries();
             });
