@@ -1718,11 +1718,18 @@
             }, { passive: false });
 
             // Nueva búsqueda o emisora aleatoria: volver al principio
+            // Quitar/poner una estrella no debe mover el cajón (en Favoritos la lista se redibuja)
+            let keepScroll = false;
+            document.addEventListener('click', e => {
+                if (!e.target.closest('.rmw-star')) return;
+                keepScroll = true;
+                setTimeout(() => { keepScroll = false; }, 0);
+            }, true);
             let lastCount = track.children.length;
             let lastRandom = null;
             new MutationObserver(() => {
                 const random = track.querySelector('.rmw-random-card');
-                if (track.children.length < lastCount || (random && random !== lastRandom)) {
+                if (!keepScroll && (track.children.length < lastCount || (random && random !== lastRandom))) {
                     track.scrollTo({ left: 0, behavior: random && random !== lastRandom ? 'smooth' : 'auto' });
                 }
                 lastRandom = random;
@@ -1778,4 +1785,4 @@
         })();
     </script>
 </body>
-    </html>
+</html>
