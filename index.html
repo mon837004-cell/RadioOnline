@@ -166,8 +166,8 @@
       .rmw-miniinfo { min-width: 0; }
       .rmw-mininame {
         font-family: var(--f-display); font-weight: 800; font-size: clamp(24px, min(3.8vw, 8vh), 64px); 
-        line-height: 1.15; /* Espacio vertical suficiente para que no se corten las letras p, y, g, j */
-        padding-bottom: 6px;  /* Margen inferior de seguridad */
+        line-height: 1.2; /* Espacio vertical suficiente para que no se corten las letras p, y, g, j */
+        padding-bottom: 8px;  /* Margen inferior de seguridad */
         letter-spacing: -.025em; color: var(--text-main); overflow-wrap: anywhere;
         display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden;
       }
@@ -1143,10 +1143,27 @@
             }
 
             playPauseBtn.addEventListener('click', async () => {
-                if (!audio.src) return;
+                if (!audio.src && !playingStation) return;
                 if (audio.paused) {
                     userPaused = false;
-                    try { await audio.play(); } catch (_) { miniStatus.textContent = 'No se pudo reanudar la emisora.'; }
+                    try {
+                        // Si hubo un corte de red y el reproductor quedó en error, recargamos el stream limpio
+                        if (audio.error || audio.networkState === HTMLMediaElement.NETWORK_NO_SOURCE || audio.networkState === HTMLMediaElement.NETWORK_EMPTY) {
+                            if (playingStation) {
+                                playStation(playingStation);
+                                return;
+                            }
+                            audio.src = loadedUrl;
+                            audio.load();
+                        }
+                        await audio.play();
+                    } catch (_) {
+                        if (playingStation) {
+                            playStation(playingStation);
+                        } else {
+                            miniStatus.textContent = 'No se pudo reanudar la emisora.';
+                        }
+                    }
                 } else {
                     userPaused = true;
                     audio.pause();
@@ -1188,6 +1205,14 @@
                 window.removeEventListener('click', tryAutoResume);
                 document.removeEventListener('visibilitychange', onVisibilityResume);
             }
+
+            // Detector automático cuando vuelve el internet tras un corte de red
+            window.addEventListener('online', () => {
+                showToast('¡Internet restablecido! Reconectando emisora...');
+                if (playingStation && !userPaused) {
+                    playStation(playingStation);
+                }
+            });
 
             const visualizerBars = document.querySelectorAll('.rmw-bar');
             const corsBlockedHosts = new Set();
