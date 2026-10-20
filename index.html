@@ -165,7 +165,9 @@
 
       .rmw-miniinfo { min-width: 0; }
       .rmw-mininame {
-        font-family: var(--f-display); font-weight: 800; font-size: clamp(28px, min(4.2vw, 9vh), 72px); line-height: .92;
+        font-family: var(--f-display); font-weight: 800; font-size: clamp(24px, min(3.8vw, 8vh), 64px); 
+        line-height: 1.15; /* Espacio vertical suficiente para que no se corten las letras p, y, g, j */
+        padding-bottom: 6px;  /* Margen inferior de seguridad */
         letter-spacing: -.025em; color: var(--text-main); overflow-wrap: anywhere;
         display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden;
       }
@@ -500,7 +502,6 @@
                 genre: 'rmw_genre_v1'
             };
 
-            // localStorage puede lanzar excepciones (modo privado, almacenamiento bloqueado): nunca debe romper la radio
             const store = {
                 get(key) { try { return localStorage.getItem(key); } catch (_) { return null; } },
                 set(key, value) { try { localStorage.setItem(key, value); } catch (_) {} }
@@ -550,7 +551,7 @@
             let apiIndex = 0;
             let favorites = loadGlobalFavorites();
             let playingStation = null;
-            let currentMode = 'catalog'; // 'catalog', 'favorites', 'top'
+            let currentMode = 'catalog';
             let searchTimer = null;
             let requestNumber = 0;
             let offset = 0;
@@ -562,10 +563,7 @@
             let autoResumeArmed = false;
             let toastTimer = null;
             
-            // Historial de exclusión para evitar que se repitan emisoras en el modo random
             let recentRandomIds = [];
-
-            // Mapa para almacenar el número real de emisoras de cada país consultado a la API
             const countryStationCounts = {};
 
             function sanitizeFavorites(list) {
@@ -712,7 +710,6 @@
                 } catch (_) {}
             }
 
-            // Invalida cualquier carga del catálogo que siga en vuelo (evita que pise Favoritos o el Ranking)
             function cancelPendingLoads() {
                 requestNumber++;
                 loading = false;
@@ -836,7 +833,7 @@
                     params.set('limit', '50');
                     params.set('hidebroken', 'true');
                     params.set('order', 'random');
-                    params.set('_', Date.now()); // 🛡️ Evita la caché de los mirrors de la API y Cloudflare
+                    params.set('_', Date.now());
 
                     if (filters.country) params.set('country', filters.country);
                     if (filters.genre) params.set('tag', filters.genre.toLowerCase());
@@ -855,17 +852,15 @@
 
                     const stations = data.map(normalizeStation);
                     
-                    // Filtrar emisoras que ya hayan salido recientemente para evitar repeticiones
                     let availableStations = stations.filter(s => !recentRandomIds.includes(s.id));
                     if (availableStations.length === 0) {
-                        recentRandomIds = []; // Reiniciar historial si se agotan
+                        recentRandomIds = [];
                         availableStations = stations;
                     }
 
                     let randomIndex = Math.floor(Math.random() * availableStations.length);
                     const station = availableStations[randomIndex];
 
-                    // Guardar ID en el historial reciente (máximo 30 emisoras recordadas)
                     recentRandomIds.push(station.id);
                     if (recentRandomIds.length > 30) {
                         recentRandomIds.shift();
@@ -1080,7 +1075,7 @@
 
             fileInput.addEventListener('change', event => {
                 const file = event.target.files[0];
-                fileInput.value = ''; // permite volver a elegir el mismo archivo
+                fileInput.value = '';
                 if (!file) return;
 
                 const reader = new FileReader();
@@ -1088,7 +1083,6 @@
                     try {
                         const imported = sanitizeFavorites(JSON.parse(e.target.result));
                         if (imported.length > 0) {
-                            // Fusionar: se conservan las actuales y solo se añaden las nuevas (sin duplicados)
                             const before = favorites.length;
                             favorites = sanitizeFavorites([...favorites, ...imported]);
                             const added = favorites.length - before;
@@ -1118,7 +1112,7 @@
                 playPauseBtn.textContent = 'Ⅱ';
 
                 if (loadedUrl !== normalized.url || !audio.src) {
-                    if (!audio.paused) switchingStation = true; // el 'pause' que sigue es un cambio de emisora, no una pausa real
+                    if (!audio.paused) switchingStation = true;
                     audio.pause();
                     resetNowPlaying();
                     corsRetryPending = false;
@@ -1131,7 +1125,6 @@
                 try {
                     await audio.play();
                 } catch (err) {
-                    // AbortError = se ha elegido otra emisora mientras esta cargaba: no es un fallo
                     if (corsRetryPending || err?.name === 'AbortError' || playingStation !== normalized) return;
                     miniStatus.textContent = 'No se pudo reproducir. Prueba otra emisora.';
                     playPauseBtn.textContent = '▶';
@@ -1196,7 +1189,6 @@
                 document.removeEventListener('visibilitychange', onVisibilityResume);
             }
 
-            // Ecualizador Dinámico y Real
             const visualizerBars = document.querySelectorAll('.rmw-bar');
             const corsBlockedHosts = new Set();
             const SIGNAL_GRACE_MS = 5000;
@@ -1299,9 +1291,9 @@
                 if (realAudio && analyser) {
                     analyser.getByteFrequencyData(freqData);
                     const levels = [
-                        bandLevel(1, 5),     // graves
-                        bandLevel(6, 40),    // medios
-                        bandLevel(41, 200)   // agudos
+                        bandLevel(1, 5),
+                        bandLevel(6, 40),
+                        bandLevel(41, 200)
                     ];
                     if (levels[0] + levels[1] + levels[2] > 0) {
                         lastSignalAt = Date.now();
@@ -1329,7 +1321,6 @@
                 resetBars();
             }
 
-            // ---------------------- CANCIÓN QUE ESTÁ SONANDO (metadatos ICY) ----------------------
             const NOW_PLAYING_INTERVAL_MS = 20000;
             const NOW_PLAYING_MAX_FAILURES = 2;
             const nowPlayingFailures = new Map();
@@ -1534,7 +1525,6 @@
                 audio.addEventListener('pause', () => { navigator.mediaSession.playbackState = 'paused'; });
             }
 
-            // Temporizador de Apagado
             const timerBtn = document.getElementById('rmw-timer');
             const timerMenu = document.createElement('div');
             timerMenu.id = 'rmw-timer-menu';
@@ -1649,7 +1639,6 @@
                 closeTimerMenu();
             });
 
-            // Botones de Modo
             allButton.addEventListener('click', () => { updateModeButtons('catalog'); loadStations(true); });
             favButton.addEventListener('click', () => renderFavorites());
             topButton.addEventListener('click', () => loadTopStations());
@@ -1679,7 +1668,6 @@
         })();
     </script>
     <script>
-        // Navegación del cajón (solo interfaz; no toca la lógica de la radio)
         (() => {
             const track = document.getElementById('rmw-results');
             const prev = document.getElementById('crate-prev');
@@ -1689,7 +1677,6 @@
             prev && prev.addEventListener('click', () => track.scrollBy({ left: -step(), behavior: 'smooth' }));
             next && next.addEventListener('click', () => track.scrollBy({ left: step(), behavior: 'smooth' }));
 
-            // La rueda del ratón desplaza el cajón de lado
             track.addEventListener('wheel', e => {
                 if (track.scrollWidth <= track.clientWidth) return;
                 if (Math.abs(e.deltaY) <= Math.abs(e.deltaX)) return;
@@ -1751,7 +1738,6 @@
         })();
     </script>
     <script>
-        // Animación de carga del reproductor (solo interfaz; no toca la lógica de la radio)
         (() => {
             const audio = document.getElementById('rmw-audio');
             const mini = document.getElementById('rmw-mini');
