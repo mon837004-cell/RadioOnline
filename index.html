@@ -238,6 +238,11 @@
       .rmw-results {
         display: flex; align-items: center; gap: 22px; overflow-x: auto; overflow-y: hidden; scrollbar-width: thin;
         padding: 22px var(--pad) 26px; scroll-snap-type: x proximity; scroll-padding-inline: var(--pad);
+      }
+      /* Holgura a los lados para que la primera y la última emisora también puedan quedar centradas */
+      .rmw-results:has(.rmw-station) {
+        padding-inline: max(var(--pad), calc(50% - var(--sw) / 2));
+        scroll-padding-inline: 0;
         -webkit-mask-image: linear-gradient(90deg, transparent, #000 28px, #000 calc(100% - 28px), transparent);
         mask-image: linear-gradient(90deg, transparent, #000 28px, #000 calc(100% - 28px), transparent);
       }
@@ -1094,9 +1099,14 @@
                     try {
                         const imported = sanitizeFavorites(JSON.parse(e.target.result));
                         if (imported.length > 0) {
-                            favorites = imported;
+                            // Fusionar: se conservan las actuales y solo se añaden las nuevas (sin duplicados)
+                            const before = favorites.length;
+                            favorites = sanitizeFavorites([...favorites, ...imported]);
+                            const added = favorites.length - before;
                             saveFavorites();
-                            showToast(`¡Éxito! Se han cargado ${imported.length} emisoras desde el archivo.`);
+                            showToast(added > 0
+                                ? `¡Listo! Se han añadido ${added} emisoras nuevas. Ahora tienes ${favorites.length} favoritas.`
+                                : 'No había emisoras nuevas: ya tenías todas las del archivo.');
                             if (currentMode === 'favorites') renderFavorites();
                         } else {
                             showToast('El archivo JSON no contiene una lista válida de emisoras.');
@@ -1733,6 +1743,20 @@
                 if (playing && playing !== lastPlaying) centerCard(playing);
                 lastPlaying = playing;
             }).observe(track, { subtree: true, attributes: true, attributeFilter: ['class'] });
+            // Al entrar en Favoritos, la primera emisora queda centrada (el bloque Exportar/Importar queda a su izquierda)
+            let pendingFavCenter = false;
+            document.addEventListener('click', e => {
+                if (e.target.closest('#rmw-favs')) pendingFavCenter = true;
+            }, true);
+            new MutationObserver(() => {
+                if (!pendingFavCenter || !track.querySelector('#rmw-fav-manager')) return;
+                pendingFavCenter = false;
+                const first = track.querySelector('.rmw-station');
+                if (!first) { track.scrollTo({ left: 0, behavior: 'auto' }); return; }
+                const t = track.getBoundingClientRect();
+                const c = first.getBoundingClientRect();
+                track.scrollTo({ left: Math.max(0, track.scrollLeft + (c.left + c.width / 2) - (t.left + t.width / 2)), behavior: 'auto' });
+            }).observe(track, { childList: true });
             // Al pulsar una emisora se centra enseguida, sin esperar a que cargue el audio
             track.addEventListener('click', e => {
                 if (e.target.closest('[data-play]')) centerCard(e.target.closest('.rmw-station'));
