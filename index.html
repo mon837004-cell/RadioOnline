@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Radio Forocochera: directorio mundial de emisoras de radio online.">
     <title>Radio Forocochera - Directorio Mundial de Emisoras</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -32,7 +33,6 @@
         min-height: 100vh;
         display: flex;
         flex-direction: column;
-        padding-bottom: 90px;
         transition: background 0.4s ease, color 0.3s ease;
       }
 
@@ -87,15 +87,14 @@
 
 
       /* =====================================================================
-         RADIO FOROCOCHERA · "EL TOCADISCOS"
-         Un plato giratorio como protagonista y las emisoras como discos
-         en un cajón que se recorre de lado. Colores = variables del tema.
+         RADIO FOROCOCHERA
+         Reproductor como protagonista y las emisoras como fundas que se
+         recorren de lado. Colores = variables del tema.
          ===================================================================== */
       :root {
         --on-accent: #ffffff;
         --f-display: 'Bricolage Grotesque', 'Segoe UI', system-ui, sans-serif;
         --f-mono: 'DM Mono', ui-monospace, SFMono-Regular, Consolas, monospace;
-        --rec: clamp(200px, min(37vh, 30vw), 440px);
         --sw: clamp(140px, min(13vw, 20vh), 190px);
         --sh: calc(var(--sw) * 1.14);
         --pad: 32px;
@@ -132,23 +131,23 @@
       .rmw-subtitle { font-family: var(--f-mono); font-size: 10.5px; letter-spacing: .18em; text-transform: uppercase; color: var(--text-sub); }
 
       .rmw-fld { display: flex; flex-direction: column; gap: 5px; min-width: 0; }
-      .topbar select, .crate select, .crate input[type="search"] {
+      .crate select, .crate input[type="search"] {
         font: inherit; font-size: 14px; width: 100%; min-width: 0; height: 40px; padding: 0 12px; outline: none;
         color: var(--text-main); background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 10px;
         transition: border-color .2s, box-shadow .2s;
       }
-      .topbar select:focus, .crate select:focus, .crate input[type="search"]:focus {
+      .crate select:focus, .crate input[type="search"]:focus {
         border-color: var(--accent); box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 22%, transparent);
       }
-      .topbar select, .crate select {
+      .crate select {
         appearance: none; -webkit-appearance: none; cursor: pointer; padding-right: 30px;
         background-image: linear-gradient(45deg, transparent 50%, var(--text-sub) 50%), linear-gradient(135deg, var(--text-sub) 50%, transparent 50%);
         background-position: calc(100% - 15px) 50%, calc(100% - 10px) 50%; background-size: 5px 5px; background-repeat: no-repeat;
       }
-      .topbar select option, .crate select option { background: var(--bg-card); color: var(--text-main); }
+      .crate select option { background: var(--bg-card); color: var(--text-main); }
       .crate input[type="search"]::placeholder { color: var(--text-sub); opacity: .8; }
 
-      /* ---------- Escenario: tocadiscos + ahora suena ---------- */
+      /* ---------- Escenario ---------- */
       .hero {
         position: relative; isolation: isolate; flex: 1; display: flex; align-items: center; justify-content: center;
         gap: clamp(28px, 5vw, 84px); padding: 4px var(--pad) 18px; min-height: 0;
@@ -213,7 +212,7 @@
         background: linear-gradient(90deg, transparent 46%, var(--on-accent) 46% 54%, transparent 54%), var(--accent);
       }
 
-      /* ---------- El cajón ---------- */
+      /* ---------- Listado de emisoras ---------- */
       .crate { position: relative; border-top: 1px solid var(--border-color); background: linear-gradient(to bottom, color-mix(in srgb, var(--bg-tools) 70%, transparent), color-mix(in srgb, var(--bg-tools) 96%, transparent)); }
       .crate-head { display: flex; align-items: flex-end; gap: 18px; flex-wrap: wrap; padding: 18px var(--pad) 0; }
       .rmw-tools { flex: 1; min-width: 0; display: flex; align-items: flex-end; gap: 10px; flex-wrap: wrap; }
@@ -356,9 +355,7 @@
       @keyframes loadblink { 0%, 100% { opacity: 1; } 50% { opacity: .4; } }
 
       /* ---------- Animaciones ---------- */
-      @keyframes spin { to { rotate: 360deg; } }
       @keyframes rise { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: none; } }
-      @keyframes ping { 0% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--accent) 70%, transparent); } 100% { box-shadow: 0 0 0 9px transparent; } }
       @supports (animation-timeline: view()) {
         .rmw-station { animation: tilt linear both; animation-timeline: view(inline); animation-range: cover 0% cover 100%; }
         @keyframes tilt {
@@ -374,7 +371,7 @@
 
       /* ---------- Pantallas pequeñas ---------- */
       @media (max-width: 900px) {
-        :root { --pad: 16px; --rec: min(54vw, 250px); --sw: 148px; }
+        :root { --pad: 16px; --sw: 148px; }
         .topbar { padding: 12px var(--pad); }
         .rmw-title { font-size: 19px; }
         .rmw-subtitle { display: none; }
@@ -498,41 +495,43 @@
                 genre: 'rmw_genre_v1'
             };
 
+            // localStorage puede lanzar excepciones (modo privado, almacenamiento bloqueado): nunca debe romper la radio
+            const store = {
+                get(key) { try { return localStorage.getItem(key); } catch (_) { return null; } },
+                set(key, value) { try { localStorage.setItem(key, value); } catch (_) {} }
+            };
+
             function applyTheme(themeName) {
                 document.body.className = 'theme-' + themeName;
-                localStorage.setItem(STORAGE.theme, themeName);
+                store.set(STORAGE.theme, themeName);
             }
-
-            const savedTheme = localStorage.getItem(STORAGE.theme) || 'classic';
-            applyTheme(savedTheme);
 
             const themeSelect = document.getElementById('rmw-theme');
-            if (themeSelect) {
-                themeSelect.value = savedTheme;
-                themeSelect.addEventListener('change', (e) => applyTheme(e.target.value));
-            }
+            const validThemes = [...themeSelect.options].map(o => o.value);
+            const storedTheme = store.get(STORAGE.theme);
+            const savedTheme = validThemes.includes(storedTheme) ? storedTheme : 'classic';
+            applyTheme(savedTheme);
+            themeSelect.value = savedTheme;
+            themeSelect.addEventListener('change', e => applyTheme(e.target.value));
 
+            const DEFAULT_COUNTRY = 'Spain';
             const countrySelect = document.getElementById('rmw-country');
             const genreSelect = document.getElementById('rmw-genre');
 
-            const savedCountry = localStorage.getItem(STORAGE.country);
-            if (savedCountry !== null) {
-                countrySelect.value = savedCountry;
-            } else {
-                countrySelect.value = 'Spain';
-            }
+            const savedCountry = store.get(STORAGE.country);
+            countrySelect.value = savedCountry !== null ? savedCountry : DEFAULT_COUNTRY;
 
-            const savedGenre = localStorage.getItem(STORAGE.genre);
+            const savedGenre = store.get(STORAGE.genre);
             if (savedGenre !== null) {
                 genreSelect.value = savedGenre;
             }
 
             countrySelect.addEventListener('change', () => {
-                localStorage.setItem(STORAGE.country, countrySelect.value);
+                store.set(STORAGE.country, countrySelect.value);
                 randomPoolCache.stations = []; // Invalidar caché random al cambiar de país
             });
             genreSelect.addEventListener('change', () => {
-                localStorage.setItem(STORAGE.genre, genreSelect.value);
+                store.set(STORAGE.genre, genreSelect.value);
                 randomPoolCache.stations = []; // Invalidar caché random al cambiar de género
             });
 
@@ -555,6 +554,7 @@
             let loading = false;
             let currentQuery = {};
             let userPaused = false;
+            let switchingStation = false;
             let loadedUrl = '';
             let autoResumeArmed = false;
             let toastTimer = null;
@@ -578,7 +578,7 @@
 
             function loadGlobalFavorites() {
                 try {
-                    const localData = localStorage.getItem(STORAGE.favorites);
+                    const localData = store.get(STORAGE.favorites);
                     if (localData) {
                         const parsed = JSON.parse(localData);
                         if (Array.isArray(parsed) && parsed.length > 0) return sanitizeFavorites(parsed);
@@ -591,7 +591,7 @@
 
             function saveFavorites() {
                 try {
-                    localStorage.setItem(STORAGE.favorites, JSON.stringify(favorites));
+                    store.set(STORAGE.favorites, JSON.stringify(favorites));
                 } catch (_) {}
             }
 
@@ -602,7 +602,7 @@
             }
 
             function getVolume() {
-                const value = Number(localStorage.getItem(STORAGE.volume) ?? 0.7);
+                const value = Number(store.get(STORAGE.volume) ?? 0.7);
                 return Number.isFinite(value) && value >= 0 && value <= 1 ? value : 0.7;
             }
 
@@ -667,6 +667,9 @@
             const audio = document.getElementById('rmw-audio');
             const toast = document.getElementById('rmw-toast');
             const miniPlayer = document.getElementById('rmw-mini');
+            const miniName = document.getElementById('rmw-mininame');
+            const miniStatus = document.getElementById('rmw-ministatus');
+            const playPauseBtn = document.getElementById('rmw-playpause');
 
             audio.volume = getVolume();
 
@@ -690,8 +693,8 @@
                         }
                     });
 
-                    const savedC = localStorage.getItem(STORAGE.country);
-                    const targetCountry = savedC !== null ? savedC : 'Spain';
+                    const savedC = store.get(STORAGE.country);
+                    const targetCountry = savedC !== null ? savedC : DEFAULT_COUNTRY;
 
                     countrySelect.innerHTML =
                         '<option value="">🌐 Todos los países</option>' +
@@ -700,12 +703,15 @@
                             .map(c => `<option value="${esc(c.name)}">${esc(c.name)} (${Number(c.stationcount)})</option>`)
                             .join('');
 
-                    if ([...countrySelect.options].some(o => o.value === targetCountry)) {
-                        countrySelect.value = targetCountry;
-                    } else {
-                        countrySelect.value = 'Spain';
-                    }
+                    const hasTarget = [...countrySelect.options].some(o => o.value === targetCountry);
+                    countrySelect.value = hasTarget ? targetCountry : DEFAULT_COUNTRY;
                 } catch (_) {}
+            }
+
+            // Invalida cualquier carga del catálogo que siga en vuelo (evita que pise Favoritos o el Ranking)
+            function cancelPendingLoads() {
+                requestNumber++;
+                loading = false;
             }
 
             function setStatus(message) {
@@ -767,7 +773,8 @@
 
                     const data = await apiFetch('/stations/search?' + params.toString());
 
-                    if (myRequest !== requestNumber || !Array.isArray(data)) return;
+                    if (myRequest !== requestNumber) return;
+                    if (!Array.isArray(data)) throw new Error('respuesta no válida');
 
                     const stations = data
                         .filter(s => s && (s.url_resolved || s.url) && s.stationuuid)
@@ -778,11 +785,6 @@
 
                     if (reset && stations.length === 0) {
                         setStatus('No se han encontrado emisoras. Prueba con otro país, género o búsqueda.');
-                    } else if (reset && stations.length > 0) {
-                        const count = document.createElement('div');
-                        count.className = 'rmw-status';
-                        count.textContent = 'Mostrando emisoras encontradas. Puedes cargar más al final.';
-                        results.prepend(count);
                     }
                 } catch (_) {
                     if (myRequest === requestNumber) {
@@ -795,11 +797,14 @@
 
             async function loadTopStations() {
                 updateModeButtons('top');
+                cancelPendingLoads();
+                const myRequest = requestNumber;
                 results.innerHTML = '';
                 setStatus('Cargando el ranking mundial de emisoras más populares…');
                 try {
                     const data = await apiFetch('/stations/topclick/50');
-                    if (!Array.isArray(data)) return;
+                    if (myRequest !== requestNumber) return;
+                    if (!Array.isArray(data)) throw new Error('respuesta no válida');
                     const stations = data.filter(s => s && (s.url_resolved || s.url) && s.stationuuid).map(normalizeStation);
                     
                     results.innerHTML = '';
@@ -814,7 +819,7 @@
                     }
                     stations.forEach(station => results.appendChild(stationCard(station)));
                 } catch (_) {
-                    setStatus('Error al cargar el ranking mundial.');
+                    if (myRequest === requestNumber) setStatus('Error al cargar el ranking mundial.');
                 }
             }
 
@@ -856,6 +861,8 @@
                         }
                     }
 
+                    if (currentMode !== 'catalog') return;
+
                     const pool = randomPoolCache.stations;
                     if (pool.length === 0) {
                         showToast('No hay emisoras disponibles en este filtro.');
@@ -869,22 +876,23 @@
 
                     const station = pool[randomIndex];
 
-                    const oldBanner = results.querySelector('.rmw-random-banner');
                     const oldCard = results.querySelector('.rmw-random-card');
-                    if (oldBanner) oldBanner.remove();
+                    const oldSpacer = results.querySelector('.rmw-random-spacer');
                     if (oldCard) oldCard.remove();
-
-                    const banner = document.createElement('div');
-                    banner.className = 'rmw-status rmw-random-banner';
-                    banner.style.padding = '8px';
-                    banner.style.fontWeight = 'bold';
-                    banner.textContent = '🎲 Emisora aleatoria obtenida';
+                    if (oldSpacer) oldSpacer.remove();
 
                     const card = stationCard(station);
                     card.classList.add('rmw-random-card');
 
+                    // Hueco vacío a la izquierda para que la emisora aleatoria quede centrada en pantalla
+                    const spacer = document.createElement('div');
+                    spacer.className = 'rmw-random-spacer';
+                    spacer.style.cssText = 'flex: none; width: 0;';
+
                     results.prepend(card);
-                    results.prepend(banner);
+                    results.prepend(spacer);
+                    const cardCenter = card.offsetLeft - results.offsetLeft + card.offsetWidth / 2;
+                    spacer.style.width = Math.max(0, results.clientWidth / 2 - cardCenter) + 'px';
 
                     results.scrollTop = 0;
 
@@ -950,7 +958,7 @@
                         const locationQuery = [station.state, station.country].filter(Boolean).join(', ');
                         mapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(locationQuery || station.name)}`;
                     }
-                    window.open(mapsUrl, '_blank');
+                    window.open(mapsUrl, '_blank', 'noopener,noreferrer');
                 });
 
                 card.querySelector('[data-play]').addEventListener('click', () => {
@@ -1006,6 +1014,7 @@
 
             function renderFavorites() {
                 updateModeButtons('favorites');
+                cancelPendingLoads();
                 results.innerHTML = '';
 
                 const manager = document.createElement('div');
@@ -1053,22 +1062,7 @@
                 if (isFavorite(station)) {
                     favorites = favorites.filter(f => f.id !== id);
                 } else {
-                    favorites.push({
-                        id,
-                        name: station.name,
-                        url: station.url,
-                        country: station.country,
-                        countrycode: station.countrycode,
-                        state: station.state,
-                        language: station.language,
-                        tags: station.tags,
-                        favicon: station.favicon,
-                        codec: station.codec,
-                        bitrate: station.bitrate,
-                        homepage: station.homepage,
-                        geo_lat: station.geo_lat,
-                        geo_long: station.geo_long
-                    });
+                    favorites.push(normalizeStation(station));
                 }
                 saveFavorites();
             }
@@ -1092,6 +1086,7 @@
 
             fileInput.addEventListener('change', event => {
                 const file = event.target.files[0];
+                fileInput.value = ''; // permite volver a elegir el mismo archivo
                 if (!file) return;
 
                 const reader = new FileReader();
@@ -1109,8 +1104,8 @@
                     } catch (_) {
                         showToast('Error al leer el archivo. Asegúrate de que sea un JSON válido.');
                     }
-                    fileInput.value = '';
                 };
+                reader.onerror = () => showToast('No se pudo leer el archivo.');
                 reader.readAsText(file);
             });
 
@@ -1119,12 +1114,12 @@
                 const normalized = normalizeStation(station);
                 playingStation = normalized;
                 updateMediaSession(normalized);
-                miniPlayer.classList.add('rmw-visible');
-                document.getElementById('rmw-mininame').textContent = normalized.name;
-                document.getElementById('rmw-ministatus').textContent = 'Conectando…';
-                document.getElementById('rmw-playpause').textContent = 'Ⅱ';
+                miniName.textContent = normalized.name;
+                miniStatus.textContent = 'Conectando…';
+                playPauseBtn.textContent = 'Ⅱ';
 
                 if (loadedUrl !== normalized.url || !audio.src) {
+                    if (!audio.paused) switchingStation = true; // el 'pause' que sigue es un cambio de emisora, no una pausa real
                     audio.pause();
                     resetNowPlaying();
                     corsRetryPending = false;
@@ -1136,10 +1131,11 @@
 
                 try {
                     await audio.play();
-                } catch (_) {
-                    if (corsRetryPending) return;
-                    document.getElementById('rmw-ministatus').textContent = 'No se pudo reproducir. Prueba otra emisora.';
-                    document.getElementById('rmw-playpause').textContent = '▶';
+                } catch (err) {
+                    // AbortError = se ha elegido otra emisora mientras esta cargaba: no es un fallo
+                    if (corsRetryPending || err?.name === 'AbortError' || playingStation !== normalized) return;
+                    miniStatus.textContent = 'No se pudo reproducir. Prueba otra emisora.';
+                    playPauseBtn.textContent = '▶';
                 }
 
                 refreshPlayButtons();
@@ -1154,11 +1150,11 @@
                 });
             }
 
-            document.getElementById('rmw-playpause').addEventListener('click', async () => {
+            playPauseBtn.addEventListener('click', async () => {
                 if (!audio.src) return;
                 if (audio.paused) {
                     userPaused = false;
-                    try { await audio.play(); } catch (_) { document.getElementById('rmw-ministatus').textContent = 'No se pudo reanudar la emisora.'; }
+                    try { await audio.play(); } catch (_) { miniStatus.textContent = 'No se pudo reanudar la emisora.'; }
                 } else {
                     userPaused = true;
                     audio.pause();
@@ -1169,7 +1165,7 @@
             volRange.value = String(audio.volume);
             volRange.addEventListener('input', event => {
                 audio.volume = Number(event.target.value);
-                localStorage.setItem(STORAGE.volume, String(audio.volume));
+                store.set(STORAGE.volume, String(audio.volume));
             });
 
             async function tryAutoResume() {
@@ -1451,14 +1447,15 @@
             }
 
             audio.addEventListener('playing', () => {
+                switchingStation = false;
                 disarmAutoResume();
                 if (corsRetryPending) {
                     if (corsRetryHost) corsBlockedHosts.add(corsRetryHost);
                     corsRetryPending = false;
                 }
                 setupRealAnalyser();
-                document.getElementById('rmw-ministatus').textContent = (playingStation?.country || '') + ' · En reproducción';
-                document.getElementById('rmw-playpause').textContent = 'Ⅱ';
+                miniStatus.textContent = (playingStation?.country || '') + ' · En reproducción';
+                playPauseBtn.textContent = 'Ⅱ';
                 miniPlayer.classList.add('is-playing');
                 startDynamicVisualizer();
                 startNowPlaying();
@@ -1466,9 +1463,11 @@
             });
 
             audio.addEventListener('pause', () => {
-                if (audio.src) {
-                    document.getElementById('rmw-ministatus').textContent = 'En pausa';
-                    document.getElementById('rmw-playpause').textContent = '▶';
+                const switching = switchingStation;
+                switchingStation = false;
+                if (audio.src && !switching) {
+                    miniStatus.textContent = 'En pausa';
+                    playPauseBtn.textContent = '▶';
                 }
                 miniPlayer.classList.remove('is-playing');
                 stopDynamicVisualizer();
@@ -1479,7 +1478,7 @@
             });
 
             audio.addEventListener('waiting', () => { 
-                document.getElementById('rmw-ministatus').textContent = 'Cargando audio…'; 
+                miniStatus.textContent = 'Cargando audio…'; 
                 miniPlayer.classList.remove('is-playing');
                 resetBars();
             });
@@ -1497,8 +1496,8 @@
                 }
                 corsRetryPending = false;
                 stopNowPlaying();
-                document.getElementById('rmw-ministatus').textContent = 'Error de streaming. Prueba otra emisora.';
-                document.getElementById('rmw-playpause').textContent = '▶';
+                miniStatus.textContent = 'Error de streaming. Prueba otra emisora.';
+                playPauseBtn.textContent = '▶';
                 miniPlayer.classList.remove('is-playing');
                 stopDynamicVisualizer();
                 refreshPlayButtons();
@@ -1719,6 +1718,25 @@
                 lastRandom = random;
                 lastCount = track.children.length;
             }).observe(track, { childList: true });
+
+            // La emisora que suena se centra sola en el cajón (a mano o con "Emisora Random")
+            const centerCard = card => {
+                if (!card || !track.contains(card)) return;
+                const t = track.getBoundingClientRect();
+                const c = card.getBoundingClientRect();
+                const left = track.scrollLeft + (c.left + c.width / 2) - (t.left + t.width / 2);
+                track.scrollTo({ left: Math.max(0, left), behavior: 'smooth' });
+            };
+            let lastPlaying = null;
+            new MutationObserver(() => {
+                const playing = track.querySelector('.rmw-station.rmw-playing');
+                if (playing && playing !== lastPlaying) centerCard(playing);
+                lastPlaying = playing;
+            }).observe(track, { subtree: true, attributes: true, attributeFilter: ['class'] });
+            // Al pulsar una emisora se centra enseguida, sin esperar a que cargue el audio
+            track.addEventListener('click', e => {
+                if (e.target.closest('[data-play]')) centerCard(e.target.closest('.rmw-station'));
+            });
         })();
     </script>
     <script>
