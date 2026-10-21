@@ -1816,7 +1816,29 @@
             genreSelect.addEventListener('change', filtersChanged);
 
             // Enlace compartido (?emisora=ID): carga y reproduce esa emisora en el reproductor
-            async function openSharedStation() {
+            // Pone la tarjeta de una emisora la primera de la lista, con un hueco vacío a la izquierda para que quede centrada en pantalla
+            function showCardFirst(station) {
+                results.querySelector('.rmw-shared-card')?.remove();
+                results.querySelector('.rmw-shared-spacer')?.remove();
+                // Si la emisora ya estaba en la lista, se quita esa para no duplicarla
+                [...results.querySelectorAll('[data-play]')]
+                    .find(b => b.getAttribute('data-play') === makeId(station))
+                    ?.closest('.rmw-station')?.remove();
+
+                const card = stationCard(station);
+                card.classList.add('rmw-shared-card');
+
+                const spacer = document.createElement('div');
+                spacer.className = 'rmw-shared-spacer';
+                spacer.style.cssText = 'flex: none; width: 0;';
+
+                results.prepend(card);
+                results.prepend(spacer);
+                const cardCenter = card.offsetLeft - results.offsetLeft + card.offsetWidth / 2;
+                spacer.style.width = Math.max(0, results.clientWidth / 2 - cardCenter) + 'px';
+            }
+
+            async function openSharedStation(listReady) {
                 let id;
                 try { id = new URLSearchParams(location.search).get('emisora'); } catch (_) { return; }
                 if (!id || !UUID_RE.test(id)) return;
@@ -1826,7 +1848,14 @@
                     const data = await apiFetch('/stations/byuuid/' + encodeURIComponent(id));
                     if (!Array.isArray(data) || !data[0]) throw new Error('emisora no encontrada');
                     const station = normalizeStation(data[0]);
-                    await playStation(station);
+                    const playback = playStation(station); // empieza a sonar sin esperar a la lista
+                    // Cuando la lista está cargada, la emisora aparece la primera y sonando, para poder marcarla como favorita o compartirla
+                    try { await listReady; } catch (_) {}
+                    if (currentMode === 'catalog') {
+                        showCardFirst(station);
+                        results.scrollTo({ left: 0, behavior: 'smooth' });
+                    }
+                    await playback;
                     // Los navegadores suelen bloquear el sonido automático al abrir un enlace: la emisora queda cargada y basta pulsar play
                     if (playingStation && playingStation.id === station.id && audio.paused && !corsRetryPending) {
                         miniStatus.textContent = 'Pulsa play para escuchar';
@@ -1839,8 +1868,8 @@
 
             const countriesReady = loadCountries();
             if (!readCountriesCache()) await countriesReady; // con lista guardada no hace falta esperar a la API
-            loadStations(true);
-            openSharedStation();
+            const listReady = loadStations(true);
+            openSharedStation(listReady);
         })();
     </script>
     <script>
