@@ -1449,7 +1449,11 @@
             // Solo funciona si el servidor de la emisora lo permite (CORS); si no, no se muestra nada.
             const NOW_PLAYING_INTERVAL_MS = 10000;
             const NOW_PLAYING_MAX_FAILURES = 2;
+            const ICY_PROXY_URL = 'https://radio-titulos.ivanete8888.workers.dev/'; // Worker de Cloudflare que lee el título en nombre del navegador
             const nowPlayingFailures = new Map();
+            const nowPlayingSkips = new Map();
+            const proxyOnlyUrls = new Set(); // emisoras cuyo título solo se consigue a través del Worker
+            let nowPlayingPoll = 0;
             const nowPlayingEl = document.getElementById('rmw-nowplaying');
             let nowPlayingTimer = null;
             let nowPlayingController = null;
@@ -1536,32 +1540,68 @@
                 }
             }
 
-            async function pollNowPlaying() {
-                if (!playingStation || !loadedUrl || audio.paused) return;
-                const url = loadedUrl;
-                if ((nowPlayingFailures.get(url) || 0) >= NOW_PLAYING_MAX_FAILURES) return;
+            // Pide el título al Worker (útil cuando la emisora no permite leerlo directamente desde el navegador)
+            async function readIcyTitleViaProxy(url, signal) {
+                const response = await fetch(`${ICY_PROXY_URL}?url=${encodeURIComponent(url)}`, { cache: 'no-store', signal });
+                if (!response.ok) throw new Error('proxy no disponible');
+                const data = await response.json();
+                if (data.error) throw new Error(data.error);
+                return typeof data.title === 'string' ? data.title : null;
+            }
 
+            // Cada intento tiene su propio límite de 8 segundos
+            async function withNowPlayingAttempt(read) {
                 if (nowPlayingController) nowPlayingController.abort();
                 const controller = new AbortController();
                 nowPlayingController = controller;
                 const timeout = setTimeout(() => controller.abort(), 8000);
-                lastNowPlayingAt = Date.now();
-
                 try {
-                    const title = await readIcyTitle(url, controller.signal);
-                    if (url !== loadedUrl) return;
-                    nowPlayingFailures.set(url, 0);
-                    if (title !== null) setNowPlaying(title);
-                } catch (_) {
-                    if (controller.signal.aborted && url !== loadedUrl) return;
-                    if (nowPlayingController !== controller) return; // sustituida por una consulta más reciente
-                    nowPlayingFailures.set(url, (nowPlayingFailures.get(url) || 0) + 1);
+                    return await read(controller.signal);
                 } finally {
                     clearTimeout(timeout);
                 }
             }
 
+            async function pollNowPlaying() {
+                if (!playingStation || !loadedUrl || audio.paused) return;
+                const url = loadedUrl;
+
+                // Tras varios fallos seguidos solo se reintenta de vez en cuando (1 de cada 6 consultas, aprox. cada minuto)
+                if ((nowPlayingFailures.get(url) || 0) >= NOW_PLAYING_MAX_FAILURES) {
+                    const skips = (nowPlayingSkips.get(url) || 0) + 1;
+                    nowPlayingSkips.set(url, skips);
+                    if (skips % 6 !== 0) return;
+                }
+
+                const myPoll = ++nowPlayingPoll;
+                lastNowPlayingAt = Date.now();
+
+                try {
+                    let title;
+                    if (proxyOnlyUrls.has(url)) {
+                        title = await withNowPlayingAttempt(signal => readIcyTitleViaProxy(url, signal));
+                    } else {
+                        try {
+                            title = await withNowPlayingAttempt(signal => readIcyTitle(url, signal));
+                        } catch (_) {
+                            if (myPoll !== nowPlayingPoll || url !== loadedUrl) return;
+                            // La lectura directa ha fallado (normalmente por CORS): se prueba a través del Worker
+                            title = await withNowPlayingAttempt(signal => readIcyTitleViaProxy(url, signal));
+                            proxyOnlyUrls.add(url);
+                        }
+                    }
+                    if (myPoll !== nowPlayingPoll || url !== loadedUrl) return;
+                    nowPlayingFailures.set(url, 0);
+                    nowPlayingSkips.set(url, 0);
+                    if (title !== null) setNowPlaying(title);
+                } catch (_) {
+                    if (myPoll !== nowPlayingPoll || url !== loadedUrl) return; // sustituida por una consulta más reciente o emisora cambiada
+                    nowPlayingFailures.set(url, (nowPlayingFailures.get(url) || 0) + 1);
+                }
+            }
+
             function stopNowPlaying() {
+                nowPlayingPoll++; // descarta cualquier consulta en curso
                 clearInterval(nowPlayingTimer);
                 nowPlayingTimer = null;
                 if (nowPlayingController) nowPlayingController.abort();
@@ -1966,4 +2006,4 @@
         })();
     </script>
 </body>
-    </html>
+</html>
