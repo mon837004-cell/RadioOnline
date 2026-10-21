@@ -1469,23 +1469,10 @@
                 if (playingStation) updateMediaSession(playingStation);
             }
 
-            // Al pulsar la fila de la canción, se copia solo el texto de la canción (sin el ♪)
+            // Al pulsar la fila de la canción, se abre YouTube (la app si está instalada) buscando esa canción
             nowPlayingEl.addEventListener('click', () => {
                 if (!currentSong) return;
-                const fallbackCopy = () => {
-                    const ta = document.createElement('textarea');
-                    ta.value = currentSong;
-                    ta.style.cssText = 'position: fixed; top: 0; left: 0; opacity: 0;';
-                    document.body.appendChild(ta);
-                    ta.select();
-                    try { document.execCommand('copy'); } catch (_) {}
-                    ta.remove();
-                };
-                if (navigator.clipboard && navigator.clipboard.writeText) {
-                    navigator.clipboard.writeText(currentSong).catch(fallbackCopy);
-                } else {
-                    fallbackCopy();
-                }
+                window.open('https://www.youtube.com/results?search_query=' + encodeURIComponent(currentSong), '_blank', 'noopener,noreferrer');
             });
 
             function decodeIcyText(bytes) {
@@ -2006,4 +1993,4 @@
         })();
     </script>
 </body>
-</html>
+    </html>
