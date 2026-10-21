@@ -280,13 +280,15 @@
         margin-top: 6px; font-family: var(--f-mono); font-size: 9px; line-height: 1.5; letter-spacing: .03em; text-transform: uppercase; color: var(--text-sub);
         overflow-wrap: anywhere; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
       }
-      .rmw-map, .rmw-star {
+      .rmw-map, .rmw-star, .rmw-share {
         z-index: 4; top: 9px; width: 28px; height: 28px; padding: 0; display: grid; place-items: center; cursor: pointer; border-radius: 50%;
         font-size: 15px; line-height: 1; color: var(--text-sub); background: color-mix(in srgb, var(--bg-main) 55%, transparent); border: 1px solid var(--border-color);
         transition: color .2s, border-color .2s;
       }
       .rmw-star { right: 9px; } .rmw-map { right: 43px; }
-      .rmw-map:hover, .rmw-star:hover { color: var(--accent); border-color: var(--accent); }
+      .rmw-share { right: 9px; top: 43px; display: none; }
+      .rmw-playing .rmw-share { display: grid; }
+      .rmw-map:hover, .rmw-star:hover, .rmw-share:hover { color: var(--accent); border-color: var(--accent); }
       .rmw-star.is-fav { color: #ffd166; border-color: #ffd166; }
 
       /* toda la funda es el botón de reproducir */
@@ -564,7 +566,9 @@
 
             const ICON_URL = 'https://raw.githubusercontent.com/mon837004-cell/RadioOnline/main/Icono.png';
             const API_TIMEOUT_MS = 6000;
+            const SHARE_BASE_URL = 'https://mon837004-cell.github.io/RadioOnline/'; // dirección donde está alojada la radio
 
+            const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
             let apiIndex = Math.floor(Math.random() * API_SERVERS.length); // reparte la carga entre servidores
             let favorites = loadGlobalFavorites();
             let playingStation = null;
@@ -974,6 +978,14 @@
                   <button class="rmw-star ${favorite ? 'is-fav' : ''}" data-favorite="${id}" title="${favorite ? 'Quitar de favoritos' : 'Añadir a favoritos'}">
                     ${favorite ? '★' : '☆'}
                   </button>
+                  <button class="rmw-share" data-share="${id}" title="Compartir emisora">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <circle cx="18" cy="5" r="3"/>
+                      <circle cx="6" cy="12" r="3"/>
+                      <circle cx="18" cy="19" r="3"/>
+                      <path d="M8.6 13.5l6.8 4M15.4 6.5l-6.8 4"/>
+                    </svg>
+                  </button>
                   <button class="rmw-play" data-play="${id}" title="Reproducir">${active && !audio.paused ? 'Ⅱ' : '▶'}</button>
                 `;
 
@@ -997,6 +1009,26 @@
                         mapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(locationQuery || station.name)}`;
                     }
                     window.open(mapsUrl, '_blank', 'noopener,noreferrer');
+                });
+
+                card.querySelector('[data-share]').addEventListener('click', async (e) => {
+                    e.stopPropagation();
+                    // Enlace a la radio con la emisora dentro; si la emisora no tiene identificador compartible,
+                    // se comparte directamente el enlace del stream
+                    const canLink = UUID_RE.test(stationId);
+                    const shareData = {
+                        title: station.name,
+                        text: [station.name, station.country].filter(Boolean).join(' · ') + ' — Radio Forocochera',
+                        url: canLink ? `${SHARE_BASE_URL}?emisora=${encodeURIComponent(stationId)}` : station.url
+                    };
+                    try {
+                        if (navigator.share) {
+                            await navigator.share(shareData);
+                        } else if (navigator.clipboard && navigator.clipboard.writeText) {
+                            await navigator.clipboard.writeText(shareData.text + '\n' + shareData.url);
+                            showToast('Enlace de la emisora copiado');
+                        }
+                    } catch (_) { /* el usuario cerró el menú de compartir */ }
                 });
 
                 card.querySelector('[data-play]').addEventListener('click', () => {
@@ -1411,7 +1443,7 @@
             // ---------------------- CANCIÓN QUE ESTÁ SONANDO (metadatos ICY) ----------------------
             // Se abre una segunda conexión corta a la emisora pidiendo los metadatos.
             // Solo funciona si el servidor de la emisora lo permite (CORS); si no, no se muestra nada.
-            const NOW_PLAYING_INTERVAL_MS = 20000;
+            const NOW_PLAYING_INTERVAL_MS = 10000;
             const NOW_PLAYING_MAX_FAILURES = 2;
             const nowPlayingFailures = new Map();
             const nowPlayingEl = document.getElementById('rmw-nowplaying');
@@ -1428,6 +1460,25 @@
                 nowPlayingEl.style.display = text ? 'block' : 'none';
                 if (playingStation) updateMediaSession(playingStation);
             }
+
+            // Al pulsar la fila de la canción, se copia solo el texto de la canción (sin el ♪)
+            nowPlayingEl.addEventListener('click', () => {
+                if (!currentSong) return;
+                const fallbackCopy = () => {
+                    const ta = document.createElement('textarea');
+                    ta.value = currentSong;
+                    ta.style.cssText = 'position: fixed; top: 0; left: 0; opacity: 0;';
+                    document.body.appendChild(ta);
+                    ta.select();
+                    try { document.execCommand('copy'); } catch (_) {}
+                    ta.remove();
+                };
+                if (navigator.clipboard && navigator.clipboard.writeText) {
+                    navigator.clipboard.writeText(currentSong).catch(fallbackCopy);
+                } else {
+                    fallbackCopy();
+                }
+            });
 
             function decodeIcyText(bytes) {
                 try {
@@ -1499,6 +1550,7 @@
                     if (title !== null) setNowPlaying(title);
                 } catch (_) {
                     if (controller.signal.aborted && url !== loadedUrl) return;
+                    if (nowPlayingController !== controller) return; // sustituida por una consulta más reciente
                     nowPlayingFailures.set(url, (nowPlayingFailures.get(url) || 0) + 1);
                 } finally {
                     clearTimeout(timeout);
@@ -1763,9 +1815,32 @@
             countrySelect.addEventListener('change', filtersChanged);
             genreSelect.addEventListener('change', filtersChanged);
 
+            // Enlace compartido (?emisora=ID): carga y reproduce esa emisora en el reproductor
+            async function openSharedStation() {
+                let id;
+                try { id = new URLSearchParams(location.search).get('emisora'); } catch (_) { return; }
+                if (!id || !UUID_RE.test(id)) return;
+                try { history.replaceState(null, '', location.pathname + location.hash); } catch (_) {}
+
+                try {
+                    const data = await apiFetch('/stations/byuuid/' + encodeURIComponent(id));
+                    if (!Array.isArray(data) || !data[0]) throw new Error('emisora no encontrada');
+                    const station = normalizeStation(data[0]);
+                    await playStation(station);
+                    // Los navegadores suelen bloquear el sonido automático al abrir un enlace: la emisora queda cargada y basta pulsar play
+                    if (playingStation && playingStation.id === station.id && audio.paused && !corsRetryPending) {
+                        miniStatus.textContent = 'Pulsa play para escuchar';
+                        playPauseBtn.textContent = '▶';
+                    }
+                } catch (_) {
+                    miniStatus.textContent = 'No se pudo abrir la emisora compartida.';
+                }
+            }
+
             const countriesReady = loadCountries();
             if (!readCountriesCache()) await countriesReady; // con lista guardada no hace falta esperar a la API
             loadStations(true);
+            openSharedStation();
         })();
     </script>
     <script>
