@@ -174,7 +174,13 @@
         color: var(--accent); overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
         -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; -webkit-tap-highlight-color: transparent;
       }
-      .rmw-nowplaying::before { content: '♪ '; }
+      .rmw-nowplaying::before { content: none; }
+      /* Fila de la canción (abajo del reproductor): icono + flecha + texto */
+      .rmw-song { display: none; align-items: center; gap: 10px; max-width: 100%; min-width: 0; padding: 7px 14px 7px 8px; cursor: pointer; border-radius: 99px; border: 1px solid var(--border-color); transition: border-color .2s, background .2s; -webkit-tap-highlight-color: transparent; }
+      .rmw-song:has(#rmw-nowplaying[style*="block"]) { display: flex; }
+      .rmw-song:hover, .rmw-song:focus-visible { border-color: var(--accent); background: color-mix(in srgb, var(--accent) 10%, transparent); }
+      .rmw-song-ico { position: relative; flex: none; display: grid; place-items: center; width: 32px; height: 32px; color: var(--accent); }
+      .rmw-song .rmw-nowplaying { margin-top: 0; min-width: 0; }
       .rmw-ministatus { margin-top: 12px; font-family: var(--f-mono); font-size: 11px; letter-spacing: .18em; text-transform: uppercase; color: var(--text-sub); }
 
       .np-controls { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
@@ -405,7 +411,7 @@
         .hero { flex-direction: column; gap: 22px; padding-top: 4px; }
         #rmw-mini { align-items: center; text-align: center; }
         .rmw-mininame { font-size: clamp(20px, 7.4vw, 32px); -webkit-line-clamp: 3; }
-        .rmw-nowplaying { white-space: normal; }
+        .rmw-nowplaying { white-space: normal; text-align: left; }
         .np-controls { justify-content: center; }
         #rmw-playpause { width: 72px; height: 72px; font-size: 24px; }
         .fader { flex: 1 1 calc(100% - 60px); }
@@ -436,7 +442,6 @@
         <div id="rmw-mini">
             <div class="rmw-miniinfo">
                 <div class="rmw-mininame" id="rmw-mininame">Dale al play!!</div>
-                <div class="rmw-nowplaying" id="rmw-nowplaying"></div>
                 <div class="rmw-ministatus" id="rmw-ministatus">Selecciona una emisora</div>
             </div>
             <div class="np-controls">
@@ -458,6 +463,15 @@
                         <path d="M8.6 13.5l6.8 4M15.4 6.5l-6.8 4"/>
                     </svg>
                 </button>
+            </div>
+            <div class="rmw-song" id="rmw-song" role="link" tabindex="0" title="Buscar esta canción en YouTube">
+                <span class="rmw-song-ico" aria-hidden="true">
+                    <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="9.5"/>
+                        <path d="M10 8.4l5.4 3.6-5.4 3.6z" fill="currentColor" stroke="none"/>
+                    </svg>
+                </span>
+                <div class="rmw-nowplaying" id="rmw-nowplaying"></div>
             </div>
         </div>
     </section>
@@ -1469,10 +1483,37 @@
                 if (playingStation) updateMediaSession(playingStation);
             }
 
-            // Al pulsar la fila de la canción, se abre YouTube (la app si está instalada) buscando esa canción
-            nowPlayingEl.addEventListener('click', () => {
+            // Al pulsar la canción se busca en YouTube: en el móvil se abre la app (vnd.youtube) y en el PC una pestaña nueva
+            const songLink = document.getElementById('rmw-song') || nowPlayingEl;
+            const isMobileDevice = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+            function openSongOnYouTube() {
                 if (!currentSong) return;
-                window.open('https://www.youtube.com/results?search_query=' + encodeURIComponent(currentSong), '_blank', 'noopener,noreferrer');
+                const query = encodeURIComponent(currentSong);
+                const webUrl = 'https://www.youtube.com/results?search_query=' + query;
+                if (!isMobileDevice) {
+                    window.open(webUrl, '_blank', 'noopener');
+                    return;
+                }
+                // Móvil: se intenta abrir la app; si la página sigue a la vista, la app no está instalada y se abre el navegador
+                const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+                let appOpened = false;
+                const markOpened = () => { appOpened = true; };
+                const onVisibility = () => { if (document.visibilityState === 'hidden') appOpened = true; };
+                document.addEventListener('visibilitychange', onVisibility);
+                window.addEventListener('pagehide', markOpened);
+                window.addEventListener('blur', markOpened);
+                window.location.href = (isIOS ? 'youtube://' : 'vnd.youtube://') + 'results?search_query=' + query;
+                setTimeout(() => {
+                    document.removeEventListener('visibilitychange', onVisibility);
+                    window.removeEventListener('pagehide', markOpened);
+                    window.removeEventListener('blur', markOpened);
+                    if (appOpened || document.visibilityState === 'hidden') return;
+                    if (!window.open(webUrl, '_blank', 'noopener')) window.location.href = webUrl; // si el navegador bloquea la pestaña nueva
+                }, 1500);
+            }
+            songLink.addEventListener('click', openSongOnYouTube);
+            songLink.addEventListener('keydown', e => {
+                if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openSongOnYouTube(); }
             });
 
             function decodeIcyText(bytes) {
