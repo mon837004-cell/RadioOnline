@@ -1256,13 +1256,15 @@
             shareBtn.addEventListener('click', async () => {
                 const station = playingStation;
                 if (!station) return;
-                // Enlace a la radio con la emisora dentro; si la emisora no tiene identificador compartible,
-                // se comparte directamente el enlace del stream
-                const canLink = UUID_RE.test(station.id);
+                // Enlace a la radio con la emisora dentro. Con identificador estándar basta ese; si no lo tiene
+                // (por ejemplo, favoritos antiguos), el enlace lleva el stream, el nombre y el país
+                const shareUrl = UUID_RE.test(station.id)
+                    ? `${SHARE_BASE_URL}?emisora=${encodeURIComponent(station.id)}`
+                    : `${SHARE_BASE_URL}?stream=${encodeURIComponent(station.url)}&nombre=${encodeURIComponent(station.name)}&pais=${encodeURIComponent(station.country || '')}`;
                 const shareData = {
                     title: station.name,
                     text: [station.name, station.country].filter(Boolean).join(' · ') + ' — Radio Forocochera',
-                    url: canLink ? `${SHARE_BASE_URL}?emisora=${encodeURIComponent(station.id)}` : station.url
+                    url: shareUrl
                 };
                 try {
                     if (navigator.share) {
@@ -1907,15 +1909,28 @@
             }
 
             async function openSharedStation(listReady) {
-                let id;
-                try { id = new URLSearchParams(location.search).get('emisora'); } catch (_) { return; }
-                if (!id || !UUID_RE.test(id)) return;
+                let params;
+                try { params = new URLSearchParams(location.search); } catch (_) { return; }
+                const id = params.get('emisora');
+                const stream = params.get('stream');
+                const validId = Boolean(id) && UUID_RE.test(id);
+                const validStream = !validId && Boolean(stream) && /^https?:\/\//i.test(stream) && stream.length <= 2000;
+                if (!validId && !validStream) return;
                 try { history.replaceState(null, '', location.pathname + location.hash); } catch (_) {}
 
                 try {
-                    const data = await apiFetch('/stations/byuuid/' + encodeURIComponent(id));
-                    if (!Array.isArray(data) || !data[0]) throw new Error('emisora no encontrada');
-                    const station = normalizeStation(data[0]);
+                    let station;
+                    if (validId) {
+                        const data = await apiFetch('/stations/byuuid/' + encodeURIComponent(id));
+                        if (!Array.isArray(data) || !data[0]) throw new Error('emisora no encontrada');
+                        station = normalizeStation(data[0]);
+                    } else {
+                        station = normalizeStation({
+                            url: stream,
+                            name: (params.get('nombre') || '').slice(0, 100),
+                            country: (params.get('pais') || '').slice(0, 60)
+                        });
+                    }
                     const playback = playStation(station); // empieza a sonar sin esperar a la lista
                     // Cuando la lista está cargada, la emisora aparece la primera y sonando, para poder marcarla como favorita o compartirla
                     try { await listReady; } catch (_) {}
@@ -2030,4 +2045,4 @@
         })();
     </script>
 </body>
-                    </html>
+    </html>
