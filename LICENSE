@@ -1,0 +1,85 @@
+Copyright (c) 2026 [TU NOMBRE O ALIAS]. Todos los derechos reservados.
+Copyright (c) 2026 [YOUR NAME OR ALIAS]. All rights reserved.
+
+================================================================================
+ESPAÑOL
+================================================================================
+
+Radio Forocochera (el "Software"): el código fuente, el diseño, los textos y
+demás elementos de este repositorio son propiedad exclusiva de su autor.
+
+Sin el permiso previo y por escrito del autor, NO está permitido:
+
+  1. Copiar, reproducir o redistribuir el Software, total o parcialmente.
+  2. Modificar el Software o crear obras derivadas a partir de él.
+  3. Publicar el Software, o versiones derivadas, bajo otro nombre o en otro
+     sitio web o repositorio.
+  4. Usar el Software, total o parcialmente, con fines comerciales.
+  5. Presentar el Software como propio.
+
+Se permite ver el código fuente y usar la radio publicada en su dirección web
+con fines personales y no comerciales.
+
+Los derechos que los Términos de Servicio de GitHub conceden a otros usuarios
+sobre los repositorios públicos (ver el código y bifurcarlo dentro de la
+plataforma) no se ven afectados por esta licencia, pero no otorgan ningún otro
+derecho de uso, copia, modificación ni distribución.
+
+COMPONENTES Y SERVICIOS DE TERCEROS
+
+Esta licencia solo se aplica al código y los contenidos creados por el autor.
+Las librerías, servicios y datos de terceros que usa el Software (por ejemplo,
+MapLibre GL JS, la API de Radio Browser, las imágenes de satélite de Esri y las
+tipografías de Google Fonts) pertenecen a sus respectivos titulares y se rigen
+por sus propias licencias y condiciones. Las emisoras de radio y sus streams
+son propiedad de sus respectivos titulares.
+
+EXENCIÓN DE GARANTÍA
+
+EL SOFTWARE SE OFRECE "TAL CUAL", SIN GARANTÍA DE NINGÚN TIPO, EXPRESA O
+IMPLÍCITA. EN NINGÚN CASO EL AUTOR SERÁ RESPONSABLE DE RECLAMACIONES, DAÑOS U
+OTRAS RESPONSABILIDADES DERIVADAS DEL USO DEL SOFTWARE.
+
+Para solicitar permisos o autorizaciones, contacta con el autor a través de su
+perfil de GitHub.
+
+================================================================================
+ENGLISH
+================================================================================
+
+Radio Forocochera (the "Software"): the source code, design, texts and other
+elements in this repository are the exclusive property of their author.
+
+Without the author's prior written permission, you may NOT:
+
+  1. Copy, reproduce or redistribute the Software, in whole or in part.
+  2. Modify the Software or create derivative works from it.
+  3. Publish the Software, or derivatives of it, under another name or on
+     another website or repository.
+  4. Use the Software, in whole or in part, for commercial purposes.
+  5. Present the Software as your own.
+
+You may view the source code and use the radio published at its web address
+for personal, non-commercial purposes.
+
+The rights that the GitHub Terms of Service grant to other users over public
+repositories (viewing the code and forking it within the platform) are not
+affected by this license, but they grant no other right to use, copy, modify
+or distribute the Software.
+
+THIRD-PARTY COMPONENTS AND SERVICES
+
+This license applies only to the code and content created by the author.
+Third-party libraries, services and data used by the Software (for example,
+MapLibre GL JS, the Radio Browser API, Esri satellite imagery and Google
+Fonts) belong to their respective owners and are governed by their own
+licenses and terms. The radio stations and their streams belong to their
+respective owners.
+
+DISCLAIMER OF WARRANTY
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY CLAIM, DAMAGES OR
+OTHER LIABILITY ARISING FROM THE USE OF THE SOFTWARE.
+
+To request permissions, contact the author through their GitHub profile.
