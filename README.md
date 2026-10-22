@@ -15,7 +15,7 @@ Una sola página, sin instalar nada y sin registros. 🎶
 
 [🚀 **Probar ahora**](https://mon837004-cell.github.io/RadioOnline/)
 
-[✨ Características](#-características) · [🌍 Globo](#-el-globo-de-emisoras) · [🔗 Compartir](#-compartir-emisoras) · [🧰 Tecnologías](#-tecnologías) 
+[✨ Características](#-características) · [🌍 Globo](#-el-globo-de-emisoras) · [🔗 Compartir](#-compartir-emisoras) · [🧰 Tecnologías](#-tecnologías)
 
 </div>
 
@@ -86,7 +86,7 @@ Pulsa **🌍 Globo** y explora las emisoras sobre un **globo terráqueo 3D** con
 
 ## 🎶 Títulos de canciones y programas
 
-Muchas emisoras envían el título de lo que suena dentro del propio audio, pero los navegadores no dejan leerlo directamente en la mayoría de ellas.
+La radio muestra el título de lo que suena, sea una canción o un programa, en las emisoras que lo envían, y lo va actualizando mientras escuchas. Si pulsas sobre él, se abre YouTube buscando esa canción. Las emisoras que no incluyen el título en su señal no pueden mostrarlo.
 
 ---
 
@@ -117,8 +117,18 @@ Muchas emisoras envían el título de lo que suena dentro del propio audio, pero
 📦 RadioOnline
  ┣ 📄 index.html   → toda la aplicación (HTML + CSS + JS)
  ┣ 🖼️ Icono.png    → logo de la radio
+ ┣ 📄 LICENSE      → licencia (todos los derechos reservados)
  ┗ 📄 README.md    → este archivo
 ```
+
+---
+
+## 📄 Licencia
+
+© 2026 [TU NOMBRE O ALIAS]. **Todos los derechos reservados.**
+Puedes ver el código y usar la radio libremente, pero no copiarlo, modificarlo ni redistribuirlo sin permiso por escrito del autor. Consulta el archivo [`LICENSE`](LICENSE) para los detalles.
+
+---
 
 ## 🙏 Créditos
 
