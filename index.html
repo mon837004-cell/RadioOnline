@@ -490,6 +490,46 @@
       .rmw-map-dialogbox button { height: 42px; padding: 0 18px; border-radius: 99px; font: inherit; font-weight: 700; cursor: pointer;
         color: var(--text-main); background: transparent; border: 1px solid var(--border-color); }
       .rmw-map-dialogbox button.primary { color: var(--on-accent, #fff); background: var(--accent); border-color: var(--accent); }
+      /* ===== Formulario "Añadir emisora" ===== */
+      .rmw-add-wrap { position: fixed; inset: 0; z-index: 1900; display: grid; place-items: center; padding: 14px; background: rgba(0, 0, 0, .65); }
+      .rmw-add-wrap[hidden] { display: none; }
+      .rmw-add-box { width: min(560px, 100%); max-height: calc(100dvh - 28px); overflow-y: auto; padding: 20px 20px 16px; border-radius: 18px; color: var(--text-main);
+        background: var(--bg-card); border: 1px solid var(--border-color); box-shadow: 0 16px 40px rgba(0, 0, 0, .5); }
+      .rmw-add-box h2 { margin: 0 0 4px; font-size: 18px; }
+      .rmw-add-intro { margin: 0 0 14px; font-size: 13px; line-height: 1.4; color: var(--text-sub); }
+      .rmw-add-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px 12px; }
+      .rmw-add-grid .full { grid-column: 1 / -1; }
+      .rmw-add-grid label { display: flex; flex-direction: column; gap: 4px; font-size: 12px; font-weight: 600; color: var(--text-sub); min-width: 0; }
+      .rmw-add-grid input, .rmw-add-grid select { width: 100%; height: 40px; padding: 0 11px; border-radius: 10px; font: inherit; font-size: 14px; font-weight: 400;
+        color: var(--text-main); background: var(--bg-tools); border: 1px solid var(--border-color); }
+      .rmw-add-grid input:focus, .rmw-add-grid select:focus { outline: 2px solid var(--accent); outline-offset: 1px; }
+      .rmw-add-grid input.bad { border-color: #ef4444; }
+      .rmw-add-geo { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 2px; }
+      .rmw-add-geo button { height: 34px; padding: 0 12px; border-radius: 99px; font: inherit; font-size: 12px; font-weight: 600; cursor: pointer;
+        color: var(--text-main); background: transparent; border: 1px solid var(--border-color); }
+      .rmw-add-geo button:hover { border-color: var(--accent); }
+      .rmw-add-status { min-height: 18px; margin: 12px 0 0; font-size: 13px; line-height: 1.4; color: var(--text-sub); }
+      .rmw-add-status.err { color: #f87171; }
+      .rmw-add-status.ok { color: #4ade80; }
+      .rmw-add-actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 12px; }
+      .rmw-add-actions button { height: 42px; padding: 0 18px; border-radius: 99px; font: inherit; font-weight: 700; cursor: pointer;
+        color: var(--text-main); background: transparent; border: 1px solid var(--border-color); }
+      .rmw-add-actions button.primary { color: var(--on-accent, #fff); background: var(--accent); border-color: var(--accent); }
+      .rmw-add-actions button:disabled { opacity: .4; cursor: not-allowed; }
+      @media (max-width: 520px) { .rmw-add-grid { grid-template-columns: 1fr; } }
+      /* Modo "elegir ubicación" del mapa (formulario de añadir emisora) */
+      .rmw-mapwrap.picking .rmw-map-top, .rmw-mapwrap.picking .rmw-map-list, .rmw-mapwrap.picking .rmw-map-card { display: none !important; }
+      .rmw-pick { position: absolute; z-index: 1200; left: 50%; transform: translateX(-50%); bottom: calc(24px + env(safe-area-inset-bottom, 0px));
+        width: min(460px, calc(100% - 20px)); padding: 14px 16px; border-radius: 18px; color: var(--text-main);
+        background: var(--bg-card); border: 1px solid var(--border-color); box-shadow: 0 12px 32px rgba(0, 0, 0, .5); }
+      .rmw-pick[hidden] { display: none; }
+      .rmw-pick-text { margin: 0 0 10px; font-size: 14px; line-height: 1.4; }
+      .rmw-pick-btns { display: flex; gap: 10px; justify-content: flex-end; }
+      .rmw-pick-btns button { height: 42px; padding: 0 18px; border-radius: 99px; font: inherit; font-weight: 700; cursor: pointer;
+        color: var(--text-main); background: transparent; border: 1px solid var(--border-color); }
+      .rmw-pick-btns button.primary { color: var(--on-accent, #fff); background: var(--accent); border-color: var(--accent); }
+      .rmw-pick-btns button:disabled { opacity: .4; cursor: not-allowed; }
+      .rmw-add-grid input[readonly] { cursor: pointer; }
     </style>
 </head>
 <body>
@@ -532,7 +572,7 @@
                 </button>
             </div>
             <div class="rmw-song" id="rmw-song" role="link" tabindex="0" title="Buscar esta canción en YouTube">
-                <span class="rmw-song-ico" aria-hidden="true"><img src="data:image/png;base64,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" alt="" width="22" height="16" draggable="false"></span>
+                <span class="rmw-song-ico" aria-hidden="true"><img src="https://raw.githubusercontent.com/mon837004-cell/RadioOnline/main/Youtube_logo.png" alt="" width="22" height="16" draggable="false"></span>
                 <div class="rmw-nowplaying" id="rmw-nowplaying"></div>
             </div>
         </div>
@@ -574,6 +614,7 @@
                     <button class="rmw-btn active" id="rmw-all">📚 Catálogo</button>
                     <button class="rmw-btn" id="rmw-favs">⭐ Mis Favoritos</button>
                     <button class="rmw-btn" id="rmw-map">🌍 Explorar</button>
+                    <button class="rmw-btn" id="rmw-add">➕ Añadir emisora</button>
                 </div>
             </div>
             <div class="crate-nav">
@@ -617,6 +658,13 @@
                 <button type="button" class="rmw-mc-star" id="rmw-mc-star" aria-label="Añadir o quitar de favoritos">☆</button>
             </div>
         </div>
+        <div class="rmw-pick" id="rmw-pick" hidden>
+            <p class="rmw-pick-text" id="rmw-pick-text">Toca el mapa en el sitio exacto donde está la emisora.</p>
+            <div class="rmw-pick-btns">
+                <button type="button" id="rmw-pick-cancel">Cancelar</button>
+                <button type="button" class="primary" id="rmw-pick-ok" disabled>Confirmar ubicación</button>
+            </div>
+        </div>
         <div class="rmw-map-dialog" id="rmw-map-dialog" hidden>
             <div class="rmw-map-dialogbox" role="dialog" aria-modal="true" aria-labelledby="rmw-map-dialogtext">
                 <p id="rmw-map-dialogtext">Cargar las emisoras de <b>todo el mundo</b> puede tardar bastante y descargar muchos datos. Se irán mostrando poco a poco y podrás cancelar cuando quieras. ¿Continuar?</p>
@@ -624,6 +672,55 @@
                     <button type="button" id="rmw-map-dialog-no">Cancelar</button>
                     <button type="button" class="primary" id="rmw-map-dialog-yes">Cargar todo</button>
                 </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="rmw-add-wrap" id="rmw-add-wrap" hidden>
+        <div class="rmw-add-box" role="dialog" aria-modal="true" aria-labelledby="rmw-add-title">
+            <h2 id="rmw-add-title">➕ Añadir una emisora a Radio Browser</h2>
+            <p class="rmw-add-intro">Se envía al directorio público de radio-browser.info. Todos los campos son obligatorios, incluida la ubicación.</p>
+            <div class="rmw-add-grid" id="rmw-add-form">
+                <label class="full">Nombre de la emisora
+                    <input id="rmw-add-name" type="text" maxlength="400" autocomplete="off" placeholder="Ej: Radio Ejemplo FM">
+                </label>
+                <label class="full">URL del stream
+                    <input id="rmw-add-url" type="url" inputmode="url" autocomplete="off" placeholder="https://servidor.com/stream.mp3">
+                </label>
+                <label>Página web
+                    <input id="rmw-add-home" type="url" inputmode="url" autocomplete="off" placeholder="https://www.ejemplo.com">
+                </label>
+                <label>URL del logo (png / jpg)
+                    <input id="rmw-add-favicon" type="url" inputmode="url" autocomplete="off" placeholder="https://www.ejemplo.com/logo.png">
+                </label>
+                <label>País
+                    <select id="rmw-add-country"><option value="ES">España</option></select>
+                </label>
+                <label>Provincia / región
+                    <input id="rmw-add-state" type="text" list="rmw-add-states" autocomplete="off" placeholder="Ej: Sevilla">
+                    <datalist id="rmw-add-states"></datalist>
+                </label>
+                <label>Idioma
+                    <input id="rmw-add-lang" type="text" list="rmw-add-langs" autocomplete="off" placeholder="spanish">
+                    <datalist id="rmw-add-langs"></datalist>
+                </label>
+                <label>Etiquetas (separadas por comas)
+                    <input id="rmw-add-tags" type="text" autocomplete="off" placeholder="pop,rock,noticias">
+                </label>
+                <label>Latitud
+                    <input id="rmw-add-lat" type="text" readonly autocomplete="off" placeholder="Elígela en el mapa">
+                </label>
+                <label>Longitud
+                    <input id="rmw-add-lng" type="text" readonly autocomplete="off" placeholder="Elígela en el mapa">
+                </label>
+                <div class="full rmw-add-geo">
+                    <button type="button" id="rmw-add-pick">🗺️ Elegir en el mapa</button>
+                </div>
+            </div>
+            <p class="rmw-add-status" id="rmw-add-status" role="status" aria-live="polite"></p>
+            <div class="rmw-add-actions">
+                <button type="button" id="rmw-add-cancel">Cerrar</button>
+                <button type="button" class="primary" id="rmw-add-send" disabled>Enviar emisora</button>
             </div>
         </div>
     </div>
@@ -753,6 +850,161 @@
             function getVolume() {
                 const value = Number(store.get(STORAGE.volume) ?? 0.7);
                 return Number.isFinite(value) && value >= 0 && value <= 1 ? value : 0.7;
+            }
+
+            // ===== Ubicación aproximada de emisoras de España sin coordenadas =====
+            // Se usa el campo "state" de la emisora (provincia, comunidad o ciudad) y se reparte
+            // cada grupo en espiral alrededor de su centro para que los puntos no se pisen.
+            // kind: 'city' | 'prov' | 'reg'  (determina la separación entre puntos)
+            const SPAIN_PLACES = [
+                // Provincias: [nombre, lat, lng, 'prov', ...alias]
+                ['Álava', 42.85, -2.67, 'prov', 'araba', 'araba alava', 'vitoria', 'vitoria gasteiz'],
+                ['Albacete', 38.99, -1.86, 'prov'],
+                ['Alicante', 38.35, -0.48, 'prov', 'alacant', 'alicante alacant'],
+                ['Almería', 36.84, -2.46, 'prov'],
+                ['Asturias', 43.36, -5.85, 'prov', 'principado de asturias', 'oviedo'],
+                ['Ávila', 40.66, -4.70, 'prov'],
+                ['Badajoz', 38.88, -6.97, 'prov', 'merida'],
+                ['Barcelona', 41.39, 2.17, 'prov'],
+                ['Burgos', 42.34, -3.70, 'prov'],
+                ['Cáceres', 39.47, -6.37, 'prov'],
+                ['Cádiz', 36.53, -6.29, 'prov'],
+                ['Cantabria', 43.46, -3.81, 'prov', 'santander'],
+                ['Castellón', 39.99, -0.04, 'prov', 'castello', 'castellon de la plana', 'castello de la plana'],
+                ['Ciudad Real', 38.99, -3.93, 'prov'],
+                ['Córdoba', 37.89, -4.78, 'prov'],
+                ['A Coruña', 43.37, -8.40, 'prov', 'la coruna', 'coruna', 'a coruna'],
+                ['Cuenca', 40.07, -2.14, 'prov'],
+                ['Girona', 41.98, 2.82, 'prov', 'gerona'],
+                ['Granada', 37.18, -3.60, 'prov'],
+                ['Guadalajara', 40.63, -3.17, 'prov'],
+                ['Gipuzkoa', 43.32, -1.98, 'prov', 'guipuzcoa', 'san sebastian', 'donostia', 'donostia san sebastian'],
+                ['Huelva', 37.26, -6.95, 'prov'],
+                ['Huesca', 42.14, -0.41, 'prov'],
+                ['Illes Balears', 39.57, 2.65, 'prov', 'islas baleares', 'baleares', 'balearic islands', 'balears', 'palma', 'palma de mallorca', 'mallorca'],
+                ['Jaén', 37.78, -3.79, 'prov'],
+                ['La Rioja', 42.47, -2.45, 'prov', 'rioja', 'logrono'],
+                ['Las Palmas', 28.12, -15.43, 'prov', 'las palmas de gran canaria', 'gran canaria'],
+                ['León', 42.60, -5.57, 'prov'],
+                ['Lleida', 41.62, 0.62, 'prov', 'lerida'],
+                ['Lugo', 43.01, -7.56, 'prov'],
+                ['Madrid', 40.42, -3.70, 'prov', 'comunidad de madrid', 'community of madrid'],
+                ['Málaga', 36.72, -4.42, 'prov'],
+                ['Murcia', 37.99, -1.13, 'prov', 'region de murcia'],
+                ['Navarra', 42.82, -1.64, 'prov', 'comunidad foral de navarra', 'navarre', 'nafarroa', 'pamplona', 'iruna'],
+                ['Ourense', 42.34, -7.86, 'prov', 'orense'],
+                ['Palencia', 42.01, -4.53, 'prov'],
+                ['Pontevedra', 42.43, -8.64, 'prov'],
+                ['Salamanca', 40.97, -5.66, 'prov'],
+                ['Santa Cruz de Tenerife', 28.47, -16.25, 'prov', 'tenerife', 'sc de tenerife', 'sta cruz de tenerife'],
+                ['Segovia', 40.95, -4.12, 'prov'],
+                ['Sevilla', 37.39, -5.99, 'prov', 'seville'],
+                ['Soria', 41.76, -2.47, 'prov'],
+                ['Tarragona', 41.12, 1.25, 'prov'],
+                ['Teruel', 40.34, -1.11, 'prov'],
+                ['Toledo', 39.86, -4.02, 'prov'],
+                ['Valencia', 39.47, -0.38, 'prov', 'valencia valencia', 'valencia valencia', 'valència'],
+                ['Valladolid', 41.65, -4.72, 'prov'],
+                ['Bizkaia', 43.26, -2.93, 'prov', 'vizcaya', 'bilbao', 'biscay'],
+                ['Zamora', 41.50, -5.75, 'prov'],
+                ['Zaragoza', 41.65, -0.89, 'prov', 'saragossa'],
+                ['Ceuta', 35.89, -5.32, 'prov'],
+                ['Melilla', 35.29, -2.94, 'prov'],
+                // Islas con identidad propia
+                ['Ibiza', 38.91, 1.43, 'city', 'eivissa', 'ibiza eivissa'],
+                ['Menorca', 39.89, 4.26, 'city', 'mahon', 'minorca'],
+                ['Formentera', 38.70, 1.45, 'city'],
+                ['Fuerteventura', 28.50, -13.86, 'city'],
+                ['Lanzarote', 29.04, -13.59, 'city'],
+                ['La Palma', 28.68, -17.76, 'city'],
+                ['La Gomera', 28.09, -17.11, 'city'],
+                ['El Hierro', 27.74, -18.00, 'city'],
+                // Comunidades pluriprovinciales (centro aproximado, mayor dispersión)
+                ['Andalucía', 37.45, -4.70, 'reg', 'andalusia'],
+                ['Aragón', 41.55, -0.90, 'reg'],
+                ['Canarias', 28.25, -15.90, 'reg', 'islas canarias', 'canary islands'],
+                ['Castilla y León', 41.70, -4.70, 'reg', 'castilla leon', 'castile and leon', 'castilla y leon'],
+                ['Castilla-La Mancha', 39.40, -3.00, 'reg', 'castilla la mancha', 'castile la mancha'],
+                ['Cataluña', 41.70, 1.60, 'reg', 'catalunya', 'catalonia', 'cat'],
+                ['Comunidad Valenciana', 39.50, -0.75, 'reg', 'comunitat valenciana', 'valencian community', 'pais valenciano', 'valenciana'],
+                ['Extremadura', 39.20, -6.20, 'reg'],
+                ['Galicia', 42.75, -8.00, 'reg', 'galiza'],
+                ['País Vasco', 43.00, -2.60, 'reg', 'euskadi', 'basque country', 'pais vasco euskadi'],
+                // Ciudades grandes que a menudo se escriben en lugar de la provincia
+                ['Vigo', 42.24, -8.72, 'city'], ['Gijón', 43.53, -5.66, 'city', 'gijon xixon', 'xixon'],
+                ['Jerez de la Frontera', 36.69, -6.14, 'city', 'jerez'], ['Marbella', 36.51, -4.88, 'city'],
+                ['Cartagena', 37.60, -0.98, 'city'], ['Elche', 38.27, -0.70, 'city', 'elx'],
+                ['Getafe', 40.31, -3.73, 'city'], ['Alcalá de Henares', 40.48, -3.36, 'city'],
+                ['Móstoles', 40.32, -3.87, 'city'], ['Fuenlabrada', 40.28, -3.79, 'city'],
+                ['Leganés', 40.33, -3.76, 'city'], ['Alcorcón', 40.35, -3.82, 'city'],
+                ['Torrejón de Ardoz', 40.46, -3.47, 'city'], ['Alcobendas', 40.54, -3.64, 'city'],
+                ['Badalona', 41.45, 2.25, 'city'], ['L\'Hospitalet de Llobregat', 41.36, 2.10, 'city', 'hospitalet', 'hospitalet de llobregat'],
+                ['Sabadell', 41.55, 2.11, 'city'], ['Terrassa', 41.56, 2.01, 'city', 'tarrasa'],
+                ['Mataró', 41.54, 2.44, 'city'], ['Santiago de Compostela', 42.88, -8.54, 'city', 'santiago'],
+                ['Ferrol', 43.48, -8.23, 'city'], ['Algeciras', 36.13, -5.45, 'city'],
+                ['Benidorm', 38.54, -0.13, 'city'], ['Torrevieja', 37.98, -0.68, 'city'],
+                ['Gandía', 38.97, -0.18, 'city', 'gandia'], ['Ponferrada', 42.55, -6.60, 'city'],
+                ['Talavera de la Reina', 39.96, -4.83, 'city', 'talavera'], ['Dos Hermanas', 37.28, -5.92, 'city'],
+                ['Roquetas de Mar', 36.76, -2.61, 'city'], ['Linares', 38.09, -3.64, 'city'],
+                ['Reus', 41.15, 1.11, 'city'], ['Lorca', 37.67, -1.70, 'city'],
+                ['Telde', 27.99, -15.42, 'city'], ['Aranjuez', 40.03, -3.60, 'city']
+            ];
+            const SPAIN_STEP = { city: 0.0030, prov: 0.0060, reg: 0.0200 }; // grados de separación base por tipo de zona
+            const SPAIN_PREFIXES = /^(provincia de|provincia|comunidad autonoma de|comunidad autonoma|comunidad de|comunidad|region de|ciudad autonoma de|ciudad de|city of|province of|community of|ayuntamiento de|municipio de)\s+/;
+            let spainIndex = null;
+
+            function spainNorm(text) {
+                return String(text || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+                    .replace(/[^a-z0-9]+/g, ' ').trim();
+            }
+
+            function buildSpainIndex() {
+                spainIndex = new Map();
+                SPAIN_PLACES.forEach(p => {
+                    const place = { name: p[0], lat: p[1], lng: p[2], kind: p[3] };
+                    [p[0], ...p.slice(4)].forEach(alias => {
+                        const key = spainNorm(alias);
+                        if (key && !spainIndex.has(key)) spainIndex.set(key, place);
+                    });
+                });
+            }
+
+            // Devuelve la zona de España que corresponde al texto de "state" (o null si no se reconoce)
+            function spainPlaceFor(state) {
+                if (!state) return null;
+                if (!spainIndex) buildSpainIndex();
+                const tryKey = text => {
+                    let key = spainNorm(text);
+                    if (!key) return null;
+                    key = key.replace(SPAIN_PREFIXES, '');
+                    return spainIndex.get(key) || null;
+                };
+                const whole = tryKey(state);
+                if (whole) return whole;
+                const parts = String(state).split(/[,;/|()]|\s-\s/);
+                if (parts.length > 1) {
+                    for (const part of parts) {
+                        const hit = tryKey(part);
+                        if (hit) return hit;
+                    }
+                }
+                return null;
+            }
+
+            function isSpainStation(st) {
+                return !!st && (st.countrycode === 'ES' || st.country === 'Spain');
+            }
+
+            // Espiral de girasol: el punto nº k de una zona se coloca a una distancia creciente del centro,
+            // girando el ángulo áureo, así nunca hay dos puntos encima y la nube queda redonda.
+            function spiralOffset(k, place) {
+                const step = SPAIN_STEP[place.kind] || SPAIN_STEP.prov;
+                const r = step * Math.sqrt(k + 0.6);
+                const a = k * 2.399963;
+                return {
+                    dLat: r * Math.sin(a),
+                    dLng: r * Math.cos(a) / Math.cos(place.lat * Math.PI / 180)
+                };
             }
 
             function makeId(station) {
@@ -1096,7 +1348,7 @@
                       <br>${esc(tags)}
                     </div>
                   </div>
-                  ${stationHasGeo(station) ? `<button class="rmw-map" data-map="${id}" title="Ver ubicación en el globo">
+                  ${stationCanShowOnMap(station) ? `<button class="rmw-map" data-map="${id}" title="Ver ubicación en el globo">
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                       <path d="M12 21.7C17.3 17 20 13 20 9a8 8 0 1 0-16 0c0 4 2.7 8 8 12.7z"/>
                       <circle cx="12" cy="9" r="3"/>
@@ -1627,16 +1879,44 @@
                 mapAccent = getComputedStyle(document.body).getPropertyValue('--accent').trim() || mapAccent;
             }
 
+            function validGeo(raw) {
+                if (!raw || raw.geo_lat == null || raw.geo_long == null) return null;
+                const lat = Number(raw.geo_lat);
+                const lng = Number(raw.geo_long);
+                if (!Number.isFinite(lat) || !Number.isFinite(lng) || Math.abs(lat) > 90 || Math.abs(lng) > 180 || (lat === 0 && lng === 0)) return null;
+                return { lat, lng };
+            }
+
             function buildMapPins(list) {
+                const approxGroups = new Map(); // zona de España -> emisoras sin coordenadas de esa zona
                 list.forEach((raw, index) => {
                     if (!raw || !raw.stationuuid || !(raw.url_resolved || raw.url)) return;
-                    if (raw.geo_lat == null || raw.geo_long == null) return;
-                    const lat = Number(raw.geo_lat);
-                    const lng = Number(raw.geo_long);
-                    if (!Number.isFinite(lat) || !Number.isFinite(lng) || Math.abs(lat) > 90 || Math.abs(lng) > 180 || (lat === 0 && lng === 0)) return;
-                    const station = normalizeStation(raw);
-                    if (mapPins.has(station.id)) return;
-                    mapPins.set(station.id, { id: station.id, station, lat, lng, rank: index }); // rank: las más escuchadas tienen prioridad al mostrar nombres
+                    const geo = validGeo(raw);
+                    if (geo) {
+                        const station = normalizeStation(raw);
+                        if (mapPins.has(station.id)) return;
+                        mapPins.set(station.id, { id: station.id, station, lat: geo.lat, lng: geo.lng, rank: index }); // rank: las más escuchadas tienen prioridad al mostrar nombres
+                        return;
+                    }
+                    // Sin coordenadas: solo en España y si se reconoce la provincia / ciudad
+                    if (!isSpainStation(raw)) return;
+                    const place = spainPlaceFor(raw.state);
+                    if (!place) return;
+                    if (!approxGroups.has(place)) approxGroups.set(place, []);
+                    approxGroups.get(place).push({ raw, index });
+                });
+                // Reparto en espiral dentro de cada zona (orden por id para que la posición de cada emisora sea siempre la misma)
+                approxGroups.forEach((items, place) => {
+                    items.sort((x, y) => (x.raw.stationuuid < y.raw.stationuuid ? -1 : x.raw.stationuuid > y.raw.stationuuid ? 1 : 0));
+                    items.forEach((item, k) => {
+                        const station = normalizeStation(item.raw);
+                        if (mapPins.has(station.id)) return;
+                        const off = spiralOffset(k, place);
+                        mapPins.set(station.id, {
+                            id: station.id, station, lat: place.lat + off.dLat, lng: place.lng + off.dLng,
+                            rank: item.index, approx: true, approxPlace: place.name
+                        });
+                    });
                 });
             }
 
@@ -1747,7 +2027,8 @@
             function showMapCard(st) {
                 mapCardStation = st;
                 mapCardName.textContent = st.name;
-                mapCardMeta.textContent = '🌍 ' + st.country + (st.state ? ' · ' + st.state : '') + (st.bitrate ? ' · ' + Number(st.bitrate) + ' kbps' : '');
+                const cardPin = mapPins.get(st.id);
+                mapCardMeta.textContent = '🌍 ' + st.country + (st.state ? ' · ' + st.state : '') + (st.bitrate ? ' · ' + Number(st.bitrate) + ' kbps' : '') + (cardPin && cardPin.approx ? ' · 📍 ubicación aproximada' : '');
                 mapCardTags.textContent = st.tags ? st.tags.split(',').slice(0, 4).join(' · ') : 'Sin etiquetas';
                 mapCardLogo.textContent = '📻';
                 if (st.favicon) {
@@ -1823,12 +2104,23 @@
                 return Number.isFinite(lat) && Number.isFinite(lng) && Math.abs(lat) <= 90 && Math.abs(lng) <= 180 && !(lat === 0 && lng === 0);
             }
 
+            // ¿Se puede enseñar en el globo? Con coordenadas propias, o (solo España) con provincia / ciudad reconocida
+            function stationCanShowOnMap(st) {
+                return stationHasGeo(st) || (isSpainStation(st) && !!spainPlaceFor(st.state));
+            }
+
             function flyToStation(st) {
-                if (!globeMap || !stationHasGeo(st)) return;
+                if (!globeMap) return;
+                let lat = null;
+                let lng = null;
+                const pin = mapPins.get(st.id);
+                if (stationHasGeo(st)) { lat = st.geo_lat; lng = st.geo_long; }
+                else if (pin) { lat = pin.lat; lng = pin.lng; } // ubicación aproximada
+                if (lat == null) return;
                 mapSpinning = false;
                 mapFocusStation = st;
                 setGlobeActive(st.id); // se marca y su nombre se ve siempre, aunque haya otras emisoras cerca
-                globeMap.flyTo({ center: [st.geo_long, st.geo_lat], zoom: 13, duration: 1800, essential: true });
+                globeMap.flyTo({ center: [lng, lat], zoom: pin && pin.approx ? 11 : 13, duration: 1800, essential: true });
             }
 
             function flyToPlaying() {
@@ -1881,6 +2173,10 @@
                 globeMap.addControl(new maplibregl.NavigationControl({ showCompass: false }), 'top-left');
                 globeMap.on('error', e => console.warn('[globo]', e && e.error ? e.error.message : e));
                 globeMap.on('click', e => {
+                    if (pickActive) {
+                        if (!(e.originalEvent && e.originalEvent.target && e.originalEvent.target.closest && e.originalEvent.target.closest('.maplibregl-marker'))) setPickPoint(e.lngLat);
+                        return;
+                    }
                     const hit = featuresNear(e.point, 14);
                     if (!hit) { hideMapCard(); return; }
                     if (hit.properties.cluster_id != null) {
@@ -1895,7 +2191,7 @@
                     const pin = mapPins.get(hitId) || (hitStation ? { id: hitId, station: hitStation } : null);
                     if (pin) selectGlobeStation(pin);
                 });
-                globeMap.on('mousemove', e => { globeMap.getCanvas().style.cursor = featuresNear(e.point, 10) ? 'pointer' : ''; });
+                globeMap.on('mousemove', e => { globeMap.getCanvas().style.cursor = pickActive ? 'crosshair' : (featuresNear(e.point, 10) ? 'pointer' : ''); });
                 const stopSpin = () => { mapSpinning = false; };
                 globeMap.on('mousedown', stopSpin);
                 globeMap.on('touchstart', stopSpin);
@@ -1975,7 +2271,37 @@
                     out.push(...data);
                     if (data.length < MAP_PAGE) break;
                 }
+                if (country === 'Spain') out.push(...await fetchSpainWithoutGeo(token)); // + las que no tienen coordenadas
                 return out;
+            }
+
+            // Emisoras de España sin coordenadas (se colocarán de forma aproximada según su provincia / ciudad)
+            async function fetchSpainWithoutGeo(token) {
+                const out = [];
+                try {
+                    for (let offset = 0; token === mapLoadToken; offset += MAP_PAGE) {
+                        const params = new URLSearchParams({
+                            has_geo_info: 'false', hidebroken: 'true', order: 'clickcount', reverse: 'true',
+                            country: 'Spain', countryExact: 'true', limit: String(MAP_PAGE), offset: String(offset)
+                        });
+                        const data = await apiFetch('/stations/search?' + params.toString(), 30000);
+                        if (!Array.isArray(data)) break;
+                        out.push(...data.filter(s => s && s.state && !validGeo(s))); // por si la API devolviera también las que sí tienen
+                        if (data.length < MAP_PAGE) break;
+                    }
+                } catch (_) { /* si falla, el mapa sigue con las emisoras que sí tienen coordenadas */ }
+                return out;
+            }
+
+            function approxCount() {
+                let n = 0;
+                mapPins.forEach(p => { if (p.approx) n++; });
+                return n;
+            }
+
+            function mapCountText() {
+                const n = approxCount();
+                return n ? ` (${n} con ubicación aproximada por provincia/ciudad)` : '';
             }
 
             async function allCountryNames() {
@@ -2040,7 +2366,7 @@
                         if (token !== mapLoadToken) return; // cancelada o sustituida por otra carga
                         refreshMapData();
                         hideMapProgress();
-                        setMapInfo(`${mapPins.size} emisoras con ubicación en todo el mundo` + (failed ? ` · ${failed} países no se pudieron cargar` : ''));
+                        setMapInfo(`${mapPins.size} emisoras con ubicación en todo el mundo` + mapCountText() + (failed ? ` · ${failed} países no se pudieron cargar` : ''));
                         if (opts.preferPlaying && mapPins.has(mapActiveId)) {
                             flyToPlaying();
                         } else {
@@ -2052,7 +2378,7 @@
                         mapRaw = await fetchGeoStations(country, token);
                         if (token !== mapLoadToken) return;
                         refreshMapData();
-                        setMapInfo(mapPins.size ? `${mapPins.size} emisoras con ubicación` : '');
+                        setMapInfo(mapPins.size ? `${mapPins.size} emisoras con ubicación` + mapCountText() : '');
                         showMapMsg(mapPins.size ? '' : `No hay emisoras con ubicación en ${country}.`);
                         if (opts.preferPlaying && mapPins.has(mapActiveId)) flyToPlaying(); else fitMapToPins();
                     }
@@ -2164,12 +2490,310 @@
             mapProgCancel.addEventListener('click', () => {
                 cancelMapLoad();
                 refreshMapData();
-                setMapInfo(`Carga cancelada · ${mapPins.size} emisoras con ubicación`);
+                setMapInfo(`Carga cancelada · ${mapPins.size} emisoras con ubicación` + mapCountText());
             });
+
+            // ===== Añadir una emisora a radio-browser.info (todos los campos obligatorios, ubicación incluida) =====
+            const addWrap = document.getElementById('rmw-add-wrap');
+            const addBtn = document.getElementById('rmw-add');
+            const addSend = document.getElementById('rmw-add-send');
+            const addStatus = document.getElementById('rmw-add-status');
+            const addEls = {
+                name: document.getElementById('rmw-add-name'),
+                url: document.getElementById('rmw-add-url'),
+                homepage: document.getElementById('rmw-add-home'),
+                favicon: document.getElementById('rmw-add-favicon'),
+                country: document.getElementById('rmw-add-country'),
+                state: document.getElementById('rmw-add-state'),
+                language: document.getElementById('rmw-add-lang'),
+                tags: document.getElementById('rmw-add-tags'),
+                lat: document.getElementById('rmw-add-lat'),
+                lng: document.getElementById('rmw-add-lng')
+            };
+            const ADD_LABELS = { name: 'nombre', url: 'URL del stream', homepage: 'página web', favicon: 'logo', country: 'país', state: 'provincia / región',
+                language: 'idioma', tags: 'etiquetas', lat: 'ubicación en el mapa', lng: 'ubicación en el mapa' };
+            const ADD_COOLDOWN_MS = 60000; // evita envíos repetidos seguidos
+            const ADD_LAST_KEY = 'rmw_add_last_v1';
+            const SPAIN_BOX = { latMin: 27.4, latMax: 44.0, lngMin: -18.5, lngMax: 4.6 }; // península, Baleares y Canarias
+            const ADD_LANGS = ['spanish', 'catalan', 'galician', 'basque', 'english', 'french', 'portuguese', 'german', 'italian', 'arabic', 'romanian'];
+            let addBusy = false;
+            let addCountriesLoaded = false;
+
+            function addIsUrl(text) {
+                try { const u = new URL(String(text).trim()); return (u.protocol === 'http:' || u.protocol === 'https:') && !!u.hostname.includes('.'); } catch (_) { return false; }
+            }
+
+            function addNum(text) {
+                const t = String(text).trim().replace(',', '.');
+                if (!/^-?\d+(\.\d+)?$/.test(t)) return NaN;
+                return Number(t);
+            }
+
+            // Devuelve { values, errors: {campo: mensaje} }; el formulario solo se puede enviar sin errores
+            function addValidate() {
+                const v = {
+                    name: addEls.name.value.trim(),
+                    url: addEls.url.value.trim(),
+                    homepage: addEls.homepage.value.trim(),
+                    favicon: addEls.favicon.value.trim(),
+                    countrycode: addEls.country.value.trim().toUpperCase(),
+                    state: addEls.state.value.trim(),
+                    language: addEls.language.value.trim().toLowerCase(),
+                    tags: addEls.tags.value.split(',').map(t => t.trim().toLowerCase()).filter(Boolean).join(','),
+                    geo_lat: addNum(addEls.lat.value),
+                    geo_long: addNum(addEls.lng.value)
+                };
+                const e = {};
+                if (v.name.length < 2) e.name = 'falta el nombre';
+                if (!addIsUrl(v.url)) e.url = 'falta la URL del stream (debe empezar por http:// o https://)';
+                if (!addIsUrl(v.homepage)) e.homepage = 'falta la página web (con http:// o https://)';
+                if (!addIsUrl(v.favicon)) e.favicon = 'falta la URL del logo (con http:// o https://)';
+                if (!/^[A-Z]{2}$/.test(v.countrycode)) e.country = 'falta el país';
+                if (v.state.length < 2) e.state = 'falta la provincia o región';
+                if (v.language.length < 2) e.language = 'falta el idioma';
+                if (!v.tags) e.tags = 'falta al menos una etiqueta';
+                if (!Number.isFinite(v.geo_lat) || Math.abs(v.geo_lat) > 90) e.lat = 'falta la ubicación (pulsa «Elegir en el mapa»)';
+                if (!Number.isFinite(v.geo_long) || Math.abs(v.geo_long) > 180) e.lng = 'falta la ubicación (pulsa «Elegir en el mapa»)';
+                if (!e.lat && !e.lng && v.geo_lat === 0 && v.geo_long === 0) e.lat = 'las coordenadas 0, 0 no son válidas';
+                if (!e.lat && !e.lng && v.countrycode === 'ES' &&
+                    (v.geo_lat < SPAIN_BOX.latMin || v.geo_lat > SPAIN_BOX.latMax || v.geo_long < SPAIN_BOX.lngMin || v.geo_long > SPAIN_BOX.lngMax)) {
+                    e.lat = 'la ubicación elegida no cae en España (vuelve a elegirla en el mapa)';
+                }
+                return { values: v, errors: e };
+            }
+
+            function addSetStatus(text, kind) {
+                addStatus.textContent = text || '';
+                addStatus.className = 'rmw-add-status' + (kind ? ' ' + kind : '');
+            }
+
+            function addRefresh() {
+                const { errors } = addValidate();
+                const keys = Object.keys(errors);
+                addSend.disabled = addBusy || keys.length > 0;
+                if (addBusy) return;
+                if (keys.length) {
+                    const empty = keys.filter(k => !(addEls[k].value || '').trim());
+                    addSetStatus(empty.length
+                        ? 'Falta por rellenar: ' + [...new Set(empty.map(k => ADD_LABELS[k]))].join(', ') + '.'
+                        : 'Revisa: ' + errors[keys[0]] + '.');
+                } else {
+                    addSetStatus('Todo listo para enviar.', 'ok');
+                }
+                Object.keys(addEls).forEach(k => addEls[k].classList.toggle('bad', !!errors[k] && !!(addEls[k].value || '').trim()));
+            }
+
+            async function addLoadCountries() {
+                if (addCountriesLoaded) return;
+                addCountriesLoaded = true;
+                let names = null;
+                try { names = new Intl.DisplayNames(['es'], { type: 'region' }); } catch (_) {}
+                let codes = [];
+                try {
+                    const list = await apiFetch('/countrycodes?hidebroken=true');
+                    if (Array.isArray(list)) codes = list.filter(c => c && /^[A-Za-z]{2}$/.test(c.name || '')).map(c => c.name.toUpperCase());
+                } catch (_) {}
+                if (!codes.length) codes = ['ES', 'PT', 'FR', 'IT', 'DE', 'GB', 'US', 'MX', 'AR', 'CO', 'CL'];
+                if (!codes.includes('ES')) codes.push('ES');
+                const items = codes.map(code => {
+                    let label = code;
+                    try { label = (names && names.of(code)) || code; } catch (_) {}
+                    return { code, label };
+                }).sort((a, b) => a.label.localeCompare(b.label, 'es'));
+                const current = addEls.country.value || 'ES';
+                addEls.country.innerHTML = items.map(i => `<option value="${i.code}">${esc(i.label)}</option>`).join('');
+                addEls.country.value = items.some(i => i.code === current) ? current : 'ES';
+                addRefresh();
+            }
+
+            function addFillDatalists() {
+                const states = document.getElementById('rmw-add-states');
+                if (!states.children.length) {
+                    states.innerHTML = SPAIN_PLACES.filter(p => p[3] === 'prov' || p[3] === 'reg').map(p => `<option value="${esc(p[0])}"></option>`).join('');
+                }
+                const langs = document.getElementById('rmw-add-langs');
+                if (!langs.children.length) langs.innerHTML = ADD_LANGS.map(l => `<option value="${l}"></option>`).join('');
+            }
+
+            // POST con formulario (sin cabeceras especiales, así el navegador no pide permiso previo al servidor)
+            async function apiPost(path, params, timeoutMs = 15000) {
+                let lastError;
+                for (let i = 0; i < API_SERVERS.length; i++) {
+                    const index = (apiIndex + i) % API_SERVERS.length;
+                    const controller = new AbortController();
+                    const timer = setTimeout(() => controller.abort(), timeoutMs);
+                    try {
+                        const response = await fetch(API_SERVERS[index] + path, {
+                            method: 'POST', body: new URLSearchParams(params), signal: controller.signal
+                        });
+                        const data = await response.json().catch(() => null);
+                        if (!response.ok && !data) throw new Error('HTTP ' + response.status);
+                        apiIndex = index;
+                        return data;
+                    } catch (error) {
+                        lastError = error;
+                    } finally {
+                        clearTimeout(timer);
+                    }
+                }
+                throw lastError || new Error('Sin conexión con el directorio');
+            }
+
+            function openAddDialog() {
+                addFillDatalists();
+                addWrap.hidden = false;
+                document.documentElement.style.overflow = 'hidden';
+                addLoadCountries();
+                addRefresh();
+                addEls.name.focus();
+            }
+
+            function closeAddDialog() {
+                if (addBusy) return;
+                addWrap.hidden = true;
+                if (!mapWrap.classList.contains('open')) document.documentElement.style.overflow = '';
+            }
+
+            async function submitAddStation() {
+                const { values, errors } = addValidate();
+                if (Object.keys(errors).length || addBusy) return;
+                const last = Number(store.get(ADD_LAST_KEY)) || 0;
+                const wait = ADD_COOLDOWN_MS - (Date.now() - last);
+                if (wait > 0) { addSetStatus(`Espera ${Math.ceil(wait / 1000)} s antes de enviar otra emisora.`, 'err'); return; }
+                addBusy = true;
+                addSend.disabled = true;
+                try {
+                    addSetStatus('Comprobando que la emisora no esté ya en el directorio…');
+                    try {
+                        const found = await apiFetch('/stations/byurl?url=' + encodeURIComponent(values.url));
+                        if (Array.isArray(found) && found.length) {
+                            addSetStatus(`Esa URL ya está en Radio Browser como «${found[0].name || 'sin nombre'}». No se envía de nuevo.`, 'err');
+                            return;
+                        }
+                    } catch (_) { /* si falla la comprobación se intenta el envío igualmente */ }
+                    addSetStatus('Enviando…');
+                    const reply = await apiPost('/add', {
+                        name: values.name, url: values.url, homepage: values.homepage, favicon: values.favicon,
+                        countrycode: values.countrycode, state: values.state, language: values.language, tags: values.tags,
+                        geo_lat: String(values.geo_lat), geo_long: String(values.geo_long)
+                    });
+                    if (reply && (reply.ok === true || reply.ok === 'true')) {
+                        store.set(ADD_LAST_KEY, String(Date.now()));
+                        Object.values(addEls).forEach(el => { if (el.tagName === 'INPUT') el.value = ''; });
+                        addSetStatus('✅ Emisora enviada a Radio Browser. Puede tardar en aparecer en el catálogo.', 'ok');
+                        showToast('✅ Emisora enviada a Radio Browser', 4000);
+                        addBusy = false;
+                        addSend.disabled = true;
+                        return;
+                    }
+                    addSetStatus('Radio Browser no la ha aceptado: ' + ((reply && reply.message) || 'respuesta no válida') + '.', 'err');
+                } catch (_) {
+                    addSetStatus('No se pudo enviar. Comprueba la conexión; si persiste, puede que el navegador bloquee el envío a Radio Browser.', 'err');
+                } finally {
+                    addBusy = false;
+                    if (addStatus.className.indexOf('ok') === -1) addSend.disabled = Object.keys(addValidate().errors).length > 0;
+                }
+            }
+
+            addBtn.addEventListener('click', openAddDialog);
+            document.getElementById('rmw-add-cancel').addEventListener('click', closeAddDialog);
+            addSend.addEventListener('click', submitAddStation);
+            Object.values(addEls).forEach(el => { el.addEventListener('input', addRefresh); el.addEventListener('change', addRefresh); });
+            document.addEventListener('keydown', e => { if (e.key === 'Escape' && !addWrap.hidden) closeAddDialog(); });
+
+            // ----- Elegir la ubicación tocando el mapa -----
+            const pickBar = document.getElementById('rmw-pick');
+            const pickText = document.getElementById('rmw-pick-text');
+            const pickOk = document.getElementById('rmw-pick-ok');
+            let pickActive = false;
+            let pickMarker = null;
+            let pickPoint = null;
+
+            function setPickPoint(lngLat) {
+                const p = typeof lngLat.wrap === 'function' ? lngLat.wrap() : lngLat;
+                pickPoint = { lat: p.lat, lng: p.lng };
+                if (!pickMarker) {
+                    pickMarker = new maplibregl.Marker({ color: mapAccent, draggable: true }).setLngLat([p.lng, p.lat]).addTo(globeMap);
+                    pickMarker.on('dragend', () => setPickPoint(pickMarker.getLngLat()));
+                } else {
+                    pickMarker.setLngLat([p.lng, p.lat]);
+                }
+                pickText.innerHTML = `📍 <b>${p.lat.toFixed(5)}, ${p.lng.toFixed(5)}</b><br>Toca otro sitio o arrastra la chincheta para ajustarla.`;
+                pickOk.disabled = false;
+            }
+
+            function endPick(confirmed) {
+                if (!pickActive) return;
+                pickActive = false;
+                const point = pickPoint;
+                if (pickMarker) { pickMarker.remove(); pickMarker = null; }
+                pickPoint = null;
+                pickBar.hidden = true;
+                mapWrap.classList.remove('picking');
+                showMapMsg('');
+                if (globeMap) globeMap.getCanvas().style.cursor = '';
+                closeMap();
+                addWrap.hidden = false;
+                document.documentElement.style.overflow = 'hidden';
+                if (confirmed && point) {
+                    addEls.lat.value = point.lat.toFixed(5);
+                    addEls.lng.value = point.lng.toFixed(5);
+                }
+                addRefresh();
+            }
+
+            async function startPick() {
+                if (pickActive || addBusy) return;
+                pickActive = true;
+                addWrap.hidden = true; // el formulario se conserva tal cual, solo se oculta
+                hideMapCard();
+                mapSpinning = false;
+                mapWrap.classList.add('open', 'picking');
+                mapBtn.classList.add('active');
+                document.documentElement.style.overflow = 'hidden';
+                document.body.style.overflow = 'hidden';
+                pickPoint = null;
+                pickOk.disabled = true;
+                pickText.textContent = 'Toca el mapa en el sitio exacto donde está la emisora.';
+                pickBar.hidden = false;
+                try {
+                    showMapMsg('Cargando el mapa…');
+                    await ensureGlobe();
+                    if (!pickActive) return;
+                    showMapMsg('');
+                    globeMap.resize();
+                    readAccent();
+                    applyGlobeStyle();
+                    globeMap.getCanvas().style.cursor = 'crosshair';
+                    const lat = addNum(addEls.lat.value);
+                    const lng = addNum(addEls.lng.value);
+                    const place = addEls.country.value === 'ES' ? spainPlaceFor(addEls.state.value) : null;
+                    if (Number.isFinite(lat) && Number.isFinite(lng) && Math.abs(lat) <= 90 && Math.abs(lng) <= 180 && !(lat === 0 && lng === 0)) {
+                        setPickPoint({ lat, lng }); // ya había una ubicación elegida: se muestra para ajustarla
+                        globeMap.flyTo({ center: [lng, lat], zoom: 12, duration: 900, essential: true });
+                    } else if (place) {
+                        globeMap.flyTo({ center: [place.lng, place.lat], zoom: place.kind === 'city' ? 11 : place.kind === 'prov' ? 9 : 7, duration: 1200, essential: true });
+                    } else if (addEls.country.value === 'ES') {
+                        globeMap.flyTo({ center: [-3.7, 40.2], zoom: 5, duration: 1200, essential: true });
+                    } else {
+                        globeMap.flyTo({ center: [0, 25], zoom: 2, duration: 1200, essential: true });
+                    }
+                } catch (_) {
+                    endPick(false);
+                    addSetStatus('No se pudo cargar el mapa. Comprueba la conexión y vuelve a intentarlo.', 'err');
+                }
+            }
+
+            document.getElementById('rmw-add-pick').addEventListener('click', startPick);
+            addEls.lat.addEventListener('click', startPick); // los campos de coordenadas solo se rellenan desde el mapa
+            addEls.lng.addEventListener('click', startPick);
+            pickOk.addEventListener('click', () => endPick(true));
+            document.getElementById('rmw-pick-cancel').addEventListener('click', () => endPick(false));
 
             mapBtn.addEventListener('click', () => { mapWrap.classList.contains('open') ? closeMapToList() : openMap(); });
             mapListBtn.addEventListener('click', closeMapToList);
             document.addEventListener('keydown', e => {
+                if (e.key === 'Escape' && pickActive) { endPick(false); return; }
                 if (e.key !== 'Escape' || !mapWrap.classList.contains('open')) return;
                 if (!mapDialog.hidden) document.getElementById('rmw-map-dialog-no').click(); else closeMapToList();
             });
