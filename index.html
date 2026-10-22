@@ -471,6 +471,8 @@
         display: flex; flex-direction: column; gap: 8px; }
       .rmw-map-top select { width: 100%; height: 42px; padding: 0 14px; border-radius: 99px; font: inherit; font-size: 16px; font-weight: 600; cursor: pointer;
         color: var(--text-main); background: color-mix(in srgb, var(--bg-card) 92%, transparent); border: 1px solid var(--border-color); box-shadow: 0 4px 14px rgba(0, 0, 0, .4); }
+      .rmw-map-selects { display: flex; gap: 8px; }
+      .rmw-map-selects select { flex: 1 1 0; min-width: 0; text-overflow: ellipsis; }
       .rmw-map-prog { padding: 10px 14px; border-radius: 16px; font-family: var(--f-mono); font-size: 12px; color: var(--text-main);
         background: color-mix(in srgb, var(--bg-card) 92%, transparent); border: 1px solid var(--border-color); box-shadow: 0 4px 14px rgba(0, 0, 0, .4); }
       .rmw-map-prog[hidden] { display: none; }
@@ -661,7 +663,10 @@
         <div id="rmw-map-canvas"></div>
         <div class="rmw-map-msg" id="rmw-map-msg" style="display:none"></div>
         <div class="rmw-map-top">
-            <select id="rmw-map-country" aria-label="País del globo"></select>
+            <div class="rmw-map-selects">
+                <select id="rmw-map-country" aria-label="País del globo"></select>
+                <select id="rmw-map-genre" aria-label="Género del globo"></select>
+            </div>
             <div class="rmw-map-prog" id="rmw-map-prog" hidden>
                 <div class="rmw-map-bar"><i id="rmw-map-barfill"></i></div>
                 <div class="rmw-map-progrow">
@@ -2288,6 +2293,7 @@
 
             // ----- País elegido en el globo y carga de emisoras con ubicación -----
             const mapCountrySelect = document.getElementById('rmw-map-country');
+            const mapGenreSelect = document.getElementById('rmw-map-genre');
             const mapProg = document.getElementById('rmw-map-prog');
             const mapBarFill = document.getElementById('rmw-map-barfill');
             const mapProgText = document.getElementById('rmw-map-progtext');
@@ -2298,6 +2304,7 @@
             const MAP_PARALLEL = 5;          // países que se piden a la vez en "Todos los países"
             const MAP_REFRESH_EVERY = 25;    // cada cuántos países se actualiza el globo mientras carga
             let mapCountry = null;           // país del globo ('' = todo el mundo); null = aún sin elegir
+            let mapGenre = '';               // género del globo ('' = todos los géneros)
             let mapRaw = [];                 // emisoras descargadas, tal cual llegan de la API
             let mapLoadToken = 0;            // cada carga nueva invalida a la anterior
             let mapLoadActive = false;
@@ -2329,6 +2336,16 @@
                 mapCountrySelect.value = mapCountry;
             }
 
+            // Mismas opciones que el desplegable de géneros de la pantalla principal
+            function syncMapGenreOptions() {
+                mapGenreSelect.innerHTML = genreSelect.innerHTML;
+                mapGenreSelect.value = mapGenre || 'Todos los géneros';
+            }
+
+            function mapGenreFromSelect() {
+                return mapGenreSelect.value === 'Todos los géneros' ? '' : mapGenreSelect.value;
+            }
+
             function refreshMapData() {
                 mapPins.clear();
                 buildMapPins([...mapRaw].sort((x, y) => (y.clickcount || 0) - (x.clickcount || 0))); // las más escuchadas primero
@@ -2345,6 +2362,7 @@
                         has_geo_info: 'true', hidebroken: 'true', order: 'clickcount', reverse: 'true',
                         country, countryExact: 'true', limit: String(MAP_PAGE), offset: String(offset)
                     });
+                    if (mapGenre) params.set('tag', mapGenre.toLowerCase());
                     const data = await apiFetch('/stations/search?' + params.toString(), 30000);
                     if (!Array.isArray(data)) throw new Error('respuesta no válida');
                     out.push(...data);
@@ -2363,6 +2381,7 @@
                             has_geo_info: 'false', hidebroken: 'true', order: 'clickcount', reverse: 'true',
                             country: 'Spain', countryExact: 'true', limit: String(MAP_PAGE), offset: String(offset)
                         });
+                        if (mapGenre) params.set('tag', mapGenre.toLowerCase());
                         const data = await apiFetch('/stations/search?' + params.toString(), 30000);
                         if (!Array.isArray(data)) break;
                         out.push(...data.filter(s => s && s.state && !validGeo(s))); // por si la API devolviera también las que sí tienen
@@ -2458,7 +2477,7 @@
                         if (token !== mapLoadToken) return;
                         refreshMapData();
                         setMapInfo(mapPins.size ? `${mapPins.size} emisoras con ubicación` + mapCountText() : '');
-                        showMapMsg(mapPins.size ? '' : `No hay emisoras con ubicación en ${country}.`);
+                        showMapMsg(mapPins.size ? '' : `No hay emisoras con ubicación en ${country}` + (mapGenre ? ` del género ${mapGenre}` : '') + '.');
                         if (opts.preferPlaying && mapPins.has(mapActiveId)) flyToPlaying(); else fitMapToPins();
                     }
                 } catch (_) {
@@ -2486,6 +2505,7 @@
                 mapSpinning = false;
                 mapDialog.hidden = true;
                 mapCountrySelect.value = mapCountry === null ? '' : mapCountry;
+                mapGenreSelect.value = mapGenre || 'Todos los géneros';
                 if (mapLoadActive) { cancelMapLoad(); mapNeedsReload = true; } // no se sigue descargando con el globo cerrado
                 if (globeMap) globeMap.stop();
                 stationPlayedFromMap = null;
@@ -2528,12 +2548,17 @@
                 mapBtn.classList.add('active');
                 document.documentElement.style.overflow = 'hidden';
                 document.body.style.overflow = 'hidden';
-                if (mapCountry === null) mapCountry = countrySelect.value || DEFAULT_COUNTRY; // empieza por el país elegido en la lista principal
+                if (mapCountry === null) {
+                    mapCountry = countrySelect.value || DEFAULT_COUNTRY; // empieza por el país elegido en la lista principal
+                    mapGenre = genreSelect.value === 'Todos los géneros' ? '' : genreSelect.value; // y por su género
+                }
+                if (target && mapGenre) { mapGenre = ''; mapNeedsReload = true; } // para que la emisora de destino aparezca en el globo
                 if (target && mapCountry !== '' && target.country && target.country !== 'País desconocido' && mapCountry !== target.country) {
                     mapCountry = target.country; // el globo carga el país de esa emisora
                     mapNeedsReload = true;
                 }
                 syncMapCountryOptions();
+                syncMapGenreOptions();
                 if (globeMap && mapPins.size && !mapNeedsReload) {
                     globeMap.resize();
                     readAccent();
@@ -2556,15 +2581,23 @@
 
             mapCountrySelect.addEventListener('change', () => {
                 if (mapCountrySelect.value === '') { mapDialog.hidden = false; return; } // "Todos los países": primero se avisa
+                mapGenre = mapGenreFromSelect();
+                loadMapStations(mapCountrySelect.value);
+            });
+            mapGenreSelect.addEventListener('change', () => {
+                if (mapCountrySelect.value === '') { mapDialog.hidden = false; return; } // con todo el mundo también se avisa
+                mapGenre = mapGenreFromSelect();
                 loadMapStations(mapCountrySelect.value);
             });
             document.getElementById('rmw-map-dialog-yes').addEventListener('click', () => {
                 mapDialog.hidden = true;
+                mapGenre = mapGenreFromSelect();
                 loadMapStations('');
             });
             document.getElementById('rmw-map-dialog-no').addEventListener('click', () => {
                 mapDialog.hidden = true;
                 mapCountrySelect.value = mapCountry === null ? '' : mapCountry; // se queda como estaba
+                mapGenreSelect.value = mapGenre || 'Todos los géneros';
             });
             mapProgCancel.addEventListener('click', () => {
                 cancelMapLoad();
@@ -3554,4 +3587,4 @@
         })();
     </script>
 </body>
-    </html>
+</html>
