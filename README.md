@@ -86,7 +86,7 @@ Pulsa **🌍 Globo** y explora las emisoras sobre un **globo terráqueo 3D** con
 
 ## 🎶 Títulos de canciones y programas
 
-Muchas emisoras envían el título de lo que suena dentro del propio audio, pero los navegadores no dejan leerlo directamente en la mayoría de ellas. Las emisoras que no incluyen el título en su señal no se pueden arreglar con esto.
+Muchas emisoras envían el título de lo que suena dentro del propio audio, pero los navegadores no dejan leerlo directamente en la mayoría de ellas.
 
 ---
 
@@ -119,8 +119,6 @@ Muchas emisoras envían el título de lo que suena dentro del propio audio, pero
  ┣ 🖼️ Icono.png    → logo de la radio
  ┗ 📄 README.md    → este archivo
 ```
-
----
 
 ## 🙏 Créditos
 
