@@ -424,6 +424,59 @@
         .rmw-actions::-webkit-scrollbar { display: none; }
         .rmw-results { gap: 16px; padding-top: 22px; padding-bottom: 28px; }
       }
+      /* ---- Globo terráqueo de emisoras (MapLibre) ---- */
+      .rmw-mapwrap { display: none; position: fixed; inset: 0; z-index: 1800; overflow: hidden;
+        background: radial-gradient(ellipse at center, color-mix(in srgb, var(--bg-card) 80%, #000) 0%, var(--bg-main) 70%); }
+      .rmw-mapwrap.open { display: block; }
+      #rmw-map-canvas { width: 100%; height: 100%; }
+      .rmw-mapwrap .maplibregl-ctrl-top-left { top: env(safe-area-inset-top, 0px); }
+      .rmw-map-msg { position: absolute; inset: 0; z-index: 500; display: grid; place-items: center; padding: 20px; text-align: center; pointer-events: none;
+        color: var(--text-sub); font-family: var(--f-mono); font-size: 13px; text-shadow: 0 0 6px #000; }
+      .rmw-map-list { position: absolute; z-index: 1100; left: 50%; bottom: calc(24px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%);
+        height: 48px; padding: 0 24px; border-radius: 99px; cursor: pointer; white-space: nowrap; font: inherit; font-size: 15px; font-weight: 700;
+        color: var(--on-accent, #fff); background: var(--accent); border: 0; box-shadow: 0 8px 24px rgba(0, 0, 0, .45); }
+      .rmw-map-list:active { transform: translateX(-50%) scale(.96); }
+      .rmw-map-top { position: absolute; z-index: 1100; top: calc(10px + env(safe-area-inset-top, 0px)); left: 52px; right: 10px; max-width: 460px;
+        display: flex; flex-direction: column; gap: 8px; }
+      .rmw-map-top select { width: 100%; height: 42px; padding: 0 14px; border-radius: 99px; font: inherit; font-size: 16px; font-weight: 600; cursor: pointer;
+        color: var(--text-main); background: color-mix(in srgb, var(--bg-card) 92%, transparent); border: 1px solid var(--border-color); box-shadow: 0 4px 14px rgba(0, 0, 0, .4); }
+      .rmw-map-prog { padding: 10px 14px; border-radius: 16px; font-family: var(--f-mono); font-size: 12px; color: var(--text-main);
+        background: color-mix(in srgb, var(--bg-card) 92%, transparent); border: 1px solid var(--border-color); box-shadow: 0 4px 14px rgba(0, 0, 0, .4); }
+      .rmw-map-prog[hidden] { display: none; }
+      .rmw-map-bar { height: 8px; border-radius: 99px; overflow: hidden; background: color-mix(in srgb, var(--text-sub) 30%, transparent); }
+      .rmw-map-bar i { display: block; height: 100%; width: 0; background: var(--accent); transition: width .25s; }
+      .rmw-map-progrow { display: flex; justify-content: space-between; align-items: center; gap: 10px; margin-top: 8px; }
+      .rmw-map-progrow button { height: 30px; padding: 0 12px; border-radius: 99px; font: inherit; font-size: 12px; font-weight: 700; cursor: pointer;
+        color: var(--text-main); background: transparent; border: 1px solid var(--border-color); }
+      .rmw-map-info { align-self: flex-start; padding: 4px 12px; border-radius: 99px; font-family: var(--f-mono); font-size: 12px; color: var(--text-main);
+        background: color-mix(in srgb, var(--bg-card) 88%, transparent); }
+      .rmw-map-info:empty { display: none; }
+      /* Ficha de la emisora al tocar un punto del globo */
+      .rmw-map-card { position: absolute; z-index: 1100; left: 50%; transform: translateX(-50%); bottom: calc(84px + env(safe-area-inset-bottom, 0px));
+        width: min(calc(100% - 24px), 460px); box-sizing: border-box; display: flex; align-items: center; gap: 12px; padding: 12px; border-radius: 18px;
+        color: var(--text-main); background: color-mix(in srgb, var(--bg-card) 96%, transparent); border: 1px solid var(--border-color); box-shadow: 0 10px 30px rgba(0, 0, 0, .5); }
+      .rmw-map-card[hidden] { display: none; }
+      .rmw-mc-logo { flex: none; width: 56px; height: 56px; border-radius: 8px; display: grid; place-items: center; font-size: 26px; overflow: hidden;
+        background: var(--bg-tools); border: 1px solid var(--border-color); }
+      .rmw-mc-logo img { width: 100%; height: 100%; object-fit: contain; padding: 3px; box-sizing: border-box; }
+      .rmw-mc-info { flex: 1; min-width: 0; }
+      .rmw-mc-name { font-weight: 700; font-size: 15px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+      .rmw-mc-meta, .rmw-mc-tags { margin-top: 2px; font-family: var(--f-mono); font-size: 11px; color: var(--text-sub); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+      .rmw-mc-actions { flex: none; display: flex; align-items: center; gap: 8px; }
+      .rmw-mc-play { width: 46px; height: 46px; border-radius: 50%; border: 0; padding: 0; cursor: pointer; font-size: 18px; color: var(--on-accent, #fff); background: var(--accent); }
+      .rmw-mc-star { width: 38px; height: 38px; border-radius: 50%; padding: 0; cursor: pointer; font-size: 18px; color: var(--text-main); background: transparent; border: 1px solid var(--border-color); }
+      .rmw-mc-star.is-fav { color: #ffd166; border-color: #ffd166; }
+      .rmw-mc-close { position: absolute; top: -11px; right: -6px; width: 26px; height: 26px; padding: 0; border-radius: 50%; cursor: pointer; font-size: 13px;
+        color: var(--text-sub); background: var(--bg-card); border: 1px solid var(--border-color); }
+      .rmw-map-dialog { position: absolute; inset: 0; z-index: 1300; display: grid; place-items: center; padding: 20px; background: rgba(0, 0, 0, .6); }
+      .rmw-map-dialog[hidden] { display: none; }
+      .rmw-map-dialogbox { max-width: 380px; padding: 20px; border-radius: 18px; font-size: 15px; line-height: 1.45; color: var(--text-main);
+        background: var(--bg-card); border: 1px solid var(--border-color); box-shadow: 0 16px 40px rgba(0, 0, 0, .5); }
+      .rmw-map-dialogbox p { margin: 0; }
+      .rmw-map-dialogbox div { display: flex; gap: 10px; justify-content: flex-end; margin-top: 16px; }
+      .rmw-map-dialogbox button { height: 42px; padding: 0 18px; border-radius: 99px; font: inherit; font-weight: 700; cursor: pointer;
+        color: var(--text-main); background: transparent; border: 1px solid var(--border-color); }
+      .rmw-map-dialogbox button.primary { color: var(--on-accent, #fff); background: var(--accent); border-color: var(--accent); }
     </style>
 </head>
 <body>
@@ -507,6 +560,7 @@
                 <div class="rmw-actions">
                     <button class="rmw-btn active" id="rmw-all">📚 Catálogo</button>
                     <button class="rmw-btn" id="rmw-favs">⭐ Favoritos</button>
+                    <button class="rmw-btn" id="rmw-map">🌍 Globo</button>
                 </div>
             </div>
             <div class="crate-nav">
@@ -520,6 +574,45 @@
             </div>
         </div>
     </section>
+
+    <div class="rmw-mapwrap" id="rmw-mapwrap">
+        <div id="rmw-map-canvas"></div>
+        <div class="rmw-map-msg" id="rmw-map-msg" style="display:none"></div>
+        <div class="rmw-map-top">
+            <select id="rmw-map-country" aria-label="País del globo"></select>
+            <div class="rmw-map-prog" id="rmw-map-prog" hidden>
+                <div class="rmw-map-bar"><i id="rmw-map-barfill"></i></div>
+                <div class="rmw-map-progrow">
+                    <span id="rmw-map-progtext"></span>
+                    <button type="button" id="rmw-map-progcancel">Cancelar</button>
+                </div>
+            </div>
+            <div class="rmw-map-info" id="rmw-map-info"></div>
+        </div>
+        <button type="button" class="rmw-map-list" id="rmw-map-list" aria-label="Volver al listado">☰ Lista</button>
+        <div class="rmw-map-card" id="rmw-map-card" hidden>
+            <button type="button" class="rmw-mc-close" id="rmw-mc-close" aria-label="Cerrar ficha">✕</button>
+            <div class="rmw-mc-logo" id="rmw-mc-logo"></div>
+            <div class="rmw-mc-info">
+                <div class="rmw-mc-name" id="rmw-mc-name"></div>
+                <div class="rmw-mc-meta" id="rmw-mc-meta"></div>
+                <div class="rmw-mc-tags" id="rmw-mc-tags"></div>
+            </div>
+            <div class="rmw-mc-actions">
+                <button type="button" class="rmw-mc-play" id="rmw-mc-play" aria-label="Reproducir o pausar">▶</button>
+                <button type="button" class="rmw-mc-star" id="rmw-mc-star" aria-label="Añadir o quitar de favoritos">☆</button>
+            </div>
+        </div>
+        <div class="rmw-map-dialog" id="rmw-map-dialog" hidden>
+            <div class="rmw-map-dialogbox" role="dialog" aria-modal="true" aria-labelledby="rmw-map-dialogtext">
+                <p id="rmw-map-dialogtext">Cargar las emisoras de <b>todo el mundo</b> puede tardar bastante y descargar muchos datos. Se irán mostrando poco a poco y podrás cancelar cuando quieras. ¿Continuar?</p>
+                <div>
+                    <button type="button" id="rmw-map-dialog-no">Cancelar</button>
+                    <button type="button" class="primary" id="rmw-map-dialog-yes">Cargar todo</button>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <audio id="rmw-audio" preload="none" playsinline></audio>
     <input type="file" id="rmw-file-input" accept=".json,application/json" style="display:none">
@@ -679,12 +772,12 @@
                 };
             }
 
-            async function apiFetch(path) {
+            async function apiFetch(path, timeoutMs = API_TIMEOUT_MS) {
                 let lastError;
                 for (let i = 0; i < API_SERVERS.length; i++) {
                     const index = (apiIndex + i) % API_SERVERS.length;
                     const controller = new AbortController();
-                    const timer = setTimeout(() => controller.abort(), API_TIMEOUT_MS);
+                    const timer = setTimeout(() => controller.abort(), timeoutMs);
                     try {
                         const response = await fetch(API_SERVERS[index] + path, { method: 'GET', cache: 'no-store', signal: controller.signal });
                         if (!response.ok) throw new Error('HTTP ' + response.status);
@@ -989,12 +1082,12 @@
                       <br>${esc(tags)}
                     </div>
                   </div>
-                  <button class="rmw-map" data-map="${id}" title="Ver ubicación en Google Maps">
+                  ${stationHasGeo(station) ? `<button class="rmw-map" data-map="${id}" title="Ver ubicación en el globo">
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                       <path d="M12 21.7C17.3 17 20 13 20 9a8 8 0 1 0-16 0c0 4 2.7 8 8 12.7z"/>
                       <circle cx="12" cy="9" r="3"/>
                     </svg>
-                  </button>
+                  </button>` : ''}
                   <button class="rmw-star ${favorite ? 'is-fav' : ''}" data-favorite="${id}" title="${favorite ? 'Quitar de favoritos' : 'Añadir a favoritos'}">
                     ${favorite ? '★' : '☆'}
                   </button>
@@ -1011,17 +1104,13 @@
                     });
                 }
 
-                card.querySelector('[data-map]').addEventListener('click', (e) => {
-                    e.stopPropagation();
-                    let mapsUrl;
-                    if (station.geo_lat != null && station.geo_long != null) {
-                        mapsUrl = `https://www.google.com/maps/search/?api=1&query=${station.geo_lat},${station.geo_long}`;
-                    } else {
-                        const locationQuery = [station.state, station.country].filter(Boolean).join(', ');
-                        mapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(locationQuery || station.name)}`;
-                    }
-                    window.open(mapsUrl, '_blank', 'noopener,noreferrer');
-                });
+                const mapButton = card.querySelector('[data-map]');
+                if (mapButton) {
+                    mapButton.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        openMap(station);
+                    });
+                }
 
                 card.querySelector('[data-play]').addEventListener('click', () => {
                     const isActive = playingStation && playingStation.id === stationId;
@@ -1251,6 +1340,11 @@
                     button.textContent = active && !audio.paused ? 'Ⅱ' : '▶';
                     button.closest('.rmw-station')?.classList.toggle('rmw-playing', Boolean(active));
                 });
+                const cardPlay = document.getElementById('rmw-mc-play'); // botón de la ficha del globo
+                if (cardPlay && cardPlay.dataset.sid) {
+                    const cardActive = playingStation && playingStation.id === cardPlay.dataset.sid;
+                    cardPlay.textContent = cardActive && !audio.paused ? 'Ⅱ' : '▶';
+                }
             }
 
             shareBtn.addEventListener('click', async () => {
@@ -1459,6 +1553,571 @@
             // ---------------------- CANCIÓN QUE ESTÁ SONANDO (metadatos ICY) ----------------------
             // Se abre una segunda conexión corta a la emisora pidiendo los metadatos.
             // Solo funciona si el servidor de la emisora lo permite (CORS); si no, no se muestra nada.
+            // ---------- Globo terráqueo de emisoras (MapLibre GL se carga solo al abrirlo) ----------
+            // Mapa por teselas (nítido a cualquier zoom) con agrupación y nombres que no se solapan, calculados por la GPU
+            const mapBtn = document.getElementById('rmw-map');
+            const mapWrap = document.getElementById('rmw-mapwrap');
+            const mapListBtn = document.getElementById('rmw-map-list');
+            const mapCanvas = document.getElementById('rmw-map-canvas');
+            const mapMsg = document.getElementById('rmw-map-msg');
+            const MAP_GLYPHS = 'https://demotiles.maplibre.org/font/{fontstack}/{range}.pbf'; // tipografía de los nombres
+            const MAP_FONT = ['Open Sans Semibold'];
+            const mapPins = new Map(); // id -> { id, station, lat, lng, rank }
+            const EMPTY_FC = { type: 'FeatureCollection', features: [] };
+            let globeMap = null;
+            let mapLoading = false;
+            let mapActiveId = '';
+            let mapAccent = '#3478df';
+            let mapSpinning = false;
+            let mapFocusStation = null; // emisora a la que se ha ido desde el botón de ubicación de su tarjeta
+
+            function showMapMsg(text) {
+                mapMsg.textContent = text || '';
+                mapMsg.style.display = text ? 'grid' : 'none';
+            }
+
+            function loadMapLibs() {
+                if (window.maplibregl) return Promise.resolve();
+                const base = 'https://cdn.jsdelivr.net/npm/maplibre-gl@5/dist/';
+                if (!document.getElementById('maplibre-css')) {
+                    const link = document.createElement('link');
+                    link.id = 'maplibre-css';
+                    link.rel = 'stylesheet';
+                    link.href = base + 'maplibre-gl.css';
+                    document.head.appendChild(link);
+                }
+                return new Promise((resolve, reject) => {
+                    const script = document.createElement('script');
+                    script.src = base + 'maplibre-gl.js';
+                    script.onload = resolve;
+                    script.onerror = () => { script.remove(); reject(new Error('no se pudo cargar maplibre-gl')); };
+                    document.head.appendChild(script);
+                });
+            }
+
+            function readAccent() {
+                mapAccent = getComputedStyle(document.body).getPropertyValue('--accent').trim() || mapAccent;
+            }
+
+            function buildMapPins(list) {
+                list.forEach((raw, index) => {
+                    if (!raw || !raw.stationuuid || !(raw.url_resolved || raw.url)) return;
+                    if (raw.geo_lat == null || raw.geo_long == null) return;
+                    const lat = Number(raw.geo_lat);
+                    const lng = Number(raw.geo_long);
+                    if (!Number.isFinite(lat) || !Number.isFinite(lng) || Math.abs(lat) > 90 || Math.abs(lng) > 180 || (lat === 0 && lng === 0)) return;
+                    const station = normalizeStation(raw);
+                    if (mapPins.has(station.id)) return;
+                    mapPins.set(station.id, { id: station.id, station, lat, lng, rank: index }); // rank: las más escuchadas tienen prioridad al mostrar nombres
+                });
+            }
+
+            function pinsToGeoJSON() {
+                return {
+                    type: 'FeatureCollection',
+                    features: [...mapPins.values()].map(p => ({
+                        type: 'Feature',
+                        geometry: { type: 'Point', coordinates: [p.lng, p.lat] },
+                        properties: { id: p.id, name: p.station.name, rank: p.rank }
+                    }))
+                };
+            }
+
+            function addGlobeLayers() {
+                const accent = mapAccent;
+                globeMap.addSource('stations', { type: 'geojson', data: EMPTY_FC, cluster: true, clusterRadius: 45, clusterMaxZoom: 8 });
+                globeMap.addSource('active', { type: 'geojson', data: EMPTY_FC });
+                globeMap.addLayer({
+                    id: 'clusters', type: 'circle', source: 'stations', filter: ['has', 'point_count'],
+                    paint: {
+                        'circle-color': accent,
+                        'circle-radius': ['step', ['get', 'point_count'], 15, 25, 19, 100, 23, 750, 29],
+                        'circle-stroke-width': 4, 'circle-stroke-color': accent, 'circle-stroke-opacity': 0.35
+                    }
+                });
+                globeMap.addLayer({
+                    id: 'cluster-count', type: 'symbol', source: 'stations', filter: ['has', 'point_count'],
+                    layout: { 'text-field': '{point_count_abbreviated}', 'text-font': MAP_FONT, 'text-size': 12, 'text-allow-overlap': true },
+                    paint: { 'text-color': '#ffffff', 'text-halo-color': 'rgba(0,0,0,0.5)', 'text-halo-width': 1 }
+                });
+                globeMap.addLayer({
+                    id: 'pins', type: 'circle', source: 'stations', filter: ['!', ['has', 'point_count']],
+                    paint: { 'circle-color': accent, 'circle-radius': 6, 'circle-stroke-width': 2, 'circle-stroke-color': '#ffffff' }
+                });
+                globeMap.addLayer({
+                    id: 'pin-names', type: 'symbol', source: 'stations', minzoom: 3.2,
+                    filter: ['all', ['!', ['has', 'point_count']], ['!=', ['get', 'id'], mapActiveId]],
+                    layout: {
+                        'text-field': ['get', 'name'], 'text-font': MAP_FONT, 'text-size': 12, 'text-anchor': 'left', 'text-offset': [0.9, 0],
+                        'text-max-width': 12, 'text-padding': 3, 'symbol-sort-key': ['get', 'rank'] // sin 'allow-overlap': lo que se pisa se oculta solo
+                    },
+                    paint: { 'text-color': '#ffffff', 'text-halo-color': '#000000', 'text-halo-width': 1.5 }
+                });
+                globeMap.addLayer({
+                    id: 'active-dot', type: 'circle', source: 'active',
+                    paint: { 'circle-color': '#ffffff', 'circle-radius': 9, 'circle-stroke-width': 3, 'circle-stroke-color': accent }
+                });
+                globeMap.addLayer({
+                    id: 'active-name', type: 'symbol', source: 'active',
+                    layout: {
+                        'text-field': ['get', 'name'], 'text-font': MAP_FONT, 'text-size': 14, 'text-anchor': 'left', 'text-offset': [1.1, 0],
+                        'text-max-width': 14, 'text-allow-overlap': true, 'text-ignore-placement': true
+                    },
+                    paint: { 'text-color': '#ffffff', 'text-halo-color': '#000000', 'text-halo-width': 2 }
+                });
+            }
+
+            function applyGlobeStyle() {
+                if (!globeMap || !globeMap.getLayer('pins')) return;
+                const accent = mapAccent;
+                globeMap.setPaintProperty('clusters', 'circle-color', accent);
+                globeMap.setPaintProperty('clusters', 'circle-stroke-color', accent);
+                globeMap.setPaintProperty('pins', 'circle-color', accent);
+                globeMap.setPaintProperty('active-dot', 'circle-stroke-color', accent);
+            }
+
+            function activePin() {
+                const pin = mapPins.get(mapActiveId);
+                if (pin) return pin;
+                const fs = mapFocusStation;
+                if (fs && fs.id === mapActiveId && stationHasGeo(fs)) return { id: fs.id, station: fs, lat: fs.geo_lat, lng: fs.geo_long };
+                const st = playingStation;
+                if (st && st.id === mapActiveId && Number.isFinite(st.geo_lat) && Number.isFinite(st.geo_long) && !(st.geo_lat === 0 && st.geo_long === 0)) {
+                    return { id: st.id, station: st, lat: st.geo_lat, lng: st.geo_long };
+                }
+                return null;
+            }
+
+            function setGlobeActive(id) {
+                mapActiveId = id;
+                if (!globeMap || !globeMap.getSource('active')) return;
+                const pin = activePin();
+                globeMap.getSource('active').setData(pin ? {
+                    type: 'FeatureCollection',
+                    features: [{ type: 'Feature', geometry: { type: 'Point', coordinates: [pin.lng, pin.lat] }, properties: { id: pin.id, name: pin.station.name } }]
+                } : EMPTY_FC);
+                globeMap.setFilter('pin-names', ['all', ['!', ['has', 'point_count']], ['!=', ['get', 'id'], id]]);
+            }
+
+            // ----- Ficha de la emisora al tocar un punto -----
+            const mapCardEl = document.getElementById('rmw-map-card');
+            const mapCardLogo = document.getElementById('rmw-mc-logo');
+            const mapCardName = document.getElementById('rmw-mc-name');
+            const mapCardMeta = document.getElementById('rmw-mc-meta');
+            const mapCardTags = document.getElementById('rmw-mc-tags');
+            const mapCardPlay = document.getElementById('rmw-mc-play');
+            const mapCardStar = document.getElementById('rmw-mc-star');
+            let mapCardStation = null;
+
+            function updateMapCardStar() {
+                if (!mapCardStation) return;
+                const fav = isFavorite(mapCardStation);
+                mapCardStar.classList.toggle('is-fav', fav);
+                mapCardStar.textContent = fav ? '★' : '☆';
+            }
+
+            function showMapCard(st) {
+                mapCardStation = st;
+                mapCardName.textContent = st.name;
+                mapCardMeta.textContent = '🌍 ' + st.country + (st.state ? ' · ' + st.state : '') + (st.bitrate ? ' · ' + Number(st.bitrate) + ' kbps' : '');
+                mapCardTags.textContent = st.tags ? st.tags.split(',').slice(0, 4).join(' · ') : 'Sin etiquetas';
+                mapCardLogo.textContent = '📻';
+                if (st.favicon) {
+                    const img = new Image();
+                    img.alt = '';
+                    img.addEventListener('load', () => mapCardLogo.replaceChildren(img));
+                    img.src = st.favicon;
+                }
+                mapCardPlay.dataset.sid = st.id;
+                updateMapCardStar();
+                mapCardEl.hidden = false;
+                refreshPlayButtons();
+            }
+
+            function hideMapCard() {
+                mapCardEl.hidden = true;
+                mapCardStation = null;
+            }
+
+            mapCardPlay.addEventListener('click', () => {
+                const st = mapCardStation;
+                if (!st) return;
+                const isActive = playingStation && playingStation.id === st.id;
+                if (isActive && !audio.paused) {
+                    userPaused = true;
+                    audio.pause();
+                } else if (isActive && audio.paused) {
+                    userPaused = false;
+                    audio.play().catch(() => {});
+                } else {
+                    userPaused = false;
+                    playStation(st);
+                }
+                refreshPlayButtons();
+            });
+
+            mapCardStar.addEventListener('click', () => {
+                const st = mapCardStation;
+                if (!st) return;
+                toggleFavorite(st);
+                updateMapCardStar();
+                const nowFavorite = isFavorite(st);
+                // Las tarjetas de la lista que ya estén dibujadas reflejan el cambio
+                results.querySelectorAll('[data-favorite]').forEach(button => {
+                    if (button.getAttribute('data-favorite') !== st.id) return;
+                    button.classList.toggle('is-fav', nowFavorite);
+                    button.textContent = nowFavorite ? '★' : '☆';
+                });
+                if (currentMode === 'favorites') renderFavorites();
+            });
+
+            document.getElementById('rmw-mc-close').addEventListener('click', hideMapCard);
+
+            function selectGlobeStation(pin) {
+                mapFocusStation = pin.station; // queda marcada y con el nombre siempre visible
+                setGlobeActive(pin.id);
+                showMapCard(pin.station);
+            }
+
+            // ¿La emisora tiene coordenadas válidas? (mismo criterio que usa el globo para colocar los puntos)
+            function stationHasGeo(st) {
+                const lat = st.geo_lat;
+                const lng = st.geo_long;
+                return Number.isFinite(lat) && Number.isFinite(lng) && Math.abs(lat) <= 90 && Math.abs(lng) <= 180 && !(lat === 0 && lng === 0);
+            }
+
+            function flyToStation(st) {
+                if (!globeMap || !stationHasGeo(st)) return;
+                mapSpinning = false;
+                mapFocusStation = st;
+                setGlobeActive(st.id); // se marca y su nombre se ve siempre, aunque haya otras emisoras cerca
+                globeMap.flyTo({ center: [st.geo_long, st.geo_lat], zoom: 13, duration: 1800, essential: true });
+            }
+
+            function flyToPlaying() {
+                const pin = activePin();
+                if (!pin || !globeMap) return;
+                mapSpinning = false;
+                globeMap.flyTo({ center: [pin.lng, pin.lat], zoom: Math.max(globeMap.getZoom(), 4), duration: 1200, essential: true });
+            }
+
+            function spinGlobe() {
+                if (!mapSpinning || !globeMap || globeMap.getZoom() > 3.2) return;
+                const center = globeMap.getCenter();
+                center.lng -= 10;
+                globeMap.easeTo({ center, duration: 1500, easing: t => t, essential: true });
+            }
+
+            function featuresNear(point, radius) {
+                const box = [[point.x - radius, point.y - radius], [point.x + radius, point.y + radius]];
+                const feats = globeMap.queryRenderedFeatures(box, { layers: ['clusters', 'pins', 'active-dot'] });
+                let best = null;
+                let bestDist = Infinity;
+                for (const f of feats) {
+                    const p = globeMap.project(f.geometry.coordinates);
+                    const dist = (p.x - point.x) ** 2 + (p.y - point.y) ** 2;
+                    if (dist < bestDist) { bestDist = dist; best = f; }
+                }
+                return best;
+            }
+
+            function setupGlobeMap() {
+                readAccent();
+                globeMap = new maplibregl.Map({
+                    container: mapCanvas,
+                    style: {
+                        version: 8,
+                        glyphs: MAP_GLYPHS,
+                        sources: {
+                            sat: { type: 'raster', tileSize: 256, maxzoom: 19, attribution: 'Imágenes © Esri, Maxar, Earthstar Geographics',
+                                tiles: ['https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}'] },
+                            satlabels: { type: 'raster', tileSize: 256, maxzoom: 19,
+                                tiles: ['https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}'] }
+                        },
+                        layers: [
+                            { id: 'sat', type: 'raster', source: 'sat' },
+                            { id: 'satlabels', type: 'raster', source: 'satlabels' } // nombres de países y ciudades sobre el satélite
+                        ]
+                    },
+                    center: [-8, 35], zoom: 1.5, minZoom: 0.5, maxZoom: 16, attributionControl: { compact: true }
+                });
+                globeMap.addControl(new maplibregl.NavigationControl({ showCompass: false }), 'top-left');
+                globeMap.on('error', e => console.warn('[globo]', e && e.error ? e.error.message : e));
+                globeMap.on('click', e => {
+                    const hit = featuresNear(e.point, 14);
+                    if (!hit) { hideMapCard(); return; }
+                    if (hit.properties.cluster_id != null) {
+                        Promise.resolve(globeMap.getSource('stations').getClusterExpansionZoom(hit.properties.cluster_id))
+                            .then(zoom => globeMap.easeTo({ center: hit.geometry.coordinates, zoom: Math.min(zoom + 0.3, 16), duration: 700 }))
+                            .catch(() => {});
+                        return;
+                    }
+                    const hitId = hit.properties.id;
+                    const hitStation = mapFocusStation && mapFocusStation.id === hitId ? mapFocusStation
+                        : (playingStation && playingStation.id === hitId ? playingStation : null);
+                    const pin = mapPins.get(hitId) || (hitStation ? { id: hitId, station: hitStation } : null);
+                    if (pin) selectGlobeStation(pin);
+                });
+                globeMap.on('mousemove', e => { globeMap.getCanvas().style.cursor = featuresNear(e.point, 10) ? 'pointer' : ''; });
+                const stopSpin = () => { mapSpinning = false; };
+                globeMap.on('mousedown', stopSpin);
+                globeMap.on('touchstart', stopSpin);
+                globeMap.on('wheel', stopSpin);
+                globeMap.on('moveend', spinGlobe);
+                return new Promise(resolve => {
+                    const ready = () => {
+                        globeMap.setProjection({ type: 'globe' }); // la Tierra como esfera
+                        addGlobeLayers();
+                        resolve();
+                    };
+                    if (globeMap.isStyleLoaded()) ready(); else globeMap.once('style.load', ready);
+                });
+            }
+
+            // ----- País elegido en el globo y carga de emisoras con ubicación -----
+            const mapCountrySelect = document.getElementById('rmw-map-country');
+            const mapProg = document.getElementById('rmw-map-prog');
+            const mapBarFill = document.getElementById('rmw-map-barfill');
+            const mapProgText = document.getElementById('rmw-map-progtext');
+            const mapProgCancel = document.getElementById('rmw-map-progcancel');
+            const mapInfo = document.getElementById('rmw-map-info');
+            const mapDialog = document.getElementById('rmw-map-dialog');
+            const MAP_PAGE = 3000;           // emisoras por petición
+            const MAP_PARALLEL = 5;          // países que se piden a la vez en "Todos los países"
+            const MAP_REFRESH_EVERY = 25;    // cada cuántos países se actualiza el globo mientras carga
+            let mapCountry = null;           // país del globo ('' = todo el mundo); null = aún sin elegir
+            let mapRaw = [];                 // emisoras descargadas, tal cual llegan de la API
+            let mapLoadToken = 0;            // cada carga nueva invalida a la anterior
+            let mapLoadActive = false;
+            let mapNeedsReload = false;
+            let mapSetupPromise = null;
+
+            function setMapInfo(text) { mapInfo.textContent = text || ''; }
+
+            function showMapProgress(done, total) {
+                mapProg.hidden = false;
+                mapBarFill.style.width = (total ? Math.round(done / total * 100) : 0) + '%';
+                mapProgText.textContent = `Cargando países ${done}/${total} · ${mapRaw.length} emisoras`;
+            }
+
+            function hideMapProgress() {
+                mapProg.hidden = true;
+                mapBarFill.style.width = '0%';
+            }
+
+            // Mismas opciones (con su número de emisoras) que el desplegable principal
+            function syncMapCountryOptions() {
+                mapCountrySelect.innerHTML = countrySelect.innerHTML;
+                if (mapCountry && ![...mapCountrySelect.options].some(o => o.value === mapCountry)) {
+                    const option = document.createElement('option');
+                    option.value = mapCountry;
+                    option.textContent = mapCountry;
+                    mapCountrySelect.appendChild(option);
+                }
+                mapCountrySelect.value = mapCountry;
+            }
+
+            function refreshMapData() {
+                mapPins.clear();
+                buildMapPins([...mapRaw].sort((x, y) => (y.clickcount || 0) - (x.clickcount || 0))); // las más escuchadas primero
+                if (globeMap && globeMap.getSource('stations')) {
+                    globeMap.getSource('stations').setData(pinsToGeoJSON());
+                    setGlobeActive(mapActiveId);
+                }
+            }
+
+            async function fetchGeoStations(country, token) {
+                const out = [];
+                for (let offset = 0; token === mapLoadToken; offset += MAP_PAGE) {
+                    const params = new URLSearchParams({
+                        has_geo_info: 'true', hidebroken: 'true', order: 'clickcount', reverse: 'true',
+                        country, countryExact: 'true', limit: String(MAP_PAGE), offset: String(offset)
+                    });
+                    const data = await apiFetch('/stations/search?' + params.toString(), 30000);
+                    if (!Array.isArray(data)) throw new Error('respuesta no válida');
+                    out.push(...data);
+                    if (data.length < MAP_PAGE) break;
+                }
+                return out;
+            }
+
+            async function allCountryNames() {
+                let names = [...countrySelect.options].map(o => o.value).filter(Boolean);
+                if (names.length < 20) {
+                    const list = await apiFetch('/countries');
+                    if (Array.isArray(list)) names = list.filter(c => c && c.name && Number(c.stationcount) > 0).map(c => c.name);
+                }
+                return names;
+            }
+
+            // Encuadra el país: se ignoran los puntos más alejados (islas, territorios de ultramar) para no alejar demasiado el zoom
+            function fitMapToPins() {
+                const pins = [...mapPins.values()];
+                if (!pins.length || !globeMap) return;
+                mapSpinning = false;
+                if (pins.length < 4) {
+                    globeMap.flyTo({ center: [pins[0].lng, pins[0].lat], zoom: 6, duration: 1200, essential: true });
+                    return;
+                }
+                const lats = pins.map(p => p.lat).sort((x, y) => x - y);
+                const lngs = pins.map(p => p.lng).sort((x, y) => x - y);
+                const cut = pins.length > 30 ? 0.03 : 0;
+                const q = (arr, f) => arr[Math.min(arr.length - 1, Math.max(0, Math.floor(f * (arr.length - 1))))];
+                globeMap.fitBounds([[q(lngs, cut), q(lats, cut)], [q(lngs, 1 - cut), q(lats, 1 - cut)]],
+                    { padding: { top: 110, bottom: 90, left: 30, right: 30 }, maxZoom: 7, duration: 1200, essential: true });
+            }
+
+            async function loadMapStations(country, opts = {}) {
+                const token = ++mapLoadToken;
+                mapCountry = country;
+                mapNeedsReload = false;
+                mapLoadActive = true;
+                hideMapCard();
+                hideMapProgress();
+                setMapInfo('');
+                mapRaw = [];
+                refreshMapData(); // vacía el globo mientras llegan las nuevas
+                try {
+                    if (country === '') {
+                        showMapMsg('');
+                        const names = await allCountryNames();
+                        if (token !== mapLoadToken) return;
+                        const queue = names.slice();
+                        let done = 0;
+                        let failed = 0;
+                        showMapProgress(0, names.length);
+                        const worker = async () => {
+                            while (queue.length && token === mapLoadToken) {
+                                const name = queue.shift();
+                                try {
+                                    const list = await fetchGeoStations(name, token);
+                                    if (token === mapLoadToken) mapRaw.push(...list);
+                                } catch (_) { failed++; }
+                                done++;
+                                if (token !== mapLoadToken) return;
+                                showMapProgress(done, names.length);
+                                if (done % MAP_REFRESH_EVERY === 0) refreshMapData(); // se va viendo cómo se llena el globo
+                            }
+                        };
+                        await Promise.all(Array.from({ length: MAP_PARALLEL }, worker));
+                        if (token !== mapLoadToken) return; // cancelada o sustituida por otra carga
+                        refreshMapData();
+                        hideMapProgress();
+                        setMapInfo(`${mapPins.size} emisoras con ubicación en todo el mundo` + (failed ? ` · ${failed} países no se pudieron cargar` : ''));
+                        if (opts.preferPlaying && mapPins.has(mapActiveId)) {
+                            flyToPlaying();
+                        } else {
+                            mapSpinning = true; // vista del mundo; gira despacio hasta que lo toques
+                            globeMap.flyTo({ center: [-8, 35], zoom: 1.5, duration: 1000, essential: true });
+                        }
+                    } else {
+                        showMapMsg(`Cargando emisoras de ${country}…`);
+                        mapRaw = await fetchGeoStations(country, token);
+                        if (token !== mapLoadToken) return;
+                        refreshMapData();
+                        setMapInfo(mapPins.size ? `${mapPins.size} emisoras con ubicación` : '');
+                        showMapMsg(mapPins.size ? '' : `No hay emisoras con ubicación en ${country}.`);
+                        if (opts.preferPlaying && mapPins.has(mapActiveId)) flyToPlaying(); else fitMapToPins();
+                    }
+                } catch (_) {
+                    if (token === mapLoadToken) {
+                        hideMapProgress();
+                        showMapMsg('No se pudieron cargar las emisoras. Vuelve a elegir el país.');
+                    }
+                } finally {
+                    if (token === mapLoadToken) mapLoadActive = false;
+                }
+            }
+
+            function cancelMapLoad() {
+                mapLoadToken++;
+                mapLoadActive = false;
+                hideMapProgress();
+            }
+
+            function closeMap() {
+                hideMapCard();
+                mapWrap.classList.remove('open');
+                mapBtn.classList.remove('active');
+                document.documentElement.style.overflow = '';
+                document.body.style.overflow = '';
+                mapSpinning = false;
+                mapDialog.hidden = true;
+                mapCountrySelect.value = mapCountry === null ? '' : mapCountry;
+                if (mapLoadActive) { cancelMapLoad(); mapNeedsReload = true; } // no se sigue descargando con el globo cerrado
+                if (globeMap) globeMap.stop();
+            }
+
+            function ensureGlobe() {
+                if (!mapSetupPromise) {
+                    mapSetupPromise = loadMapLibs()
+                        .then(() => (globeMap ? null : setupGlobeMap()))
+                        .catch(err => { mapSetupPromise = null; throw err; });
+                }
+                return mapSetupPromise;
+            }
+
+            async function openMap(target = null) { // target: emisora a la que ir (botón de ubicación de su tarjeta)
+                mapWrap.classList.add('open');
+                mapBtn.classList.add('active');
+                document.documentElement.style.overflow = 'hidden';
+                document.body.style.overflow = 'hidden';
+                if (mapCountry === null) mapCountry = countrySelect.value || DEFAULT_COUNTRY; // empieza por el país elegido en la lista principal
+                if (target && mapCountry !== '' && target.country && target.country !== 'País desconocido' && mapCountry !== target.country) {
+                    mapCountry = target.country; // el globo carga el país de esa emisora
+                    mapNeedsReload = true;
+                }
+                syncMapCountryOptions();
+                if (globeMap && mapPins.size && !mapNeedsReload) {
+                    globeMap.resize();
+                    readAccent();
+                    applyGlobeStyle();
+                    setGlobeActive(playingStation ? playingStation.id : '');
+                    if (target) flyToStation(target); else flyToPlaying();
+                    return;
+                }
+                try {
+                    showMapMsg('Cargando el globo…');
+                    await ensureGlobe();
+                    if (!mapWrap.classList.contains('open')) return; // lo cerraron mientras cargaba
+                    setGlobeActive(playingStation ? playingStation.id : '');
+                    await loadMapStations(mapCountry, { preferPlaying: !target });
+                    if (target && mapWrap.classList.contains('open')) flyToStation(target);
+                } catch (_) {
+                    showMapMsg('No se pudo cargar el globo. Comprueba la conexión (y que tu navegador admita WebGL 2) y vuelve a pulsar 🌍 Globo.');
+                }
+            }
+
+            mapCountrySelect.addEventListener('change', () => {
+                if (mapCountrySelect.value === '') { mapDialog.hidden = false; return; } // "Todos los países": primero se avisa
+                loadMapStations(mapCountrySelect.value);
+            });
+            document.getElementById('rmw-map-dialog-yes').addEventListener('click', () => {
+                mapDialog.hidden = true;
+                loadMapStations('');
+            });
+            document.getElementById('rmw-map-dialog-no').addEventListener('click', () => {
+                mapDialog.hidden = true;
+                mapCountrySelect.value = mapCountry === null ? '' : mapCountry; // se queda como estaba
+            });
+            mapProgCancel.addEventListener('click', () => {
+                cancelMapLoad();
+                refreshMapData();
+                setMapInfo(`Carga cancelada · ${mapPins.size} emisoras con ubicación`);
+            });
+
+            mapBtn.addEventListener('click', () => { mapWrap.classList.contains('open') ? closeMap() : openMap(); });
+            mapListBtn.addEventListener('click', closeMap);
+            document.addEventListener('keydown', e => {
+                if (e.key !== 'Escape' || !mapWrap.classList.contains('open')) return;
+                if (!mapDialog.hidden) document.getElementById('rmw-map-dialog-no').click(); else closeMap();
+            });
+            // Cualquier otra acción del buscador vuelve al listado normal
+            [allButton, favButton].forEach(btn => btn.addEventListener('click', closeMap));
+            searchInput.addEventListener('input', closeMap);
+            countrySelect.addEventListener('change', closeMap);
+            genreSelect.addEventListener('change', closeMap);
+
             const NOW_PLAYING_INTERVAL_MS = 10000;
             const NOW_PLAYING_MAX_FAILURES = 2;
             const ICY_PROXY_URL = 'https://radio-titulos.ivanete8888.workers.dev/'; // Worker de Cloudflare que lee el título en nombre del navegador
@@ -1943,6 +2602,14 @@
                     if (playingStation && playingStation.id === station.id && audio.paused && !corsRetryPending) {
                         miniStatus.textContent = 'Pulsa play para escuchar';
                         playPauseBtn.textContent = '▶';
+                        // El navegador bloquea el audio sin interacción: arranca en cuanto la persona toque la pantalla por primera vez
+                        const startOnFirstGesture = (ev) => {
+                            if (ev.target?.closest?.('#rmw-play, [data-play]') || ev.target === playPauseBtn || playPauseBtn.contains(ev.target)) return; // esos botones ya hacen su propia acción
+                            cleanup();
+                            if (playingStation && playingStation.id === station.id && audio.paused && !userPaused) playStation(station);
+                        };
+                        const cleanup = () => ['click', 'touchend', 'keydown'].forEach(t => document.removeEventListener(t, startOnFirstGesture, true));
+                        ['click', 'touchend', 'keydown'].forEach(t => document.addEventListener(t, startOnFirstGesture, true));
                     }
                 } catch (_) {
                     miniStatus.textContent = 'No se pudo abrir la emisora compartida.';
