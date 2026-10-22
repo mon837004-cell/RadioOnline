@@ -349,6 +349,7 @@
         background: var(--bg-tools); border: 1px solid var(--border-color); border-left: 4px solid var(--accent); border-radius: 10px; box-shadow: 0 12px 34px rgba(0, 0, 0, .5);
       }
       #rmw-toast.rmw-visible { display: block; }
+      body:has(.rmw-mapwrap.open) #rmw-toast { bottom: calc(200px + env(safe-area-inset-bottom, 0px)); }
       #rmw-timer-menu {
         position: fixed; z-index: 2147483000; display: none; min-width: 220px; padding: 12px; color: var(--text-main);
         background: var(--bg-tools); border: 1px solid var(--border-color); border-top: 3px solid var(--accent); border-radius: 12px; box-shadow: 0 14px 34px rgba(0, 0, 0, .55);
@@ -462,6 +463,9 @@
       .rmw-mc-info { flex: 1; min-width: 0; }
       .rmw-mc-name { font-weight: 700; font-size: 15px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
       .rmw-mc-meta, .rmw-mc-tags { margin-top: 2px; font-family: var(--f-mono); font-size: 11px; color: var(--text-sub); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+      .rmw-mc-status { margin-top: 4px; font-family: var(--f-orb); font-size: 10px; letter-spacing: .1em; text-transform: uppercase; line-height: 1.35; color: var(--text-sub); }
+      .rmw-mc-status:empty { display: none; }
+      body:has(#rmw-mini.is-loading) .rmw-mc-status { animation: loadblink 1.2s ease-in-out infinite; }
       .rmw-mc-actions { flex: none; display: flex; align-items: center; gap: 8px; }
       .rmw-mc-play { width: 46px; height: 46px; border-radius: 50%; border: 0; padding: 0; cursor: pointer; font-size: 18px; color: var(--on-accent, #fff); background: var(--accent); }
       .rmw-mc-star { width: 38px; height: 38px; border-radius: 50%; padding: 0; cursor: pointer; font-size: 18px; color: var(--text-main); background: transparent; border: 1px solid var(--border-color); }
@@ -559,8 +563,8 @@
                 </label>
                 <div class="rmw-actions">
                     <button class="rmw-btn active" id="rmw-all">📚 Catálogo</button>
-                    <button class="rmw-btn" id="rmw-favs">⭐ Favoritos</button>
-                    <button class="rmw-btn" id="rmw-map">🌍 Globo</button>
+                    <button class="rmw-btn" id="rmw-favs">⭐ Mis Favoritos</button>
+                    <button class="rmw-btn" id="rmw-map">🌍 Explorar</button>
                 </div>
             </div>
             <div class="crate-nav">
@@ -589,7 +593,7 @@
             </div>
             <div class="rmw-map-info" id="rmw-map-info"></div>
         </div>
-        <button type="button" class="rmw-map-list" id="rmw-map-list" aria-label="Volver al listado">☰ Lista</button>
+        <button type="button" class="rmw-map-list" id="rmw-map-list" aria-label="Volver a la radio">← Volver a la Radio</button>
         <div class="rmw-map-card" id="rmw-map-card" hidden>
             <button type="button" class="rmw-mc-close" id="rmw-mc-close" aria-label="Cerrar ficha">✕</button>
             <div class="rmw-mc-logo" id="rmw-mc-logo"></div>
@@ -597,6 +601,7 @@
                 <div class="rmw-mc-name" id="rmw-mc-name"></div>
                 <div class="rmw-mc-meta" id="rmw-mc-meta"></div>
                 <div class="rmw-mc-tags" id="rmw-mc-tags"></div>
+                <div class="rmw-mc-status" id="rmw-mc-status"></div>
             </div>
             <div class="rmw-mc-actions">
                 <button type="button" class="rmw-mc-play" id="rmw-mc-play" aria-label="Reproducir o pausar">▶</button>
@@ -807,11 +812,11 @@
 
             audio.volume = getVolume();
 
-            function showToast(message) {
+            function showToast(message, duration = 4000) {
                 toast.textContent = message;
                 toast.classList.add('rmw-visible');
                 clearTimeout(toastTimer);
-                toastTimer = setTimeout(() => toast.classList.remove('rmw-visible'), 4000);
+                toastTimer = setTimeout(() => toast.classList.remove('rmw-visible'), duration);
             }
 
             const COUNTRIES_CACHE_KEY = 'rmw_countries_cache_v1';
@@ -1245,12 +1250,14 @@
 
             function toggleFavorite(station) {
                 const id = makeId(station);
-                if (isFavorite(station)) {
+                const wasFavorite = isFavorite(station);
+                if (wasFavorite) {
                     favorites = favorites.filter(f => f.id !== id);
                 } else {
                     favorites.push(normalizeStation(station));
                 }
                 saveFavorites();
+                showToast(wasFavorite ? `☆ ${station.name} quitada de favoritos` : `★ ${station.name} añadida a favoritos`, 2500);
             }
 
             function exportFavoritesFile() {
@@ -1333,6 +1340,15 @@
                 refreshPlayButtons();
             }
 
+            function updateMapCardStatus() {
+                const box = document.getElementById('rmw-mc-status');
+                const cardPlay = document.getElementById('rmw-mc-play');
+                if (!box || !cardPlay) return;
+                const sid = cardPlay.dataset.sid;
+                box.textContent = sid && playingStation && playingStation.id === sid ? miniStatus.textContent : '';
+            }
+            new MutationObserver(updateMapCardStatus).observe(miniStatus, { childList: true, characterData: true, subtree: true });
+
             function refreshPlayButtons() {
                 document.querySelectorAll('[data-play]').forEach(button => {
                     const btnId = button.getAttribute('data-play');
@@ -1345,6 +1361,7 @@
                     const cardActive = playingStation && playingStation.id === cardPlay.dataset.sid;
                     cardPlay.textContent = cardActive && !audio.paused ? 'Ⅱ' : '▶';
                 }
+                updateMapCardStatus();
             }
 
             shareBtn.addEventListener('click', async () => {
@@ -1567,6 +1584,8 @@
             let globeMap = null;
             let mapLoading = false;
             let mapActiveId = '';
+            let stationPlayedFromMap = null; // última emisora que empezó a sonar desde el mapa (para ponerla la primera de la lista al volver)
+            let mapStationForCatalog = null; // emisora del mapa pendiente de mostrarse la primera cuando se vuelva al catálogo desde Favoritos
             let mapAccent = '#3478df';
             let mapSpinning = false;
             let mapFocusStation = null; // emisora a la que se ha ido desde el botón de ubicación de su tarjeta
@@ -1737,6 +1756,8 @@
             function hideMapCard() {
                 mapCardEl.hidden = true;
                 mapCardStation = null;
+                delete mapCardPlay.dataset.sid;
+                updateMapCardStatus();
             }
 
             mapCardPlay.addEventListener('click', () => {
@@ -1751,6 +1772,7 @@
                     audio.play().catch(() => {});
                 } else {
                     userPaused = false;
+                    stationPlayedFromMap = st;
                     playStation(st);
                 }
                 refreshPlayButtons();
@@ -1777,6 +1799,12 @@
                 mapFocusStation = pin.station; // queda marcada y con el nombre siempre visible
                 setGlobeActive(pin.id);
                 showMapCard(pin.station);
+                // Se reproduce directamente, sin tener que pulsar ▶ en la ficha
+                const isActive = playingStation && playingStation.id === pin.id;
+                userPaused = false;
+                if (!isActive) { stationPlayedFromMap = pin.station; playStation(pin.station); }
+                else if (audio.paused) audio.play().catch(() => {});
+                refreshPlayButtons();
             }
 
             // ¿La emisora tiene coordenadas válidas? (mismo criterio que usa el globo para colocar los puntos)
@@ -2046,6 +2074,30 @@
                 mapCountrySelect.value = mapCountry === null ? '' : mapCountry;
                 if (mapLoadActive) { cancelMapLoad(); mapNeedsReload = true; } // no se sigue descargando con el globo cerrado
                 if (globeMap) globeMap.stop();
+                stationPlayedFromMap = null;
+            }
+
+            // Volver del mapa al listado: la emisora que se ha puesto desde el mapa aparece también la primera de la lista
+            function closeMapToList() {
+                const station = stationPlayedFromMap;
+                closeMap();
+                if (!station) return;
+                if (currentMode === 'catalog') {
+                    showCardFirst(station);
+                    refreshPlayButtons();
+                    results.scrollTo({ left: 0, behavior: 'smooth' });
+                } else if (currentMode === 'favorites') {
+                    mapStationForCatalog = station; // saldrá la primera al pasar al catálogo
+                }
+            }
+
+            function showPendingMapStation() {
+                const station = mapStationForCatalog;
+                mapStationForCatalog = null;
+                if (!station || currentMode !== 'catalog') return;
+                showCardFirst(station);
+                refreshPlayButtons();
+                results.scrollTo({ left: 0, behavior: 'smooth' });
             }
 
             function ensureGlobe() {
@@ -2084,7 +2136,7 @@
                     await loadMapStations(mapCountry, { preferPlaying: !target });
                     if (target && mapWrap.classList.contains('open')) flyToStation(target);
                 } catch (_) {
-                    showMapMsg('No se pudo cargar el globo. Comprueba la conexión (y que tu navegador admita WebGL 2) y vuelve a pulsar 🌍 Globo.');
+                    showMapMsg('No se pudo cargar el globo. Comprueba la conexión (y que tu navegador admita WebGL 2) y vuelve a pulsar 🌍 Explorar.');
                 }
             }
 
@@ -2106,11 +2158,11 @@
                 setMapInfo(`Carga cancelada · ${mapPins.size} emisoras con ubicación`);
             });
 
-            mapBtn.addEventListener('click', () => { mapWrap.classList.contains('open') ? closeMap() : openMap(); });
-            mapListBtn.addEventListener('click', closeMap);
+            mapBtn.addEventListener('click', () => { mapWrap.classList.contains('open') ? closeMapToList() : openMap(); });
+            mapListBtn.addEventListener('click', closeMapToList);
             document.addEventListener('keydown', e => {
                 if (e.key !== 'Escape' || !mapWrap.classList.contains('open')) return;
-                if (!mapDialog.hidden) document.getElementById('rmw-map-dialog-no').click(); else closeMap();
+                if (!mapDialog.hidden) document.getElementById('rmw-map-dialog-no').click(); else closeMapToList();
             });
             // Cualquier otra acción del buscador vuelve al listado normal
             [allButton, favButton].forEach(btn => btn.addEventListener('click', closeMap));
@@ -2518,7 +2570,8 @@
             allButton.addEventListener('click', () => {
                 if (currentMode === 'favorites') favoritesScrollLeft = results.scrollLeft;
                 updateModeButtons('catalog');
-                if (!restoreCatalogSnapshot()) loadStations(true);
+                const catalogReady = restoreCatalogSnapshot() ? Promise.resolve() : loadStations(true);
+                Promise.resolve(catalogReady).then(showPendingMapStation);
             });
             favButton.addEventListener('click', () => {
                 const comingFromCatalog = currentMode === 'catalog';
