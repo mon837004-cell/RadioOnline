@@ -16,7 +16,7 @@ Una sola página, sin instalar nada y sin registros. 🎶
 
 [🚀 **Probar ahora**](https://mon837004-cell.github.io/RadioOnline/)
 
-[✨ Características](#-características) · [🌍 Globo](#-el-globo-de-emisoras) · [🔗 Compartir](#-compartir-emisoras) · [🧰 Tecnologías](#-tecnologías) · [🚀 Publicar](#-publicar-tu-propia-copia)
+[✨ Características](#-características) · [🌍 Globo](#-el-globo-de-emisoras) · [🔗 Compartir](#-compartir-emisoras) · [🧰 Tecnologías](#-tecnologías) 
 
 </div>
 
@@ -90,7 +90,7 @@ Pulsa **🌍 Globo** y explora las emisoras sobre un **globo terráqueo 3D** con
 Muchas emisoras envían el título de lo que suena dentro del propio audio, pero los navegadores no dejan leerlo directamente en la mayoría de ellas. Por eso la radio lo intenta de dos formas:
 
 1. 🔍 **Directa:** pide el título a la emisora desde el navegador.
-2. ☁️ **A través de un Cloudflare Worker** ([`worker.js`](worker.js)): si la emisora lo bloquea, un pequeño servidor gratuito lee el título en su nombre y devuelve solo ese texto. Solo acepta peticiones que vengan de tu página.
+2. ☁️ **A través de un Worker** si la emisora lo bloquea, un pequeño servidor gratuito lee el título en su nombre y devuelve solo ese texto. Solo acepta peticiones que vengan de tu página.
 
 Las emisoras que no incluyen el título en su señal no se pueden arreglar con esto.
 
@@ -115,49 +115,13 @@ Las emisoras que no incluyen el título en su señal no se pueden arreglar con e
 | 📡 **Datos** | [Radio Browser API](https://api.radio-browser.info/) |
 | 🌍 **Globo** | [MapLibre GL JS](https://maplibre.org/) con proyección de globo, cargado bajo demanda desde jsDelivr |
 | 🛰️ **Imágenes** | Teselas de satélite y etiquetas de [Esri](https://www.esri.com/) |
-| ☁️ **Títulos** | [Cloudflare Workers](https://workers.cloudflare.com/) (plan gratuito) |
 | 🔤 **Tipografías** | Google Fonts |
-| 🌐 **APIs del navegador** | Audio, Media Session, Web Share, Clipboard, Web Audio y `localStorage` |
-
----
-
-## 🚀 Publicar tu propia copia
-
-1. 🍴 Haz un **fork** de este repositorio, o sube tu `index.html` a uno nuevo.
-2. ⚙️ Ve a **Settings → Pages** y elige la rama `main` y la carpeta raíz.
-3. 🎉 En un par de minutos tu radio estará en `https://TU-USUARIO.github.io/NOMBRE-DEL-REPO/`.
-4. 🔗 Para que el botón de compartir apunte a **tu** página, cambia esta constante en el código:
-
-```js
-const SHARE_BASE_URL = 'https://TU-USUARIO.github.io/NOMBRE-DEL-REPO/';
-```
-
-### ☁️ Activar los títulos con tu propio Worker (opcional)
-
-1. Crea una cuenta gratuita en [Cloudflare](https://www.cloudflare.com/) y entra en **Workers & Pages → Create application → Start with Hello World**.
-2. Ponle un nombre, pulsa **Deploy**, entra en **Edit code**, pega el contenido de [`worker.js`](worker.js) y vuelve a pulsar **Deploy**.
-3. En `worker.js`, cambia `ALLOWED_ORIGIN` por la dirección de tu página, sin barra final:
-
-```js
-const ALLOWED_ORIGIN = 'https://TU-USUARIO.github.io';
-```
-
-4. En el `index.html`, cambia esta constante por la dirección de tu Worker:
-
-```js
-const ICY_PROXY_URL = 'https://TU-WORKER.TU-USUARIO.workers.dev/';
-```
-
-> 💡 La radio funciona igual sin el Worker; simplemente mostrará el título en menos emisoras. También puedes abrir el `index.html` directamente en el navegador, aunque los enlaces para compartir y el Worker necesitan que esté publicada en una dirección web.
-
----
 
 ## 📂 Estructura
 
 ```
 📦 RadioOnline
  ┣ 📄 index.html   → toda la aplicación (HTML + CSS + JS)
- ┣ 📄 worker.js    → Cloudflare Worker que lee los títulos de las canciones
  ┣ 🖼️ Icono.png    → logo de la radio
  ┗ 📄 README.md    → este archivo
 ```
