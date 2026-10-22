@@ -231,6 +231,27 @@
         background: linear-gradient(90deg, transparent 46%, var(--on-accent) 46% 54%, transparent 54%), var(--accent);
       }
 
+      /* ---------- Botón y modal: propiedades de la emisora ---------- */
+      .rmw-info-btn { width: 44px; height: 44px; }
+      .rmw-info-btn[hidden] { display: none; }
+      @media (max-width: 900px) { .np-controls .fader { flex-basis: calc(100% - 120px); } }
+      .rmw-info-wrap { position: fixed; inset: 0; z-index: 1900; display: grid; place-items: center; padding: 14px; background: rgba(0, 0, 0, .65); }
+      .rmw-info-wrap[hidden] { display: none; }
+      .rmw-info-box { width: min(560px, 100%); max-height: calc(100dvh - 28px); overflow-y: auto; padding: 20px 20px 16px; border-radius: 18px; color: var(--text-main);
+        background: var(--bg-card); border: 1px solid var(--border-color); box-shadow: 0 16px 40px rgba(0, 0, 0, .5); }
+      .rmw-info-box h2 { margin: 0 0 12px; font-size: 18px; overflow-wrap: anywhere; }
+      .rmw-info-list { display: grid; grid-template-columns: minmax(110px, 32%) 1fr; gap: 8px 14px; margin: 0; font-size: 13px; line-height: 1.4; }
+      .rmw-info-list dt { min-width: 0; overflow-wrap: anywhere; font-family: var(--f-mono); font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: var(--text-sub); }
+      .rmw-info-list dd { margin: 0; min-width: 0; overflow-wrap: anywhere; }
+      .rmw-info-list a { color: var(--accent); }
+      .rmw-info-list img { max-width: 64px; max-height: 64px; border-radius: 8px; display: block; }
+      .rmw-info-links { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 14px; }
+      .rmw-info-links a { display: inline-flex; align-items: center; height: 38px; padding: 0 16px; border-radius: 99px; font-size: 13px; font-weight: 700; text-decoration: none;
+        color: var(--text-main); border: 1px solid var(--border-color); }
+      .rmw-info-links a:hover { border-color: var(--accent); color: var(--accent); }
+      .rmw-info-links button { margin-left: auto; height: 38px; padding: 0 18px; border-radius: 99px; font: inherit; font-weight: 700; cursor: pointer;
+        color: var(--text-main); background: transparent; border: 1px solid var(--border-color); }
+
       /* ---------- Listado de emisoras ---------- */
       .crate { position: relative; border-top: 1px solid var(--border-color); background: linear-gradient(to bottom, color-mix(in srgb, var(--bg-tools) 70%, transparent), color-mix(in srgb, var(--bg-tools) 96%, transparent)); }
       .crate-head { display: flex; align-items: flex-end; gap: 18px; flex-wrap: wrap; padding: 18px var(--pad) 0; }
@@ -559,6 +580,13 @@
                     <div class="rmw-bar"></div>
                     <div class="rmw-bar"></div>
                 </div>
+                <button class="rmw-minibtn rmw-info-btn" id="rmw-info" title="Propiedades de la emisora" aria-label="Propiedades de la emisora" hidden>
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="9.5"/>
+                        <path d="M12 11v6"/>
+                        <circle cx="12" cy="7.5" r="0.6" fill="currentColor"/>
+                    </svg>
+                </button>
                 <label class="fader"><span>Vol</span>
                     <input class="rmw-volume" id="rmw-volume" type="range" min="0" max="1" step="0.05" aria-label="Volumen">
                 </label>
@@ -722,6 +750,14 @@
                 <button type="button" id="rmw-add-cancel">Cerrar</button>
                 <button type="button" class="primary" id="rmw-add-send" disabled>Enviar emisora</button>
             </div>
+        </div>
+    </div>
+
+    <div class="rmw-info-wrap" id="rmw-info-wrap" hidden>
+        <div class="rmw-info-box" role="dialog" aria-modal="true" aria-labelledby="rmw-info-title">
+            <h2 id="rmw-info-title">Propiedades de la emisora</h2>
+            <dl class="rmw-info-list" id="rmw-info-list"></dl>
+            <div class="rmw-info-links" id="rmw-info-links"><button type="button" id="rmw-info-close">Cerrar</button></div>
         </div>
     </div>
 
@@ -1648,8 +1684,25 @@
                 } catch (_) { /* el usuario cerró el menú de compartir */ }
             });
 
+            // Si aún no hay ninguna emisora cargada, el play inicial reproduce la primera del listado
+            let firstPlayObserver = null;
+            function playFirstStation() {
+                const firstButton = () => results.querySelector('.rmw-station [data-play]');
+                const btn = firstButton();
+                if (btn) { btn.click(); return; }
+                if (firstPlayObserver) return; // ya está esperando a que cargue el listado
+                miniStatus.textContent = 'Cargando emisoras…';
+                const stop = () => { if (firstPlayObserver) { firstPlayObserver.disconnect(); firstPlayObserver = null; } clearTimeout(giveUp); };
+                const giveUp = setTimeout(stop, 10000);
+                firstPlayObserver = new MutationObserver(() => {
+                    const b = firstButton();
+                    if (b) { stop(); if (!audio.src) b.click(); }
+                });
+                firstPlayObserver.observe(results, { childList: true, subtree: true });
+            }
+
             playPauseBtn.addEventListener('click', async () => {
-                if (!audio.src) return;
+                if (!audio.src) { playFirstStation(); return; }
                 if (audio.paused) {
                     userPaused = false;
                     try { await audio.play(); } catch (_) { miniStatus.textContent = 'No se pudo reanudar la emisora.'; }
@@ -2695,6 +2748,83 @@
                 }
             }
 
+            // ----- Propiedades de la emisora que suena -----
+            const infoBtn = document.getElementById('rmw-info');
+            const infoWrap = document.getElementById('rmw-info-wrap');
+            const infoTitle = document.getElementById('rmw-info-title');
+            const infoList = document.getElementById('rmw-info-list');
+            const infoLinks = document.getElementById('rmw-info-links');
+
+            // El botón aparece cuando hay una emisora cargada (igual que el de compartir)
+            const syncInfoBtn = () => { infoBtn.hidden = shareBtn.hidden; };
+            new MutationObserver(syncInfoBtn).observe(shareBtn, { attributes: true, attributeFilter: ['hidden'] });
+            syncInfoBtn();
+
+            function infoSafeUrl(u) {
+                try { const x = new URL(u); return (x.protocol === 'http:' || x.protocol === 'https:') ? x.href : ''; } catch (e) { return ''; }
+            }
+
+            function infoValue(key, v) {
+                const dd = document.createElement('dd');
+                if (v === null || v === undefined || v === '' || (Array.isArray(v) && !v.length)) { dd.textContent = '—'; return dd; }
+                if (typeof v === 'boolean') { dd.textContent = v ? 'Sí' : 'No'; return dd; }
+                if (key === 'bitrate' && Number(v) > 0) { dd.textContent = Number(v) + 'kbps'; return dd; }
+                const s = String(v);
+                if (/^https?:\/\//i.test(s)) {
+                    const href = infoSafeUrl(s);
+                    if (href) {
+                        if (key === 'favicon') {
+                            const img = document.createElement('img');
+                            img.src = href; img.alt = ''; img.referrerPolicy = 'no-referrer';
+                            img.onerror = () => img.remove();
+                            dd.appendChild(img);
+                        }
+                        const a = document.createElement('a');
+                        a.href = href; a.target = '_blank'; a.rel = 'noopener noreferrer'; a.textContent = s;
+                        dd.appendChild(a);
+                        return dd;
+                    }
+                }
+                dd.textContent = s;
+                return dd;
+            }
+
+            const INFO_FIELDS = ['name', 'country', 'state', 'codec', 'bitrate', 'url'];
+            const INFO_LABELS = { name: 'nombre', country: 'país', state: 'ciudad', codec: 'codec', bitrate: 'bitrate', url: 'stream url' };
+
+            function renderInfo(station) {
+                const props = station;
+                infoTitle.textContent = station.name || 'Propiedades de la emisora';
+                infoList.textContent = '';
+                INFO_FIELDS.forEach(k => {
+                    const dt = document.createElement('dt');
+                    dt.textContent = INFO_LABELS[k] || k;
+                    infoList.appendChild(dt);
+                    infoList.appendChild(infoValue(k, props[k]));
+                });
+
+                infoLinks.querySelectorAll('a').forEach(el => el.remove());
+                const home = infoSafeUrl(props.homepage || '');
+                if (home) {
+                    const a = document.createElement('a');
+                    a.href = home; a.target = '_blank'; a.rel = 'noopener noreferrer'; a.textContent = '🌐 Web de la emisora';
+                    infoLinks.prepend(a);
+                }
+            }
+
+            function openInfoDialog() {
+                const station = playingStation;
+                if (!station) return;
+                renderInfo(station);
+                infoWrap.hidden = false;
+            }
+            function closeInfoDialog() { infoWrap.hidden = true; }
+
+            infoBtn.addEventListener('click', openInfoDialog);
+            document.getElementById('rmw-info-close').addEventListener('click', closeInfoDialog);
+            infoWrap.addEventListener('click', e => { if (e.target === infoWrap) closeInfoDialog(); });
+            document.addEventListener('keydown', e => { if (e.key === 'Escape' && !infoWrap.hidden) closeInfoDialog(); });
+
             addBtn.addEventListener('click', openAddDialog);
             document.getElementById('rmw-add-cancel').addEventListener('click', closeAddDialog);
             addSend.addEventListener('click', submitAddStation);
@@ -3398,4 +3528,4 @@
         })();
     </script>
 </body>
-    </html>
+                        </html>
