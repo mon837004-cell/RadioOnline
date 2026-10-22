@@ -125,7 +125,7 @@ La radio muestra el título de lo que suena, sea una canción o un programa, en 
 
 ## 📄 Licencia
 
-© 2026 [TU NOMBRE O ALIAS]. **Todos los derechos reservados.**
+© 2026 RamperDjs **Todos los derechos reservados.**
 Puedes ver el código y usar la radio libremente, pero no copiarlo, modificarlo ni redistribuirlo sin permiso por escrito del autor. Consulta el archivo [`LICENSE`](LICENSE) para los detalles.
 
 ---
