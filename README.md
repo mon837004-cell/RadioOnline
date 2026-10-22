@@ -87,12 +87,7 @@ Pulsa **🌍 Globo** y explora las emisoras sobre un **globo terráqueo 3D** con
 
 ## 🎶 Títulos de canciones y programas
 
-Muchas emisoras envían el título de lo que suena dentro del propio audio, pero los navegadores no dejan leerlo directamente en la mayoría de ellas. Por eso la radio lo intenta de dos formas:
-
-1. 🔍 **Directa:** pide el título a la emisora desde el navegador.
-2. ☁️ **A través de un Worker** si la emisora lo bloquea, un pequeño servidor gratuito lee el título en su nombre y devuelve solo ese texto. Solo acepta peticiones que vengan de tu página.
-
-Las emisoras que no incluyen el título en su señal no se pueden arreglar con esto.
+Muchas emisoras envían el título de lo que suena dentro del propio audio, pero los navegadores no dejan leerlo directamente en la mayoría de ellas. Las emisoras que no incluyen el título en su señal no se pueden arreglar con esto.
 
 ---
 
