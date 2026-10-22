@@ -1984,8 +1984,31 @@
                 };
             }
 
+            function addLabelBackground() {
+                // Fondo de etiqueta estirable (9-slice) que se ajusta al texto de cada nombre
+                if (globeMap.hasImage('rmw-label-bg')) return;
+                const r = 4, w = 2 * r + 2, ratio = 2, c = document.createElement('canvas');
+                c.width = w * ratio; c.height = w * ratio;
+                const ctx = c.getContext('2d');
+                ctx.scale(ratio, ratio);
+                ctx.beginPath();
+                if (ctx.roundRect) ctx.roundRect(0.5, 0.5, w - 1, w - 1, r); else ctx.rect(0.5, 0.5, w - 1, w - 1);
+                ctx.fillStyle = 'rgba(12, 14, 20, 0.78)';
+                ctx.fill();
+                ctx.lineWidth = 1;
+                ctx.strokeStyle = 'rgba(255, 255, 255, 0.22)';
+                ctx.stroke();
+                globeMap.addImage('rmw-label-bg', ctx.getImageData(0, 0, c.width, c.height), {
+                    pixelRatio: ratio,
+                    // MapLibre mide estas zonas en píxeles reales de la imagen (lógicos × ratio)
+                    stretchX: [[r * ratio, (w - r) * ratio]], stretchY: [[r * ratio, (w - r) * ratio]],
+                    content: [0, 0, w * ratio, w * ratio] // el borde forma parte del área del texto: la etiqueta no sobresale
+                });
+            }
+
             function addGlobeLayers() {
                 const accent = mapAccent;
+                addLabelBackground();
                 globeMap.addSource('stations', { type: 'geojson', data: EMPTY_FC, cluster: true, clusterRadius: 45, clusterMaxZoom: 8 });
                 globeMap.addSource('active', { type: 'geojson', data: EMPTY_FC });
                 globeMap.addLayer({
@@ -2010,7 +2033,8 @@
                     filter: ['all', ['!', ['has', 'point_count']], ['!=', ['get', 'id'], mapActiveId]],
                     layout: {
                         'text-field': ['get', 'name'], 'text-font': MAP_FONT, 'text-size': 12, 'text-anchor': 'left', 'text-offset': [0.9, 0],
-                        'text-max-width': 12, 'text-padding': 3, 'symbol-sort-key': ['get', 'rank'] // sin 'allow-overlap': lo que se pisa se oculta solo
+                        'text-max-width': 12, 'text-padding': 3, 'symbol-sort-key': ['get', 'rank'], // sin 'allow-overlap': lo que se pisa se oculta solo
+                        'icon-image': 'rmw-label-bg', 'icon-text-fit': 'both', 'icon-text-fit-padding': [-0.5, 4, -0.5, 3]
                     },
                     paint: { 'text-color': '#ffffff', 'text-halo-color': '#000000', 'text-halo-width': 1.5 }
                 });
@@ -2022,7 +2046,9 @@
                     id: 'active-name', type: 'symbol', source: 'active',
                     layout: {
                         'text-field': ['get', 'name'], 'text-font': MAP_FONT, 'text-size': 14, 'text-anchor': 'left', 'text-offset': [1.1, 0],
-                        'text-max-width': 14, 'text-allow-overlap': true, 'text-ignore-placement': true
+                        'text-max-width': 14, 'text-allow-overlap': true, 'text-ignore-placement': true,
+                        'icon-image': 'rmw-label-bg', 'icon-text-fit': 'both', 'icon-text-fit-padding': [-0.75, 5, -0.25, 4],
+                        'icon-allow-overlap': true, 'icon-ignore-placement': true
                     },
                     paint: { 'text-color': '#ffffff', 'text-halo-color': '#000000', 'text-halo-width': 2 }
                 });
@@ -3528,4 +3554,4 @@
         })();
     </script>
 </body>
-                        </html>
+</html>
