@@ -235,6 +235,9 @@
       /* ---------- Botón y modal: propiedades de la emisora ---------- */
       .rmw-info-btn { width: 44px; height: 44px; }
       .rmw-info-btn[hidden] { display: none; }
+      /* Iconos interiores más grandes para distinguirlos mejor; los botones mantienen su tamaño */
+      #rmw-timer:not(.rmw-on) { font-size: 27px; line-height: 1; }  /* con la cuenta atrás activa se mantiene el texto pequeño */
+      .rmw-info-btn svg { width: 29px; height: 29px; }
       @media (max-width: 900px) { .np-controls .fader { flex-basis: calc(100% - 120px); } }
       .rmw-info-wrap { position: fixed; inset: 0; z-index: 1900; display: grid; place-items: center; padding: 14px; background: rgba(0, 0, 0, .65); }
       .rmw-info-wrap[hidden] { display: none; }
@@ -824,7 +827,6 @@
             const API_SERVERS = [
                 'https://de1.api.radio-browser.info/json',
                 'https://fr1.api.radio-browser.info/json',
-                'https://at1.api.radio-browser.info/json',
                 'https://de2.api.radio-browser.info/json'
             ];
 
