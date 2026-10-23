@@ -544,6 +544,21 @@
       .rmw-add-actions button.primary { color: var(--on-accent, #fff); background: var(--accent); border-color: var(--accent); }
       .rmw-add-actions button:disabled { opacity: .4; cursor: not-allowed; }
       @media (max-width: 520px) { .rmw-add-grid { grid-template-columns: 1fr; } }
+      /* Lista negra */
+      .rmw-bl-row { display: flex; gap: 8px; }
+      .rmw-bl-row input { flex: 1; min-width: 0; height: 40px; padding: 0 11px; border-radius: 10px; font: inherit; font-size: 14px;
+        color: var(--text-main); background: var(--bg-tools); border: 1px solid var(--border-color); }
+      .rmw-bl-row input:focus { outline: 2px solid var(--accent); outline-offset: 1px; }
+      .rmw-bl-row button { height: 40px; padding: 0 16px; border-radius: 99px; font: inherit; font-weight: 700; cursor: pointer;
+        color: var(--on-accent, #fff); background: var(--accent); border: 1px solid var(--accent); }
+      .rmw-bl-list { display: flex; flex-wrap: wrap; gap: 8px; margin: 14px 0 4px; min-height: 34px; align-content: flex-start; }
+      .rmw-bl-chip { display: inline-flex; align-items: center; gap: 4px; max-width: 100%; height: 32px; padding: 0 5px 0 12px; border-radius: 99px;
+        font-size: 13px; color: var(--text-main); border: 1px solid var(--border-color); background: var(--bg-tools); }
+      .rmw-bl-chip span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+      .rmw-bl-chip button { flex: none; width: 22px; height: 22px; padding: 0; border: 0; border-radius: 50%; font: inherit; font-size: 16px; line-height: 1;
+        color: inherit; background: transparent; cursor: pointer; }
+      .rmw-bl-chip button:hover { background: var(--accent); color: var(--on-accent, #fff); }
+      .rmw-bl-empty { font-size: 13px; color: var(--text-sub); }
       /* Modo "elegir ubicación" del mapa (formulario de añadir emisora) */
       .rmw-mapwrap.picking .rmw-map-top, .rmw-mapwrap.picking .rmw-map-list, .rmw-mapwrap.picking .rmw-map-card { display: none !important; }
       .rmw-pick { position: absolute; z-index: 1200; left: 50%; transform: translateX(-50%); bottom: calc(24px + env(safe-area-inset-bottom, 0px));
@@ -649,6 +664,7 @@
                     <button class="rmw-btn" id="rmw-favs">⭐ Mis Favoritos</button>
                     <button class="rmw-btn" id="rmw-map">🌍 Explorar</button>
                     <button class="rmw-btn" id="rmw-add">➕ Añadir emisora</button>
+                    <button class="rmw-btn" id="rmw-blacklist">🚫 Lista negra</button>
                 </div>
             </div>
             <div class="crate-nav">
@@ -709,6 +725,22 @@
                     <button type="button" id="rmw-map-dialog-no">Cancelar</button>
                     <button type="button" class="primary" id="rmw-map-dialog-yes">Cargar todo</button>
                 </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="rmw-add-wrap" id="rmw-bl-wrap" hidden>
+        <div class="rmw-add-box" role="dialog" aria-modal="true" aria-labelledby="rmw-bl-title">
+            <h2 id="rmw-bl-title">🚫 Lista negra</h2>
+            <p class="rmw-add-intro">No se muestran las emisoras cuyo nombre o etiquetas contengan alguna de estas palabras (sin distinguir mayúsculas ni acentos). Puedes añadir varias separadas por comas. Tus favoritos no se ocultan.</p>
+            <div class="rmw-bl-row">
+                <input id="rmw-bl-input" type="text" maxlength="120" autocomplete="off" placeholder="Palabra o frase a ocultar" aria-label="Palabra para la lista negra">
+                <button type="button" id="rmw-bl-add">Añadir</button>
+            </div>
+            <div class="rmw-bl-list" id="rmw-bl-list" aria-live="polite"></div>
+            <div class="rmw-add-actions">
+                <button type="button" id="rmw-bl-clear">Vaciar lista</button>
+                <button type="button" class="primary" id="rmw-bl-close">Cerrar</button>
             </div>
         </div>
     </div>
@@ -783,7 +815,8 @@
                 volume: 'rmw_volume_v1',
                 theme: 'rmw_theme_v1',
                 country: 'rmw_country_v1',
-                genre: 'rmw_genre_v1'
+                genre: 'rmw_genre_v1',
+                blacklist: 'rmw_blacklist_v1'
             };
 
             // localStorage puede lanzar excepciones (modo privado, almacenamiento bloqueado): nunca debe romper la radio
@@ -837,6 +870,38 @@
             const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
             let apiIndex = Math.floor(Math.random() * API_SERVERS.length); // reparte la carga entre servidores
             let favorites = loadGlobalFavorites();
+
+            // ----- Lista negra: no se muestran las emisoras cuyo nombre o etiquetas contengan alguna de estas palabras -----
+            // Se compara sin mayúsculas ni acentos ("Religión" y "religion" cuentan igual)
+            function blacklistKey(text) {
+                return String(text || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/\s+/g, ' ').trim();
+            }
+            function loadBlacklist() {
+                try {
+                    const list = JSON.parse(store.get(STORAGE.blacklist) || '[]');
+                    if (!Array.isArray(list)) return [];
+                    const seen = new Set();
+                    return list.map(w => String(w).replace(/\s+/g, ' ').trim()).filter(w => {
+                        const key = blacklistKey(w);
+                        if (!key || seen.has(key)) return false;
+                        seen.add(key);
+                        return true;
+                    });
+                } catch (_) { return []; }
+            }
+            let blacklist = loadBlacklist();             // palabras tal como se escribieron
+            let blacklistKeys = blacklist.map(blacklistKey); // las mismas, normalizadas, para comparar
+            function setBlacklist(list) {
+                blacklist = list;
+                blacklistKeys = list.map(blacklistKey);
+                store.set(STORAGE.blacklist, JSON.stringify(list));
+            }
+            // Vale tanto para una emisora de la API como para una ya normalizada (ambas tienen name y tags)
+            function isBlacklisted(station) {
+                if (!blacklistKeys.length || !station) return false;
+                const text = blacklistKey((station.name || '') + ' ' + (station.tags || ''));
+                return blacklistKeys.some(key => text.includes(key));
+            }
             let playingStation = null;
             let currentMode = 'catalog'; // 'catalog', 'favorites'
             let searchTimer = null;
@@ -1275,6 +1340,7 @@
                     raw.forEach(d => {
                         if (!d || !(d.url_resolved || d.url) || !d.stationuuid) return;
                         const station = normalizeStation(d);
+                        if (isBlacklisted(station)) return;
                         const nameKey = nameKeyOf(station.name);
                         if (shownIds.has(station.id) || (nameKey && shownNames.has(nameKey))) return;
                         shownIds.add(station.id);
@@ -1354,7 +1420,8 @@
 
                     const stations = data
                         .filter(s => s && (s.url_resolved || s.url) && s.stationuuid)
-                        .map(normalizeStation);
+                        .map(normalizeStation)
+                        .filter(station => !isBlacklisted(station));
 
                     offset += data.length;
                     renderStations(stations, reset, data.length >= 50);
@@ -1998,6 +2065,7 @@
                 const approxGroups = new Map(); // zona de España -> emisoras sin coordenadas de esa zona
                 list.forEach((raw, index) => {
                     if (!raw || !raw.stationuuid || !(raw.url_resolved || raw.url)) return;
+                    if (isBlacklisted(raw)) return;
                     const geo = validGeo(raw);
                     if (geo) {
                         const station = normalizeStation(raw);
@@ -2939,6 +3007,87 @@
             Object.values(addEls).forEach(el => { el.addEventListener('input', addRefresh); el.addEventListener('change', addRefresh); });
             document.addEventListener('keydown', e => { if (e.key === 'Escape' && !addWrap.hidden) closeAddDialog(); });
 
+            // ----- Lista negra -----
+            const blWrap = document.getElementById('rmw-bl-wrap');
+            const blInput = document.getElementById('rmw-bl-input');
+            const blList = document.getElementById('rmw-bl-list');
+            const blClear = document.getElementById('rmw-bl-clear');
+            let blDirty = false; // hubo cambios: la lista se recarga al cerrar el cuadro
+
+            function renderBlacklist() {
+                blList.textContent = '';
+                if (!blacklist.length) {
+                    const empty = document.createElement('span');
+                    empty.className = 'rmw-bl-empty';
+                    empty.textContent = 'La lista está vacía: se muestran todas las emisoras.';
+                    blList.appendChild(empty);
+                }
+                blacklist.forEach(word => {
+                    const chip = document.createElement('span');
+                    chip.className = 'rmw-bl-chip';
+                    const label = document.createElement('span');
+                    label.textContent = word;
+                    const remove = document.createElement('button');
+                    remove.type = 'button';
+                    remove.textContent = '×';
+                    remove.title = 'Quitar de la lista negra';
+                    remove.setAttribute('aria-label', 'Quitar «' + word + '» de la lista negra');
+                    remove.addEventListener('click', () => {
+                        setBlacklist(blacklist.filter(w => w !== word));
+                        blDirty = true;
+                        renderBlacklist();
+                    });
+                    chip.append(label, remove);
+                    blList.appendChild(chip);
+                });
+                blClear.disabled = !blacklist.length;
+            }
+
+            function addBlacklistWords() {
+                const words = blInput.value.split(/[,;]/).map(w => w.replace(/\s+/g, ' ').trim()).filter(w => blacklistKey(w));
+                const next = [...blacklist];
+                words.forEach(word => { if (!next.some(w => blacklistKey(w) === blacklistKey(word))) next.push(word); });
+                blInput.value = '';
+                if (next.length === blacklist.length) { blInput.focus(); return; } // vacío o ya estaban
+                setBlacklist(next);
+                blDirty = true;
+                renderBlacklist();
+                blInput.focus();
+            }
+
+            // Al cerrar: el catálogo se vuelve a cargar y el mapa se reconstruye con lo que ya había descargado
+            function applyBlacklistChanges() {
+                catalogSnapshot = null; // la lista guardada del catálogo ya no vale
+                if (currentMode === 'catalog') loadStations(true);
+                refreshMapData();
+            }
+
+            function openBlacklistDialog() {
+                renderBlacklist();
+                blWrap.hidden = false;
+                document.documentElement.style.overflow = 'hidden';
+                blInput.focus();
+            }
+
+            function closeBlacklistDialog() {
+                blWrap.hidden = true;
+                if (!mapWrap.classList.contains('open')) document.documentElement.style.overflow = '';
+                if (blDirty) { blDirty = false; applyBlacklistChanges(); }
+            }
+
+            document.getElementById('rmw-blacklist').addEventListener('click', openBlacklistDialog);
+            document.getElementById('rmw-bl-add').addEventListener('click', addBlacklistWords);
+            blInput.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); addBlacklistWords(); } });
+            document.getElementById('rmw-bl-close').addEventListener('click', closeBlacklistDialog);
+            blWrap.addEventListener('click', e => { if (e.target === blWrap) closeBlacklistDialog(); });
+            document.addEventListener('keydown', e => { if (e.key === 'Escape' && !blWrap.hidden) closeBlacklistDialog(); });
+            blClear.addEventListener('click', () => {
+                if (!blacklist.length || !confirm('¿Vaciar la lista negra?')) return;
+                setBlacklist([]);
+                blDirty = true;
+                renderBlacklist();
+            });
+
             // ----- Elegir la ubicación tocando el mapa -----
             const pickBar = document.getElementById('rmw-pick');
             const pickText = document.getElementById('rmw-pick-text');
@@ -3170,9 +3319,13 @@
                 }
             }
 
+            // HLS (.m3u8): no se consulta el título (casi ninguna emisora HLS lo envía y cada consulta gasta una petición del Worker)
+            function isHlsUrl(url) { return /m3u8/i.test(url || ''); }
+
             async function pollNowPlaying() {
                 if (!playingStation || !loadedUrl || audio.paused) return;
                 const url = loadedUrl;
+                if (isHlsUrl(url)) return;
 
                 // Tras varios fallos seguidos solo se reintenta de vez en cuando (1 de cada 6 consultas, aprox. cada minuto)
                 if ((nowPlayingFailures.get(url) || 0) >= NOW_PLAYING_MAX_FAILURES) {
@@ -3186,7 +3339,7 @@
 
                 try {
                     let title;
-                    if (proxyOnlyUrls.has(url) || /m3u8/i.test(url)) { // HLS no tiene ICY: directo al Worker
+                    if (proxyOnlyUrls.has(url)) { // la lectura directa ya falló antes: directo al Worker
                         title = await withNowPlayingAttempt(signal => readIcyTitleViaProxy(url, signal));
                     } else {
                         try {
@@ -3217,7 +3370,7 @@
             }
 
             function startNowPlaying() {
-                if (nowPlayingTimer) return;
+                if (nowPlayingTimer || isHlsUrl(loadedUrl)) return;
                 if (Date.now() - lastNowPlayingAt > 5000) pollNowPlaying();
                 nowPlayingTimer = setInterval(pollNowPlaying, NOW_PLAYING_INTERVAL_MS);
             }
