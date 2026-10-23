@@ -1677,7 +1677,7 @@
                 const cardPlay = document.getElementById('rmw-mc-play'); // botón de la ficha del globo
                 if (cardPlay && cardPlay.dataset.sid) {
                     const cardActive = playingStation && playingStation.id === cardPlay.dataset.sid;
-                    if (cardActive && !audio.paused) cardPlay.innerHTML = PAUSE_ICON_HTML; else cardPlay.textContent = '▶';
+                    if (cardActive && !audio.paused) cardPlay.innerHTML = PAUSE_ICON_HTML.replace('display:block;', 'display:block;margin:0 auto;'); else cardPlay.textContent = '▶';
                 }
                 updateMapCardStatus();
             }
