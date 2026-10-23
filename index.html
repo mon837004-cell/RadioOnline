@@ -1123,6 +1123,7 @@
             const miniStatus = document.getElementById('rmw-ministatus');
             const playPauseBtn = document.getElementById('rmw-playpause');
             const shareBtn = document.getElementById('rmw-share');
+            const PAUSE_ICON_HTML = '<span aria-hidden="true" style="display:block;width:14px;height:18px;background:linear-gradient(90deg,currentColor 0 36%,transparent 36% 64%,currentColor 64%)"></span>';
 
             audio.volume = getVolume();
 
@@ -1629,7 +1630,7 @@
                 updateMediaSession(normalized);
                 miniName.textContent = normalized.name;
                 miniStatus.textContent = 'Conectando…';
-                playPauseBtn.textContent = 'Ⅱ';
+                playPauseBtn.innerHTML = PAUSE_ICON_HTML;
 
                 if (loadedUrl !== normalized.url || !audio.src || isStreamBroken()) {
                     if (!audio.paused) switchingStation = true; // el 'pause' que sigue es un cambio de emisora, no una pausa real
@@ -1676,7 +1677,7 @@
                 const cardPlay = document.getElementById('rmw-mc-play'); // botón de la ficha del globo
                 if (cardPlay && cardPlay.dataset.sid) {
                     const cardActive = playingStation && playingStation.id === cardPlay.dataset.sid;
-                    cardPlay.textContent = cardActive && !audio.paused ? 'Ⅱ' : '▶';
+                    if (cardActive && !audio.paused) cardPlay.innerHTML = PAUSE_ICON_HTML; else cardPlay.textContent = '▶';
                 }
                 updateMapCardStatus();
             }
@@ -1694,11 +1695,31 @@
                     text: [station.name, station.country].filter(Boolean).join(' · ') + ' — Radio Forocochera',
                     url: shareUrl
                 };
+                const isMobileDevice = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+                const copyText = shareData.text + '\n' + shareData.url;
+                const copyToClipboard = async () => {
+                    try {
+                        if (navigator.clipboard && navigator.clipboard.writeText) {
+                            await navigator.clipboard.writeText(copyText);
+                            return true;
+                        }
+                    } catch (_) { /* se prueba el método alternativo */ }
+                    try {
+                        const ta = document.createElement('textarea');
+                        ta.value = copyText;
+                        ta.setAttribute('readonly', '');
+                        ta.style.cssText = 'position:fixed;top:0;left:0;opacity:0;';
+                        document.body.appendChild(ta);
+                        ta.select();
+                        const ok = document.execCommand('copy');
+                        ta.remove();
+                        return ok;
+                    } catch (_) { return false; }
+                };
                 try {
-                    if (navigator.share) {
+                    if (isMobileDevice && navigator.share) {
                         await navigator.share(shareData);
-                    } else if (navigator.clipboard && navigator.clipboard.writeText) {
-                        await navigator.clipboard.writeText(shareData.text + '\n' + shareData.url);
+                    } else if (await copyToClipboard()) {
                         showToast('Enlace de la emisora copiado');
                     }
                 } catch (_) { /* el usuario cerró el menú de compartir */ }
@@ -3219,7 +3240,7 @@
                 }
                 setupRealAnalyser();
                 miniStatus.textContent = (playingStation?.country || '') + ' · En reproducción';
-                playPauseBtn.textContent = 'Ⅱ';
+                playPauseBtn.innerHTML = PAUSE_ICON_HTML;
                 miniPlayer.classList.add('is-playing');
                 startDynamicVisualizer();
                 startNowPlaying();
