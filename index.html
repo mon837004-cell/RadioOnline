@@ -848,6 +848,12 @@
             let favoritesScrollLeft = null;
             let userPaused = false;
             let switchingStation = false;
+            // Reconexión automática
+            let wantReconnect = false;       // se perdió la señal y hay que volver a conectar
+            let hasPlayedLive = false;       // esta emisora ya sonó alguna vez (no es un fallo de la emisora)
+            let reconnectTimer = null;
+            let stallTimer = null;
+            let reconnectAttempts = 0;
             let loadedUrl = '';
             let autoResumeArmed = false;
             let toastTimer = null;
@@ -1626,6 +1632,7 @@
                     if (!audio.paused) switchingStation = true; // el 'pause' que sigue es un cambio de emisora, no una pausa real
                     audio.pause();
                     resetNowPlaying();
+                    resetReconnect();
                     corsRetryPending = false;
                     configureCors(normalized.url);
                     audio.src = streamSrc(normalized.url);
@@ -1713,6 +1720,7 @@
                 if (!audio.src) { playFirstStation(); return; }
                 if (audio.paused) {
                     userPaused = false;
+                    if (wantReconnect) { reconnectNow(); return; }
                     try { await audio.play(); } catch (_) { miniStatus.textContent = 'No se pudo reanudar la emisora.'; }
                 } else {
                     userPaused = true;
@@ -3196,6 +3204,8 @@
 
             audio.addEventListener('playing', () => {
                 switchingStation = false;
+                hasPlayedLive = true;
+                resetReconnect();
                 disarmAutoResume();
                 if (corsRetryPending) {
                     if (corsRetryHost) corsBlockedHosts.add(corsRetryHost);
@@ -3232,6 +3242,14 @@
             });
             
             audio.addEventListener('error', () => {
+                // Sin internet: no es un problema de CORS ni de la emisora, solo hay que esperar y reconectar
+                if (navigator.onLine === false && audio.src && playingStation && !userPaused) {
+                    stopNowPlaying();
+                    miniPlayer.classList.remove('is-playing');
+                    stopDynamicVisualizer();
+                    scheduleReconnect();
+                    return;
+                }
                 if (audio.crossOrigin && audio.src) {
                     corsRetryPending = true;
                     corsRetryHost = hostOf(loadedUrl);
@@ -3249,6 +3267,78 @@
                 miniPlayer.classList.remove('is-playing');
                 stopDynamicVisualizer();
                 refreshPlayButtons();
+                // Si la emisora ya había sonado, el corte viene de la red: reintenta solo
+                if (hasPlayedLive && !userPaused) scheduleReconnect();
+            });
+
+            // ── Reconexión automática cuando se pierde internet ──
+            function resetReconnect() {
+                wantReconnect = false;
+                reconnectAttempts = 0;
+                clearTimeout(reconnectTimer);
+                clearTimeout(stallTimer);
+                reconnectTimer = null;
+                stallTimer = null;
+            }
+
+            function scheduleReconnect() {
+                if (userPaused || !playingStation || !loadedUrl) return;
+                wantReconnect = true;
+                clearTimeout(reconnectTimer);
+                miniStatus.textContent = 'Sin conexión. Reconectando…';
+                playPauseBtn.textContent = '▶';
+                if (navigator.onLine === false) return; // el evento 'online' lo reactivará
+                const delay = Math.min(2000 * Math.pow(1.6, reconnectAttempts), 15000);
+                reconnectAttempts++;
+                reconnectTimer = setTimeout(reconnectNow, delay);
+            }
+
+            function reconnectNow() {
+                clearTimeout(reconnectTimer);
+                reconnectTimer = null;
+                if (userPaused || !playingStation || !loadedUrl) return;
+                if (navigator.onLine === false) { scheduleReconnect(); return; }
+                miniStatus.textContent = 'Reconectando…';
+                configureCors(loadedUrl);
+                audio.src = streamSrc(loadedUrl); // recarga el stream desde cero: el anterior ya está muerto
+                audio.load();
+                audio.play().catch(err => {
+                    if (err?.name === 'AbortError') return;
+                    scheduleReconnect();
+                });
+            }
+
+            // Si el stream se queda cargando demasiado tiempo después de haber sonado, se considera cortado
+            audio.addEventListener('waiting', () => {
+                if (!hasPlayedLive || userPaused) return;
+                clearTimeout(stallTimer);
+                stallTimer = setTimeout(() => {
+                    if (!userPaused && (audio.paused || audio.readyState < 3)) scheduleReconnect();
+                }, 12000);
+            });
+            audio.addEventListener('stalled', () => {
+                if (!hasPlayedLive || userPaused || stallTimer) return;
+                stallTimer = setTimeout(() => {
+                    stallTimer = null;
+                    if (!userPaused && audio.readyState < 3) scheduleReconnect();
+                }, 12000);
+            });
+            // Un directo que "termina" solo significa que se cortó la conexión
+            audio.addEventListener('ended', () => { if (!userPaused) scheduleReconnect(); });
+
+            window.addEventListener('offline', () => {
+                if (userPaused || !playingStation || audio.paused && !wantReconnect) return;
+                wantReconnect = true;
+                miniStatus.textContent = 'Sin internet. Esperando conexión…';
+            });
+            window.addEventListener('online', () => {
+                if (userPaused || !playingStation) return;
+                // Si estaba sonando o esperando, vuelve a la misma emisora (pequeña pausa para que la red se estabilice)
+                if (wantReconnect || audio.paused || audio.readyState < 3) {
+                    wantReconnect = true;
+                    clearTimeout(reconnectTimer);
+                    reconnectTimer = setTimeout(reconnectNow, 1500);
+                }
             });
 
             const hasMediaSession = 'mediaSession' in navigator;
