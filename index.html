@@ -236,7 +236,7 @@
       .rmw-info-btn { width: 44px; height: 44px; }
       .rmw-info-btn[hidden] { display: none; }
       /* Iconos interiores más grandes para distinguirlos mejor; los botones mantienen su tamaño */
-      #rmw-timer:not(.rmw-on) { font-size: 27px; line-height: 1; }  /* con la cuenta atrás activa se mantiene el texto pequeño */
+      #rmw-timer svg { width: 28px; height: 28px; display: block; }  /* con la cuenta atrás activa el botón muestra texto pequeño en su lugar */
       .rmw-info-btn svg { width: 29px; height: 29px; }
       @media (max-width: 900px) { .np-controls .fader { flex-basis: calc(100% - 120px); } }
       .rmw-info-wrap { position: fixed; inset: 0; z-index: 1900; display: grid; place-items: center; padding: 14px; background: rgba(0, 0, 0, .65); }
@@ -580,7 +580,7 @@
             </div>
             <div class="np-controls">
                 <button class="rmw-minibtn" id="rmw-playpause" title="Reproducir o pausar">▶</button>
-                <button class="rmw-minibtn" id="rmw-timer" title="Temporizador de apagado" aria-label="Temporizador de apagado">⏱</button>
+                <button class="rmw-minibtn" id="rmw-timer" title="Temporizador de apagado" aria-label="Temporizador de apagado"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="10" x2="14" y1="2" y2="2"/><line x1="12" x2="15" y1="14" y2="11"/><circle cx="12" cy="14" r="8"/></svg></button>
                 <div class="rmw-visualizer" id="rmw-visualizer" title="Ecualizador activo">
                     <div class="rmw-bar"></div>
                     <div class="rmw-bar"></div>
@@ -3152,7 +3152,7 @@
 
                 try {
                     let title;
-                    if (proxyOnlyUrls.has(url)) {
+                    if (proxyOnlyUrls.has(url) || /m3u8/i.test(url)) { // HLS no tiene ICY: directo al Worker
                         title = await withNowPlayingAttempt(signal => readIcyTitleViaProxy(url, signal));
                     } else {
                         try {
@@ -3290,6 +3290,7 @@
 
             // Temporizador de Apagado
             const timerBtn = document.getElementById('rmw-timer');
+            const TIMER_ICON_HTML = '<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="10" x2="14" y1="2" y2="2"/><line x1="12" x2="15" y1="14" y2="11"/><circle cx="12" cy="14" r="8"/></svg>';
             const timerMenu = document.createElement('div');
             timerMenu.id = 'rmw-timer-menu';
             document.body.appendChild(timerMenu);
@@ -3305,7 +3306,7 @@
 
             function updateTimerButton() {
                 if (!sleepEnd) {
-                    timerBtn.textContent = '⏱';
+                    timerBtn.innerHTML = TIMER_ICON_HTML;
                     timerBtn.classList.remove('rmw-on');
                     timerBtn.title = 'Temporizador de apagado';
                     return;
