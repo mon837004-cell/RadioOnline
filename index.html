@@ -644,6 +644,17 @@
                 <option value="Disco">Disco</option><option value="EDM">EDM</option><option value="Electronic">Electronic</option><option value="Flamenco">Flamenco</option><option value="Folk">Folk</option><option value="Funk">Funk</option><option value="Hard Rock">Hard Rock</option><option value="Heavy Metal">Heavy Metal</option><option value="Hip Hop">Hip Hop</option><option value="Hits">Hits</option><option value="Indie">Indie</option><option value="Jazz">Jazz</option><option value="Latin">Latin</option><option value="Lounge">Lounge</option><option value="Metal">Metal</option><option value="News">News</option><option value="Oldies">Oldies</option><option value="Opera">Opera</option><option value="Pop">Pop</option><option value="Punk">Punk</option><option value="Rap">Rap</option><option value="R&B">R&B</option><option value="Reggae">Reggae</option><option value="Rock">Rock</option><option value="Salsa">Salsa</option><option value="Ska">Ska</option><option value="Soul">Soul</option><option value="Soundtracks">Soundtracks</option><option value="Sports">Sports</option><option value="Talk">Talk</option><option value="Techno">Techno</option><option value="Top 40">Top 40</option><option value="Trance">Trance</option><option value="World Music">World Music</option>
             </select>
                 </label>
+                <label class="rmw-fld sel">
+                    <select id="rmw-stream" aria-label="Tipo de stream (filtro temporal de pruebas)">
+                        <option value="">🧪 Todos los formatos</option>
+                        <option value="MP3">🧪 Solo MP3</option>
+                        <option value="AAC">🧪 Solo AAC</option>
+                        <option value="OGG">🧪 Solo OGG</option>
+                        <option value="OPUS">🧪 Solo Opus</option>
+                        <option value="FLAC">🧪 Solo FLAC</option>
+                        <option value="HLS">🧪 Solo HLS</option>
+                    </select>
+                </label>
                 <div class="rmw-actions">
                     <button class="rmw-btn active" id="rmw-all">📚 Catálogo</button>
                     <button class="rmw-btn" id="rmw-favs">⭐ Mis Favoritos</button>
@@ -808,6 +819,7 @@
             const DEFAULT_COUNTRY = 'Spain';
             const countrySelect = document.getElementById('rmw-country');
             const genreSelect = document.getElementById('rmw-genre');
+            const streamSelect = document.getElementById('rmw-stream'); // filtro temporal de pruebas por formato (no se guarda)
 
             const savedCountry = store.get(STORAGE.country);
             countrySelect.value = savedCountry !== null ? savedCountry : DEFAULT_COUNTRY;
@@ -850,15 +862,6 @@
             let switchingStation = false;
             let loadedUrl = '';
             let autoResumeArmed = false;
-            // Reconexión automática tras cortes de red
-            let streamWasPlaying = false;   // la emisora actual ya llegó a sonar: un fallo después es un corte, no una emisora caída
-            let networkLost = false;        // el navegador avisó de que se fue la red
-            let reconnectTimer = null;
-            let reconnectAttempt = 0;
-            let reconnectActive = false;    // hay una reconexión en marcha
-            let stallTimer = null;
-            const RECONNECT_DELAYS_MS = [2000, 3000, 5000, 8000, ...Array(10).fill(10000)]; // unos 2 minutos de intentos, como mucho 10 s entre uno y otro
-            const STALL_LIMIT_MS = 15000;   // audio parado sin avisar (conexión colgada) -> se reconecta
             let toastTimer = null;
             const countryCounts = {};
             
@@ -1122,6 +1125,8 @@
             const miniName = document.getElementById('rmw-mininame');
             const miniStatus = document.getElementById('rmw-ministatus');
             const playPauseBtn = document.getElementById('rmw-playpause');
+            // Icono de pausa dibujado (dos barras), en lugar del carácter "Ⅱ" que algunas fuentes dibujan como cifra romana
+            const PAUSE_HTML = '<svg viewBox="0 0 24 24" width="0.85em" height="0.85em" fill="currentColor" aria-hidden="true" style="display:block;margin:auto"><rect x="5.5" y="3.5" width="5" height="17" rx="1.2"/><rect x="13.5" y="3.5" width="5" height="17" rx="1.2"/></svg>';
             const shareBtn = document.getElementById('rmw-share');
 
             audio.volume = getVolume();
@@ -1202,8 +1207,33 @@
                 return {
                     name: searchInput.value.trim(),
                     country: countrySelect.value,
-                    genre: genreSelect.value === 'Todos los géneros' ? '' : genreSelect.value
+                    genre: genreSelect.value === 'Todos los géneros' ? '' : genreSelect.value,
+                    stream: streamSelect.value
                 };
+            }
+
+            // Filtro temporal por formato: la API de Radio Browser no filtra de forma fiable por códec ni por HLS,
+            // así que se descargan hasta 9000 emisoras del país/género elegido y se quedan las del formato pedido
+            // (campo "codec": MP3, AAC, AAC+, OGG, FLAC...; campo "hls": 1 si es HLS)
+            function matchesStream(d, stream) {
+                if (stream === 'HLS') return Number(d.hls) === 1;
+                const codec = String(d.codec || '').toUpperCase();
+                return codec === stream || (stream === 'AAC' && codec.startsWith('AAC')) || (stream === 'OGG' && codec === 'VORBIS');
+            }
+            async function fetchStreamFiltered(filters) {
+                const PAGE = 3000;
+                const out = [];
+                for (let off = 0; off < 3 * PAGE; off += PAGE) {
+                    const params = new URLSearchParams({ limit: String(PAGE), offset: String(off), hidebroken: 'true', order: 'clickcount', reverse: 'true' });
+                    if (filters.name) params.set('name', filters.name);
+                    if (filters.country) params.set('country', filters.country);
+                    if (filters.genre) params.set('tag', filters.genre.toLowerCase());
+                    const data = await apiFetch('/stations/search?' + params.toString(), 30000);
+                    if (!Array.isArray(data)) break;
+                    out.push(...data);
+                    if (data.length < PAGE) break;
+                }
+                return out.filter(d => d && matchesStream(d, filters.stream) && (d.url_resolved || d.url) && d.stationuuid);
             }
 
             let autoRetried = false;
@@ -1324,6 +1354,18 @@
                 try {
                     const filters = currentQuery;
 
+                    // Filtro temporal por formato (MP3, AAC, OGG, Opus, FLAC, HLS)
+                    if (filters.stream) {
+                        const found = shuffleInPlace((await fetchStreamFiltered(filters)).map(normalizeStation));
+                        if (myRequest !== requestNumber) return;
+                        renderStations(found, reset, false);
+                        if (reset) {
+                            if (found.length) showToast(`Solo ${filters.stream}: ${found.length} emisoras`, 3000);
+                            else setStatus(`No hay emisoras ${filters.stream} con esos filtros. Prueba con otro país o género.`);
+                        }
+                        return;
+                    }
+
                     // Sin texto de búsqueda: listado aleatorio
                     if (!filters.name) {
                         const batch = await fetchRandomBatch(filters, reset);
@@ -1438,7 +1480,7 @@
                         audio.pause();
                     } else if (isActive && audio.paused) {
                         userPaused = false;
-                        resumeOrReload();
+                        audio.play().catch(() => {});
                     } else {
                         userPaused = false;
                         playStation(station);
@@ -1629,15 +1671,12 @@
                 updateMediaSession(normalized);
                 miniName.textContent = normalized.name;
                 miniStatus.textContent = 'Conectando…';
-                playPauseBtn.textContent = 'Ⅱ';
+                playPauseBtn.innerHTML = PAUSE_HTML;
 
-                if (loadedUrl !== normalized.url || !audio.src || isStreamBroken()) {
+                if (loadedUrl !== normalized.url || !audio.src) {
                     if (!audio.paused) switchingStation = true; // el 'pause' que sigue es un cambio de emisora, no una pausa real
                     audio.pause();
                     resetNowPlaying();
-                    cancelReconnect();
-                    networkLost = false;
-                    streamWasPlaying = false;
                     corsRetryPending = false;
                     configureCors(normalized.url);
                     audio.src = streamSrc(normalized.url);
@@ -1676,7 +1715,7 @@
                 const cardPlay = document.getElementById('rmw-mc-play'); // botón de la ficha del globo
                 if (cardPlay && cardPlay.dataset.sid) {
                     const cardActive = playingStation && playingStation.id === cardPlay.dataset.sid;
-                    cardPlay.textContent = cardActive && !audio.paused ? 'Ⅱ' : '▶';
+                    if (cardActive && !audio.paused) cardPlay.innerHTML = PAUSE_HTML; else cardPlay.textContent = '▶';
                 }
                 updateMapCardStatus();
             }
@@ -1725,7 +1764,6 @@
                 if (!audio.src) { playFirstStation(); return; }
                 if (audio.paused) {
                     userPaused = false;
-                    if (isStreamBroken()) { cancelReconnect(); reloadCurrentStream(); return; } // la conexión murió: se abre otra
                     try { await audio.play(); } catch (_) { miniStatus.textContent = 'No se pudo reanudar la emisora.'; }
                 } else {
                     userPaused = true;
@@ -2171,7 +2209,7 @@
                     audio.pause();
                 } else if (isActive && audio.paused) {
                     userPaused = false;
-                    resumeOrReload();
+                    audio.play().catch(() => {});
                 } else {
                     userPaused = false;
                     stationPlayedFromMap = st;
@@ -2205,7 +2243,7 @@
                 const isActive = playingStation && playingStation.id === pin.id;
                 userPaused = false;
                 if (!isActive) { stationPlayedFromMap = pin.station; playStation(pin.station); }
-                else if (audio.paused) resumeOrReload();
+                else if (audio.paused) audio.play().catch(() => {});
                 refreshPlayButtons();
             }
 
@@ -3019,6 +3057,7 @@
             searchInput.addEventListener('input', closeMap);
             countrySelect.addEventListener('change', closeMap);
             genreSelect.addEventListener('change', closeMap);
+            streamSelect.addEventListener('change', closeMap);
 
             const NOW_PLAYING_INTERVAL_MS = 10000;
             const NOW_PLAYING_MAX_FAILURES = 2;
@@ -3210,16 +3249,13 @@
             audio.addEventListener('playing', () => {
                 switchingStation = false;
                 disarmAutoResume();
-                cancelReconnect();        // ya suena: se acabó la reconexión
-                networkLost = false;
-                streamWasPlaying = true;
                 if (corsRetryPending) {
                     if (corsRetryHost) corsBlockedHosts.add(corsRetryHost);
                     corsRetryPending = false;
                 }
                 setupRealAnalyser();
                 miniStatus.textContent = (playingStation?.country || '') + ' · En reproducción';
-                playPauseBtn.textContent = 'Ⅱ';
+                playPauseBtn.innerHTML = PAUSE_HTML;
                 miniPlayer.classList.add('is-playing');
                 startDynamicVisualizer();
                 startNowPlaying();
@@ -3227,7 +3263,6 @@
             });
 
             audio.addEventListener('pause', () => {
-                clearStallTimer();
                 const switching = switchingStation;
                 switchingStation = false;
                 if (audio.src && !switching) {
@@ -3249,7 +3284,7 @@
             });
             
             audio.addEventListener('error', () => {
-                if (audio.crossOrigin && audio.src && !streamWasPlaying) { // si ya había sonado, el fallo es de red, no de CORS
+                if (audio.crossOrigin && audio.src) {
                     corsRetryPending = true;
                     corsRetryHost = hostOf(loadedUrl);
                     realAudio = false;
@@ -3261,116 +3296,11 @@
                 }
                 corsRetryPending = false;
                 stopNowPlaying();
+                miniStatus.textContent = 'Error de streaming. Prueba otra emisora.';
                 playPauseBtn.textContent = '▶';
                 miniPlayer.classList.remove('is-playing');
                 stopDynamicVisualizer();
-                // Si la emisora ya sonaba, es un corte: se reintenta sola en lugar de rendirse
-                if ((streamWasPlaying || reconnectActive) && scheduleReconnect()) { refreshPlayButtons(); return; }
-                miniStatus.textContent = streamWasPlaying ? 'Se perdió la conexión. Pulsa ▶ para reintentar.' : 'Error de streaming. Prueba otra emisora.';
                 refreshPlayButtons();
-            });
-
-            // ---------- Reconexión automática tras cortes de red ----------
-            function isStreamBroken() {
-                return Boolean(audio.error) || audio.networkState === HTMLMediaElement.NETWORK_NO_SOURCE;
-            }
-
-            function wantsToPlay() { return Boolean(playingStation && loadedUrl && !userPaused); }
-
-            function clearStallTimer() { clearTimeout(stallTimer); stallTimer = null; }
-
-            function cancelReconnect() {
-                clearTimeout(reconnectTimer);
-                reconnectTimer = null;
-                reconnectAttempt = 0;
-                reconnectActive = false;
-                clearStallTimer();
-            }
-
-            // Abre de nuevo la conexión con la emisora actual (la anterior murió con el corte)
-            function reloadCurrentStream() {
-                if (!loadedUrl) return;
-                if (!audio.paused) switchingStation = true; // el 'pause' que sigue no es una pausa real
-                audio.pause();
-                corsRetryPending = false;
-                configureCors(loadedUrl);
-                audio.src = streamSrc(loadedUrl);
-                audio.load();
-                audio.play().catch(() => {}); // si falla, lo gestiona el evento 'error'
-            }
-
-            function resumeOrReload() {
-                if (isStreamBroken()) { cancelReconnect(); reloadCurrentStream(); }
-                else audio.play().catch(() => {});
-            }
-
-            function scheduleReconnect(delay) {
-                if (!wantsToPlay()) return false;
-                if (navigator.onLine === false) {
-                    // Sin red no se gastan intentos: se espera al aviso 'online' del navegador
-                    networkLost = true;
-                    reconnectActive = true;
-                    clearTimeout(reconnectTimer);
-                    reconnectTimer = null;
-                    miniStatus.textContent = 'Sin conexión. Se reanudará sola al volver internet.';
-                    return true;
-                }
-                if (reconnectAttempt >= RECONNECT_DELAYS_MS.length) { cancelReconnect(); return false; }
-                const wait = delay == null ? RECONNECT_DELAYS_MS[reconnectAttempt] : delay;
-                reconnectAttempt++;
-                reconnectActive = true;
-                clearTimeout(reconnectTimer);
-                miniStatus.textContent = 'Reconectando…';
-                reconnectTimer = setTimeout(reconnectNow, wait);
-                return true;
-            }
-
-            function reconnectNow() {
-                reconnectTimer = null;
-                if (!wantsToPlay()) { cancelReconnect(); return; }
-                if (navigator.onLine === false) { scheduleReconnect(); return; }
-                miniStatus.textContent = 'Reconectando…';
-                reloadCurrentStream();
-            }
-
-            // Audio parado sin ningún aviso (conexión colgada tras el corte): pasado un rato se reconecta
-            function armStallWatchdog() {
-                if (stallTimer || !streamWasPlaying || !wantsToPlay()) return;
-                stallTimer = setTimeout(() => {
-                    stallTimer = null;
-                    if (wantsToPlay() && !audio.paused && audio.readyState < 3 && !reconnectActive) scheduleReconnect(0);
-                }, STALL_LIMIT_MS);
-            }
-
-            function reconnectStatusText() {
-                return networkLost ? 'Sin conexión. Se reanudará sola al volver internet.' : 'Reconectando…';
-            }
-
-            audio.addEventListener('waiting', () => {
-                if (reconnectActive || networkLost) miniStatus.textContent = reconnectStatusText();
-                armStallWatchdog();
-            });
-
-            // Se registra después del 'pause' original, así que manda: durante la reconexión no se muestra "En pausa"
-            audio.addEventListener('pause', () => {
-                if (userPaused) { cancelReconnect(); networkLost = false; return; } // pausa de la persona: se deja de reconectar
-                if (reconnectActive || networkLost) miniStatus.textContent = reconnectStatusText();
-            });
-
-            // El servidor cerró el flujo (p. ej. por el corte)
-            audio.addEventListener('ended', () => { if (streamWasPlaying) scheduleReconnect(); });
-
-            window.addEventListener('offline', () => {
-                if (!wantsToPlay() || !(streamWasPlaying || reconnectActive)) return;
-                networkLost = true;
-                miniStatus.textContent = 'Sin conexión. Se reanudará sola al volver internet.';
-            });
-
-            window.addEventListener('online', () => {
-                if (!wantsToPlay() || !(streamWasPlaying || reconnectActive)) return;
-                if (!(networkLost || reconnectActive || isStreamBroken() || audio.paused || audio.readyState < 3)) return; // sigue sonando bien
-                reconnectAttempt = 0;
-                scheduleReconnect(2500); // el adaptador tarda unos segundos en tener ruta y DNS
             });
 
             const hasMediaSession = 'mediaSession' in navigator;
@@ -3556,6 +3486,7 @@
             searchInput.addEventListener('input', filtersChanged);
             countrySelect.addEventListener('change', filtersChanged);
             genreSelect.addEventListener('change', filtersChanged);
+            streamSelect.addEventListener('change', filtersChanged);
 
             // Enlace compartido (?emisora=ID): carga y reproduce esa emisora en el reproductor
             // Pone la tarjeta de una emisora la primera de la lista, con un hueco vacío a la izquierda para que quede centrada en pantalla
