@@ -1625,7 +1625,6 @@
                     audio.pause();
                     resetNowPlaying();
                     corsRetryPending = false;
-                    proxyRetryPending = false;
                     configureCors(normalized.url);
                     audio.src = streamSrc(normalized.url);
                     loadedUrl = normalized.url; // se guarda la URL original: los títulos se piden con ella
@@ -1636,7 +1635,7 @@
                     await audio.play();
                 } catch (err) {
                     // AbortError = se ha elegido otra emisora mientras esta cargaba: no es un fallo
-                    if (corsRetryPending || proxyRetryPending || err?.name === 'AbortError' || playingStation !== normalized) return;
+                    if (corsRetryPending || err?.name === 'AbortError' || playingStation !== normalized) return;
                     miniStatus.textContent = 'No se pudo reproducir. Prueba otra emisora.';
                     playPauseBtn.textContent = '▶';
                 }
@@ -1762,17 +1761,11 @@
             // Emisoras http:// en una página https: el navegador las bloquea. Se reproducen a través del Worker.
             const STREAM_PROXY_URL = 'https://radio-titulos.ivanete8888.workers.dev/stream?url=';
             const PAGE_IS_HTTPS = location.protocol === 'https:';
-            const proxiedUrls = new Set();   // emisoras http que han fallado directas y van por el Worker
-            let proxyRetryPending = false;
 
             function isHttpUrl(url) { return /^http:\/\//i.test(url || ''); }
-            function isIpHost(url) {
-                try { const h = new URL(url).hostname; return /^\d{1,3}(\.\d{1,3}){3}$/.test(h) || h.includes(':'); } catch (_) { return false; }
-            }
-            // Con IP no hay certificado posible: directamente por el Worker. Con nombre de dominio se prueba primero directa.
-            function needsProxy(url) {
-                return PAGE_IS_HTTPS && isHttpUrl(url) && (isIpHost(url) || proxiedUrls.has(url));
-            }
+            // Toda emisora http:// va directa al Worker: probarla antes en directo solo añade esperas (el navegador
+            // intenta subirla a https y puede tardar decenas de segundos en rendirse).
+            function needsProxy(url) { return PAGE_IS_HTTPS && isHttpUrl(url); }
             function streamSrc(url) {
                 return needsProxy(url) ? STREAM_PROXY_URL + encodeURIComponent(url) : url;
             }
@@ -3206,7 +3199,6 @@
                     if (corsRetryHost) corsBlockedHosts.add(corsRetryHost);
                     corsRetryPending = false;
                 }
-                proxyRetryPending = false;
                 setupRealAnalyser();
                 miniStatus.textContent = (playingStation?.country || '') + ' · En reproducción';
                 playPauseBtn.textContent = 'Ⅱ';
@@ -3248,21 +3240,7 @@
                     if (!userPaused) audio.play().catch(() => {});
                     return;
                 }
-                // Emisora http:// bloqueada como contenido mixto: último recurso, el Worker
-                if (PAGE_IS_HTTPS && isHttpUrl(loadedUrl) && !needsProxy(loadedUrl)) {
-                    proxiedUrls.add(loadedUrl);
-                    proxyRetryPending = true;
-                    corsRetryPending = false;
-                    realAudio = false;
-                    if (typeof audio.captureStream === 'function' || typeof audio.mozCaptureStream === 'function') audio.crossOrigin = 'anonymous'; // el Worker envía CORS
-                    audio.src = streamSrc(loadedUrl);
-                    audio.load();
-                    if (!userPaused) audio.play().catch(() => {});
-                    return;
-                }
                 corsRetryPending = false;
-                proxyRetryPending = false;
-                if (!isIpHost(loadedUrl)) proxiedUrls.delete(loadedUrl); // el siguiente intento vuelve a probar directa
                 stopNowPlaying();
                 miniStatus.textContent = 'Error de streaming. Prueba otra emisora.';
                 playPauseBtn.textContent = '▶';
