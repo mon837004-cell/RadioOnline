@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="Radio Forocochera: directorio mundial de emisoras de radio online.">
     <title>Radio Forocochera - Directorio Mundial de Emisoras</title>
+    <link rel="icon" href="https://raw.githubusercontent.com/mon837004-cell/RadioOnline/main/Icono.png">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wdth,wght@12..96,75..100,400..800&family=DM+Mono:wght@400;500&family=Orbitron:wght@400;500;700;800;900&display=swap" rel="stylesheet">
@@ -824,7 +825,6 @@
                 'https://de1.api.radio-browser.info/json',
                 'https://fr1.api.radio-browser.info/json',
                 'https://at1.api.radio-browser.info/json',
-                'https://nl1.api.radio-browser.info/json',
                 'https://de2.api.radio-browser.info/json'
             ];
 
@@ -1058,6 +1058,7 @@
 
             function normalizeStation(station) {
                 let favicon = station.favicon || '';
+                if (/^\s*(null|undefined)\s*$/i.test(favicon)) favicon = ''; // algunas emisoras traen el texto "null" como logo
                 if (favicon.startsWith('http://')) {
                     favicon = favicon.replace('http://', 'https://');
                 }
@@ -1375,7 +1376,7 @@
                 card.className = 'rmw-station' + (active ? ' rmw-playing' : '');
                 
                 let logoHtml = `<div class="rmw-logo rmw-logo-placeholder">📻</div>`;
-                if (station.favicon) {
+                if (station.favicon && !/^\s*(null|undefined)\s*$/i.test(station.favicon)) {
                     logoHtml = `<img class="rmw-logo" loading="lazy" alt="" src="${esc(station.favicon)}">`;
                 }
 
@@ -1624,9 +1625,10 @@
                     audio.pause();
                     resetNowPlaying();
                     corsRetryPending = false;
+                    proxyRetryPending = false;
                     configureCors(normalized.url);
-                    audio.src = normalized.url;
-                    loadedUrl = normalized.url;
+                    audio.src = streamSrc(normalized.url);
+                    loadedUrl = normalized.url; // se guarda la URL original: los títulos se piden con ella
                     audio.load();
                 }
 
@@ -1634,7 +1636,7 @@
                     await audio.play();
                 } catch (err) {
                     // AbortError = se ha elegido otra emisora mientras esta cargaba: no es un fallo
-                    if (corsRetryPending || err?.name === 'AbortError' || playingStation !== normalized) return;
+                    if (corsRetryPending || proxyRetryPending || err?.name === 'AbortError' || playingStation !== normalized) return;
                     miniStatus.textContent = 'No se pudo reproducir. Prueba otra emisora.';
                     playPauseBtn.textContent = '▶';
                 }
@@ -1756,6 +1758,24 @@
             // Ecualizador Dinámico y Real
             const visualizerBars = document.querySelectorAll('.rmw-bar');
             const corsBlockedHosts = new Set();
+
+            // Emisoras http:// en una página https: el navegador las bloquea. Se reproducen a través del Worker.
+            const STREAM_PROXY_URL = 'https://radio-titulos.ivanete8888.workers.dev/stream?url=';
+            const PAGE_IS_HTTPS = location.protocol === 'https:';
+            const proxiedUrls = new Set();   // emisoras http que han fallado directas y van por el Worker
+            let proxyRetryPending = false;
+
+            function isHttpUrl(url) { return /^http:\/\//i.test(url || ''); }
+            function isIpHost(url) {
+                try { const h = new URL(url).hostname; return /^\d{1,3}(\.\d{1,3}){3}$/.test(h) || h.includes(':'); } catch (_) { return false; }
+            }
+            // Con IP no hay certificado posible: directamente por el Worker. Con nombre de dominio se prueba primero directa.
+            function needsProxy(url) {
+                return PAGE_IS_HTTPS && isHttpUrl(url) && (isIpHost(url) || proxiedUrls.has(url));
+            }
+            function streamSrc(url) {
+                return needsProxy(url) ? STREAM_PROXY_URL + encodeURIComponent(url) : url;
+            }
             const SIGNAL_GRACE_MS = 5000;
             let visualizerTimer = null;
             let visualizerFrame = 0;
@@ -1778,7 +1798,7 @@
 
             function configureCors(url) {
                 const canCapture = typeof audio.captureStream === 'function' || typeof audio.mozCaptureStream === 'function';
-                if (canCapture && !corsBlockedHosts.has(hostOf(url))) audio.crossOrigin = 'anonymous';
+                if (canCapture && (needsProxy(url) || !corsBlockedHosts.has(hostOf(url)))) audio.crossOrigin = 'anonymous';
                 else audio.removeAttribute('crossorigin');
             }
 
@@ -2115,7 +2135,7 @@
                 mapCardMeta.textContent = '🌍 ' + st.country + (st.state ? ' · ' + st.state : '') + (st.bitrate ? ' · ' + Number(st.bitrate) + ' kbps' : '') + (cardPin && cardPin.approx ? ' · 📍 ubicación aproximada' : '');
                 mapCardTags.textContent = st.tags ? st.tags.split(',').slice(0, 4).join(' · ') : 'Sin etiquetas';
                 mapCardLogo.textContent = '📻';
-                if (st.favicon) {
+                if (st.favicon && !/^\s*(null|undefined)\s*$/i.test(st.favicon)) {
                     const img = new Image();
                     img.alt = '';
                     img.addEventListener('load', () => mapCardLogo.replaceChildren(img));
@@ -3186,6 +3206,7 @@
                     if (corsRetryHost) corsBlockedHosts.add(corsRetryHost);
                     corsRetryPending = false;
                 }
+                proxyRetryPending = false;
                 setupRealAnalyser();
                 miniStatus.textContent = (playingStation?.country || '') + ' · En reproducción';
                 playPauseBtn.textContent = 'Ⅱ';
@@ -3222,12 +3243,26 @@
                     corsRetryHost = hostOf(loadedUrl);
                     realAudio = false;
                     audio.removeAttribute('crossorigin');
-                    audio.src = loadedUrl;
+                    audio.src = streamSrc(loadedUrl);
+                    audio.load();
+                    if (!userPaused) audio.play().catch(() => {});
+                    return;
+                }
+                // Emisora http:// bloqueada como contenido mixto: último recurso, el Worker
+                if (PAGE_IS_HTTPS && isHttpUrl(loadedUrl) && !needsProxy(loadedUrl)) {
+                    proxiedUrls.add(loadedUrl);
+                    proxyRetryPending = true;
+                    corsRetryPending = false;
+                    realAudio = false;
+                    if (typeof audio.captureStream === 'function' || typeof audio.mozCaptureStream === 'function') audio.crossOrigin = 'anonymous'; // el Worker envía CORS
+                    audio.src = streamSrc(loadedUrl);
                     audio.load();
                     if (!userPaused) audio.play().catch(() => {});
                     return;
                 }
                 corsRetryPending = false;
+                proxyRetryPending = false;
+                if (!isIpHost(loadedUrl)) proxiedUrls.delete(loadedUrl); // el siguiente intento vuelve a probar directa
                 stopNowPlaying();
                 miniStatus.textContent = 'Error de streaming. Prueba otra emisora.';
                 playPauseBtn.textContent = '▶';
