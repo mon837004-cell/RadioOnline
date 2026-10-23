@@ -644,12 +644,6 @@
                 <option value="Disco">Disco</option><option value="EDM">EDM</option><option value="Electronic">Electronic</option><option value="Flamenco">Flamenco</option><option value="Folk">Folk</option><option value="Funk">Funk</option><option value="Hard Rock">Hard Rock</option><option value="Heavy Metal">Heavy Metal</option><option value="Hip Hop">Hip Hop</option><option value="Hits">Hits</option><option value="Indie">Indie</option><option value="Jazz">Jazz</option><option value="Latin">Latin</option><option value="Lounge">Lounge</option><option value="Metal">Metal</option><option value="News">News</option><option value="Oldies">Oldies</option><option value="Opera">Opera</option><option value="Pop">Pop</option><option value="Punk">Punk</option><option value="Rap">Rap</option><option value="R&B">R&B</option><option value="Reggae">Reggae</option><option value="Rock">Rock</option><option value="Salsa">Salsa</option><option value="Ska">Ska</option><option value="Soul">Soul</option><option value="Soundtracks">Soundtracks</option><option value="Sports">Sports</option><option value="Talk">Talk</option><option value="Techno">Techno</option><option value="Top 40">Top 40</option><option value="Trance">Trance</option><option value="World Music">World Music</option>
             </select>
                 </label>
-                <label class="rmw-fld sel">
-                    <select id="rmw-hlsmode" aria-label="Tipo de stream (filtro temporal de pruebas)">
-                        <option value="all">🧪 Todas las emisoras</option>
-                        <option value="hls">🧪 Solo HLS</option>
-                    </select>
-                </label>
                 <div class="rmw-actions">
                     <button class="rmw-btn active" id="rmw-all">📚 Catálogo</button>
                     <button class="rmw-btn" id="rmw-favs">⭐ Mis Favoritos</button>
@@ -814,7 +808,6 @@
             const DEFAULT_COUNTRY = 'Spain';
             const countrySelect = document.getElementById('rmw-country');
             const genreSelect = document.getElementById('rmw-genre');
-            const hlsSelect = document.getElementById('rmw-hlsmode'); // filtro temporal de pruebas: todas / solo HLS (no se guarda)
 
             const savedCountry = store.get(STORAGE.country);
             countrySelect.value = savedCountry !== null ? savedCountry : DEFAULT_COUNTRY;
@@ -1200,8 +1193,7 @@
                 return {
                     name: searchInput.value.trim(),
                     country: countrySelect.value,
-                    genre: genreSelect.value === 'Todos los géneros' ? '' : genreSelect.value,
-                    hls: hlsSelect.value === 'hls'
+                    genre: genreSelect.value === 'Todos los géneros' ? '' : genreSelect.value
                 };
             }
 
@@ -1209,24 +1201,6 @@
 
             // Listado aleatorio: sin descargar el catálogo. Se piden varios trozos pequeños en posiciones
             // al azar de la lista del país/género elegido (o de todo el mundo) y se mezclan.
-            // Filtro temporal "Solo HLS": la API de Radio Browser no filtra por HLS, así que se descargan hasta 9000
-            // emisoras del país/género elegido y se quedan las que traen hls=1
-            async function fetchHlsStations(filters) {
-                const PAGE = 3000;
-                const out = [];
-                for (let off = 0; off < 3 * PAGE; off += PAGE) {
-                    const params = new URLSearchParams({ limit: String(PAGE), offset: String(off), hidebroken: 'true', order: 'clickcount', reverse: 'true' });
-                    if (filters.name) params.set('name', filters.name);
-                    if (filters.country) params.set('country', filters.country);
-                    if (filters.genre) params.set('tag', filters.genre.toLowerCase());
-                    const data = await apiFetch('/stations/search?' + params.toString(), 30000);
-                    if (!Array.isArray(data)) break;
-                    out.push(...data);
-                    if (data.length < PAGE) break;
-                }
-                return out.filter(d => d && Number(d.hls) === 1 && (d.url_resolved || d.url) && d.stationuuid);
-            }
-
             const RANDOM_SLICES = 10;
             const RANDOM_SLICE_SIZE = 5;
             const SMALL_LIST_LIMIT = 60;
@@ -1340,18 +1314,6 @@
 
                 try {
                     const filters = currentQuery;
-
-                    // Filtro temporal "Solo HLS"
-                    if (filters.hls) {
-                        const hlsStations = shuffleInPlace((await fetchHlsStations(filters)).map(normalizeStation));
-                        if (myRequest !== requestNumber) return;
-                        renderStations(hlsStations, reset, false);
-                        if (reset) {
-                            if (hlsStations.length) showToast(`Solo HLS: ${hlsStations.length} emisoras`, 3000);
-                            else setStatus('No hay emisoras HLS con esos filtros. Prueba con otro país o género.');
-                        }
-                        return;
-                    }
 
                     // Sin texto de búsqueda: listado aleatorio
                     if (!filters.name) {
@@ -3472,7 +3434,6 @@
             searchInput.addEventListener('input', filtersChanged);
             countrySelect.addEventListener('change', filtersChanged);
             genreSelect.addEventListener('change', filtersChanged);
-            hlsSelect.addEventListener('change', () => { closeMap(); filtersChanged(); });
 
             // Enlace compartido (?emisora=ID): carga y reproduce esa emisora en el reproductor
             // Pone la tarjeta de una emisora la primera de la lista, con un hueco vacío a la izquierda para que quede centrada en pantalla
